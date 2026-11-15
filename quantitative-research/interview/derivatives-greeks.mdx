@@ -1,0 +1,136 @@
+---
+title: "Quant interview: derivatives pricing and Greeks"
+sidebarTitle: "Derivatives and Greeks"
+description: "Equity derivatives questions for quant interviews with answers: put-call parity, Black-Scholes limits, Greeks, delta-hedged P&L, skew, dividends and forwards."
+keywords:
+  - "quant interview"
+  - "options"
+  - "Greeks"
+  - "Black-Scholes"
+  - "put-call parity"
+  - "implied volatility"
+  - "skew"
+  - "forward"
+icon: "calculator"
+---
+
+這一頁整理股票衍生品相關的量化面試題，涵蓋選擇權定價、Greeks、波動率曲面與遠期定價。答案以繁體中文說明，公式用英文符號。
+
+<Info>
+  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些是標準教科書框架（Black-Scholes 與其延伸），不代表任何特定市場或交易所的合約規則。市場細節請見 [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview)。
+</Info>
+
+## Pricing relationships
+
+<AccordionGroup>
+  <Accordion title="Q1. State put-call parity. What do you do if it is violated?">
+    歐式選擇權、無股息時：`C − P = S − K e^(−rT)`。
+
+    - 連續股息率 q：`C − P = S e^(−qT) − K e^(−rT)`
+    - 離散股息：以 `S − PV(dividends)` 取代 S
+
+    若不成立，可用 conversion / reversal 做無風險套利：例如 `C − P` 高於右邊時，賣出 call、買進 put、買進股票並借錢。實務上要考慮借券成本、融資利率與買賣價差，所以 parity 實際是一個帶狀區間而非等式。反過來，也能用 parity 從 call / put 價差推出隱含的借券成本或隱含股息。
+  </Accordion>
+
+  <Accordion title="Q2. What is the fair forward or futures price of a stock or index? When does cash-and-carry arbitrage work?">
+    連續股息率：`F = S e^((r − q) T)`。離散股息：`F = (S − PV(D)) e^(rT)`。
+
+    若 F 高於此值：買現貨、賣期貨、持有到期交割（cash-and-carry）。若 F 低於此值：賣空現貨、買期貨（reverse cash-and-carry）。基差 (basis) 就是 F 減 S，來自融資成本扣掉預期股息，到期時收斂到 0。
+
+    實務限制：借券成本、融資利差、股息不確定性與保證金都會讓可套利區間變寬。這也是指數期貨相對 ETF 的 Delta-1 套利的基礎。見 [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)。
+  </Accordion>
+
+  <Accordion title="Q3. Explain risk-neutral pricing. Why does the real-world drift not appear in the Black-Scholes price?">
+    選擇權可以用標的資產與現金動態複製，複製成本就是無套利價格。複製策略不依賴對股價漂移 μ 的看法，因此價格裡 μ 被無風險利率 r 取代。
+
+    在風險中性測度 Q 下，價格 = 折現後的期望報酬：`V = e^(−rT) E_Q[payoff]`。這不代表市場參與者風險中性，只是計算工具。波動率 σ 保留下來，因為複製成本取決於路徑的波動程度。
+  </Accordion>
+
+  <Accordion title="Q4. Should you ever exercise an American call early? An American put?">
+    **無股息的 call：** 不應提前履約，因為提前履約放棄了時間價值與利息收益，call 的價值高於內在價值。
+
+    **有股息的 call：** 可能在除息日前一刻提前履約，條件是股息大於剩餘時間價值與持有 strike 現金的利息利益。
+
+    **Put：** 可能提前履約，特別是深度價內、利率高時，因為提早拿到 strike 現金可以產生利息收益，而持有 put 的時間價值已經很小。
+  </Accordion>
+
+  <Accordion title="Q5. How do dividends affect call and put prices?">
+    預期股息提高會讓 **call 價格下降、put 價格上升**，因為除息日股價會下跌股息金額，而選擇權持有人不領股息。這同時反映在 forward 價格下降，也是 put-call parity 中 S 被 `S e^(−qT)` 取代的原因。
+
+    對交易的意義：股息預期與股息風險是獨立的風險因子，delta 對沖後仍會殘留。見 [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging) 的 Dividends 段落。
+  </Accordion>
+</AccordionGroup>
+
+## Black-Scholes and its limits
+
+<AccordionGroup>
+  <Accordion title="Q6. List the Black-Scholes assumptions. Which fail most badly in practice?">
+    **假設：** 股價服從有常數漂移與常數波動率的幾何布朗運動（對數常態）、無風險利率固定、可連續交易、無交易成本、可無限放空、無套利。
+
+    **最常失效的：**
+
+    - **常數波動率：** 實際有波動率微笑 / 偏態 (smile / skew)，且波動率隨時間變動並隨機。
+    - **連續路徑：** 實際有跳空（財報、事件、開盤缺口），delta 對沖無法完全消除跳空風險。
+    - **無交易成本與連續對沖：** 離散對沖與成本讓對沖後的損益有殘餘波動。
+
+    因此市場用隱含波動率作為報價語言，而不是把 Black-Scholes 當成真實模型。
+  </Accordion>
+
+  <Accordion title="Q7. How are theta and gamma related for a delta-hedged option?">
+    Black-Scholes PDE：`Θ + r S Δ + (1/2) σ² S² Γ = r V`。
+
+    對 delta 中性且 r 很小的部位，近似為 `Θ ≈ −(1/2) σ² S² Γ`。意思是：持有 long gamma 的人每天付出 theta，換取股價波動時的 gamma 收益。兩者在 BS 世界裡剛好以隱含波動率平衡。
+  </Accordion>
+
+  <Accordion title="Q8. You are long a delta-hedged option. What is your daily P&L, and when do you make money?">
+    近似：`P&L ≈ (1/2) Γ S² [ (ΔS / S)² − σ_implied² × dt ]`。
+
+    當實現的單日報酬平方大於隱含變異數對應的單日值，也就是**實現波動率高於隱含波動率**時，long gamma 賺錢；反之虧損。這就是「交易波動率」的核心：買賣選擇權本質上是在買賣實現波動率與隱含波動率的差。
+
+    注意這是近似。Vega 損益（隱含波動率本身的變動）要另外計算，且 gamma 在不同履約價與時間的分佈會影響實際結果。
+  </Accordion>
+
+  <Accordion title="Q9. Where is gamma largest? Where is vega largest? How do they change near expiry?">
+    - **Gamma：** 在價平 (ATM) 最大。接近到期時，ATM gamma 急劇升高（pin risk），價內與價外 gamma 趨近 0。
+    - **Vega：** 在價平附近最大，且隨剩餘時間增加（vega 約與 √T 成正比）。接近到期時 vega 趨近 0。
+    - **Theta：** 價平選擇權在接近到期時衰減最快。
+
+    所以短天期價平選擇權是高 gamma / 低 vega，長天期是低 gamma / 高 vega。
+  </Accordion>
+</AccordionGroup>
+
+## Volatility surface
+
+<AccordionGroup>
+  <Accordion title="Q10. Why do equity index options show negative skew?">
+    下跌履約價（put）的隱含波動率高於上漲履約價。常見解釋：
+
+    - **避險需求：** 機構買 put 保護持股，推高 put 價格。
+    - **槓桿效應 (leverage effect)：** 股價下跌時公司槓桿上升，波動率上升，造成股價與波動率負相關。
+    - **崩盤風險溢酬：** 投資人願意為下跌尾部風險付出溢價。
+
+    個股的 skew 形狀因標的而異，部分個股偏態較平甚至偏向上方。
+  </Accordion>
+
+  <Accordion title="Q11. What is the difference between sticky strike and sticky delta? Why does it matter for hedging?">
+    - **Sticky strike：** 標的價格移動時，每個固定履約價的隱含波動率不變。
+    - **Sticky delta（sticky moneyness）：** 隱含波動率跟著 moneyness 走，標的上漲時，同一履約價的隱含波動率會隨之變動。
+
+    在有 skew 時，兩者讓有效 delta 不同。Sticky delta 下，標的價格改變會連帶改變隱含波動率，有效 delta 等於 BS delta 加上 `vega × (∂σ / ∂S)`。選擇哪個假設會影響對沖比率與 P&L 歸因。
+  </Accordion>
+
+  <Accordion title="Q12. How would you check a vol surface for arbitrage?">
+    兩個基本條件：
+
+    - **Calendar spread：** 在固定履約價下，總變異數 `σ² × T` 必須隨到期日遞增，否則可用日曆價差套利。
+    - **Butterfly：** 在固定到期日下，選擇權價格對履約價必須是凸函數，也就是隱含的風險中性密度不能為負。
+
+    還要檢查 call 價格隨履約價遞減、且價差不超過折現後的履約價差。實務上擬合曲面（如 SVI 之類的參數化）時要加入這些約束。
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Probability and statistics](/quantitative-research/interview/probability-statistics)
+- [ETF market making and arbitrage](/quantitative-research/interview/etf-market-making)
+- [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)

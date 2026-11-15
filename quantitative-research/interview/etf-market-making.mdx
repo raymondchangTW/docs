@@ -1,0 +1,156 @@
+---
+title: "Quant interview: ETF market making and arbitrage"
+sidebarTitle: "ETF and Delta-1"
+description: "ETF market making, creation and redemption arbitrage, iNAV, tracking error, inventory skew and leveraged ETF rebalancing questions with answers for quant interviews."
+keywords:
+  - "quant interview"
+  - "ETF"
+  - "market making"
+  - "arbitrage"
+  - "iNAV"
+  - "tracking error"
+  - "leveraged ETF"
+  - "Delta-1"
+icon: "layer-group"
+---
+
+這一頁整理與 ETF 做市、套利與 Delta-1 相關的面試題。答案是概念與框架，市場規則（例如香港的申購贖回、做市商義務）請看本站對應頁面，題目內不重複寫細節。
+
+<Info>
+  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些答案是通用框架，不是特定市場的規則，也不是任何公司的內部做法。市場細節見 [ETF creation, redemption and arbitrage (Hong Kong)](/equities-derivatives/hk/cash-etf/creation-redemption) 與 [ETF market maker rules (Hong Kong)](/equities-derivatives/hk/cash-etf/market-maker-rules)。
+</Info>
+
+## Fair value and arbitrage
+
+<AccordionGroup>
+  <Accordion title="Q1. How do you estimate the intraday fair value (iNAV) of an ETF?">
+    基本做法：成分股即時價格乘以數量，加上現金成分，再除以每單位對應的份額，並換算成 ETF 的計價貨幣。
+
+    難點在於**成分股報價是否即時**：
+
+    - 成分股所在市場未開盤時，價格是陳舊的 (stale)。可用相關指數期貨、ADR 或匯率去估計當下的合理價。
+    - 有外幣成分時要加入匯率，且匯率與股票收盤時間可能不同步。
+    - 成分股停牌或流動性差時，用最後價會失真。
+
+    所以 fair value 本質上是一個估計，並帶有誤差帶，報價價差要涵蓋這個不確定性。
+  </Accordion>
+
+  <Accordion title="Q2. Explain the creation and redemption arbitrage. When do you create and when do you redeem?">
+    - **ETF 溢價（ETF 價格高於 NAV）：** 買入成分股籃子，交付給發行人換取 ETF 份額（creation），在市場賣出 ETF。
+    - **ETF 折價（ETF 價格低於 NAV）：** 買入 ETF，向發行人贖回成分股（redemption），在市場賣出成分股。
+
+    套利的收益 = 價差減去所有成本：成分股交易成本、申購贖回費用、融資與借券成本、對沖與執行風險。因此 ETF 價格會停在一個無套利區間內，而不是精確等於 NAV。
+
+    若沒有申購贖回管道，也可以先用期貨或對沖工具鎖定價差，再等待收斂。見 [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)。
+  </Accordion>
+
+  <Accordion title="Q3. Why can an ETF trade at a persistent premium or discount even though arbitrage exists?">
+    常見原因：
+
+    - **成本與資本限制：** 套利空間小於交易成本、融資成本與資本占用。
+    - **借券困難：** 做空成分股籃子時借不到券，或借券成本高。
+    - **時區與停市：** 標的市場未開盤，NAV 本身不確定。
+    - **容量與申購贖回限制：** 申購贖回有最低單位、截止時間與可參與的券商限制。
+    - **成分股流動性差：** 買進或賣出整個籃子會有衝擊成本。
+
+    面試加分點：區分「溢折價是資訊（NAV 陳舊）」與「溢折價是真實錯價」，前者不應該被當成機會。
+  </Accordion>
+
+  <Accordion title="Q4. What is the difference between tracking error and tracking difference?">
+    - **Tracking difference：** ETF 報酬減去指數報酬，在一段期間內累積的差距，通常主要來自費用、股息處理與現金拖累。
+    - **Tracking error：** 這個差距的波動，通常用日或週報酬差距的年化標準差表示。
+
+    前者衡量平均落後多少，後者衡量差距有多不穩定。投資人看前者，風險管理看後者。
+  </Accordion>
+</AccordionGroup>
+
+## Market making
+
+<AccordionGroup>
+  <Accordion title="Q5. How do you set a bid-ask spread for an ETF? What are the components?">
+    價差通常要涵蓋：
+
+    - **對沖成本：** 用期貨或成分股對沖時的交易成本與基差風險。
+    - **庫存風險：** 持有未對沖部位在持有期間的價格波動。
+    - **逆向選擇 (adverse selection)：** 對手可能比你更早知道資訊（例如 NAV 陳舊、期貨已動）。
+    - **固定成本與稅費：** 手續費、印花稅等。見 [Trading rules](/equities-derivatives/hk/cash-etf/trading-rules)。
+    - **利潤目標與交易所報價義務：** 見 [Market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules)。
+
+    實務上價差會隨波動率、成分股流動性與時段調整，價差越寬，被打到的機率越低但成交量也越少。
+  </Accordion>
+
+  <Accordion title="Q6. How should a market maker adjust quotes when inventory builds up?">
+    把報價中心往庫存的反方向移：持有多頭庫存時，降低 bid 與 ask，讓賣出更容易、買進更難。
+
+    Avellaneda-Stoikov 模型給出直覺：reservation price `r = s − q γ σ² (T − t)`，其中 q 是庫存、γ 是風險厭惡、σ 是波動率。庫存越大、波動率越高、剩餘時間越長，報價中心偏移越多。
+
+    這是概念框架。實務上還要結合可對沖的比例：如果庫存可以用期貨即時對沖，庫存的有效風險比未對沖的小，偏移就不用那麼大。
+  </Accordion>
+
+  <Accordion title="Q7. What is adverse selection in market making and how do you detect it?">
+    指對手方具有資訊優勢，成交後價格往對你不利的方向走。
+
+    偵測方法（概念層級）：
+
+    - 分析成交後短時間（例如幾秒到幾分鐘）的價格走勢，也就是 post-trade markout。成交後系統性對你不利代表被逆向選擇。
+    - 看是否發生在期貨或相關標的已經先動之後，也就是報價落後 (stale quote)。
+    - 依客戶類型、時段與訂單大小分組比較 markout。
+
+    對策：加寬價差、縮小報價量、加快報價更新，或在特定情境暫停報價。
+  </Accordion>
+
+  <Accordion title="Q8. How do you hedge ETF inventory with index futures, and what risks remain?">
+    對沖合約數 = ETF 部位的市值乘以 beta，再除以期貨的合約價值（期貨價格乘以合約乘數）。見 [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)。
+
+    殘餘風險：
+
+    - **基差風險：** 期貨與現貨的價差會變動，到期時才收斂。
+    - **追蹤與組成差異：** ETF 追蹤的指數與期貨標的可能不完全相同。
+    - **股息與時間：** 股息時間對期貨與 ETF NAV 的影響不同。
+    - **整數合約：** 合約數只能取整數，會有殘差。
+    - **展期成本：** 期貨到期前要換月。
+  </Accordion>
+</AccordionGroup>
+
+## Leveraged and inverse ETFs
+
+<AccordionGroup>
+  <Accordion title="Q9. Why does a 2x daily leveraged ETF not return twice the index over a long period?">
+    因為槓桿比率每天重設，長期報酬是每日槓桿報酬的連乘，路徑相依。
+
+    在連續時間近似下，槓桿倍數 L 的每日重設基金對數成長率約為 `L μ − (1/2) L² σ²`，指數的是 `μ − (1/2) σ²`。若拿「L 倍的指數對數報酬」作比較，差距為 `−(1/2) L (L − 1) σ²`。對 L = 2，差距約為 `−σ²`，也就是**波動率拖累 (volatility decay)**。
+
+    含意：震盪市（高波動、無趨勢）下槓桿 ETF 會損耗；單邊趨勢市則可能超過 L 倍。反向 ETF (L = −1) 的拖累是 `−(1/2)(−1)(−2) σ² = −σ²`，同樣存在。
+  </Accordion>
+
+  <Accordion title="Q10. A leveraged ETF must rebalance daily. How large is the rebalancing flow and in which direction?">
+    要維持固定的 L 倍曝險，收盤前需要調整的標的名目金額約為 `L (L − 1) × AUM × (當日指數報酬)`。
+
+    - 指數上漲、L 大於 1：需要**加買**標的（追漲）。
+    - 指數下跌、L 大於 1：需要**賣出**標的（殺跌）。
+    - 反向 ETF (L = −1)：`L (L − 1) = 2`，流向同樣與指數同方向。指數上漲時基金淨值下降，需要回補空頭（買入標的），指數下跌時則需要加碼空頭（賣出標的）。
+
+    這類流量集中在收盤前，可能放大尾盤波動；對做市商是可預期的方向性需求，也是對沖時需要提前準備的流動性。實際規模取決於基金當日 AUM 與是否用互換或期貨實現曝險。
+  </Accordion>
+</AccordionGroup>
+
+## Delta-1 swaps
+
+<AccordionGroup>
+  <Accordion title="Q11. What goes into the price of a Delta-1 total return swap on a stock?">
+    基本結構：客戶收取標的報酬（價格加股息），支付融資利率加利差，發行方持有對沖部位。價格的組成通常包括：
+
+    - 基準利率與融資利差（反映資金成本與資本占用）
+    - 借券成本（客戶做空時尤其重要）
+    - 股息處理與稅務（預扣稅、股息稅率因市場與投資人而異）
+    - 對沖成本與流動性
+
+    各項的具體數字與條款依交易對手與市場而定，見 [OTC derivatives](/equities-derivatives/global/delta-1-otc)。
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Derivatives pricing and Greeks](/quantitative-research/interview/derivatives-greeks)
+- [ETF creation, redemption and arbitrage (Hong Kong)](/equities-derivatives/hk/cash-etf/creation-redemption)
+- [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)

@@ -98,6 +98,12 @@
                 ]
               }
             ]
+          },
+          {
+            "group": "Interview",
+            "pages": [
+              "equities-derivatives/interview/mock-interview"
+            ]
           }
         ]
       },
@@ -105,9 +111,14 @@
         "tab": "Quantitative Research",
         "groups": [
           {
-            "group": "Group 1",
+            "group": "Interview questions",
             "pages": [
-              "page-3"
+              "quantitative-research/interview/probability-statistics",
+              "quantitative-research/interview/derivatives-greeks",
+              "quantitative-research/interview/etf-market-making",
+              "quantitative-research/interview/statistics-backtesting",
+              "quantitative-research/interview/data-engineering",
+              "quantitative-research/mock-interview"
             ]
           },
           {

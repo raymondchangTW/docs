@@ -1,0 +1,133 @@
+---
+title: "Quant interview: data engineering and systems"
+sidebarTitle: "Data engineering"
+description: "Python, SQL, Linux, Docker and data pipeline interview questions for quantitative roles: market data quality, as-of joins, corporate actions and reproducibility."
+keywords:
+  - "quant interview"
+  - "data engineering"
+  - "Python"
+  - "SQL"
+  - "Linux"
+  - "Docker"
+  - "market data"
+  - "pipeline"
+icon: "database"
+---
+
+這一頁整理量化職位會問的資料工程與系統題，涵蓋 Python、SQL、Linux、Docker 與市場資料處理。答案是概念與設計原則，不含程式碼。需要程式範例時，再另外請求。
+
+<Info>
+  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些是通用的工程實務，不代表任何特定公司的技術堆疊。
+</Info>
+
+## Market data
+
+<AccordionGroup>
+  <Accordion title="Q1. How do you check the quality of a market data feed or historical price table?">
+    先分類問題，再逐項檢查：
+
+    - **缺值與缺日：** 對照交易日曆，找出缺少的日期。
+    - **重複與順序：** 相同時間戳與代碼的重複列、時間倒序。
+    - **異常值：** 價格或報酬超出合理範圍、價格為 0 或負、成交量異常。
+    - **陳舊價格 (stale)：** 長時間價格不變，可能是停牌也可能是資料中斷。
+    - **一致性：** 開高低收的關係（高不低於開收）、不同來源之間的差異。
+    - **公司行動：** 拆併股與股息造成的價格斷層。
+
+    做法：把檢查寫成自動化規則並記錄結果，異常時告警而不是靜默修正，並保留原始資料。
+  </Accordion>
+
+  <Accordion title="Q2. What are corporate actions and how do they affect backtests?">
+    股息、拆股、併股、配股、代碼或名稱變更、合併與下市等。
+
+    若價格沒有調整，拆股會被誤判成暴跌，造成錯誤訊號。要區分**調整後價格**（用於報酬計算與訊號）與**未調整價格**（用於實際可成交的價格、手數與名目金額）。回測要用事件發生當時已知的調整資訊，避免前視。
+  </Accordion>
+
+  <Accordion title="Q3. How do you align trades and quotes in time, and what is a point-in-time (as-of) join?">
+    As-of join：對每一筆交易，取**該時間點之前（含）最近的一筆報價**，而不是用相同時間戳精確比對，因為報價與成交很少剛好同時。
+
+    要注意：
+
+    - 時區與不同交易所時鐘的差異
+    - 時間戳精度（毫秒、微秒）與資料來源的延遲
+    - 不能取到「之後」的報價，否則是前視偏誤
+
+    在 SQL 與 pandas 都有對應的做法，面試時可說明邏輯，不必背語法。
+  </Accordion>
+
+  <Accordion title="Q4. How do you handle time zones and trading calendars across markets?">
+    內部統一以 UTC 儲存時間戳，顯示與業務邏輯再轉換到市場當地時間。每個市場有自己的交易日曆、半日市與假期，要用維護中的日曆資料而不是假設週一到週五。
+
+    跨市場分析（例如港股 ETF 對美股成分）要明確定義「同一時點」，因為兩邊開收盤時間不重疊，這也會影響 iNAV 的新鮮度。
+  </Accordion>
+</AccordionGroup>
+
+## Python and SQL
+
+<AccordionGroup>
+  <Accordion title="Q5. Why is vectorized code faster than a Python loop, and when can you not vectorize?">
+    NumPy 與 pandas 把迴圈放在已編譯的底層（C）執行，避開 Python 直譯器每次迭代的開銷，並且利用連續記憶體與 SIMD。
+
+    難以向量化的情況：每一步依賴前一步的狀態（路徑相依，例如帶止損的逐筆模擬）、複雜的條件分支。這時可考慮 Numba 或改寫成較少迴圈的形式，或用 C++ 實作關鍵部分。先量測再優化，不要憑感覺。
+  </Accordion>
+
+  <Accordion title="Q6. Why does Python's GIL matter for research code? How do you use multiple cores?">
+    GIL 使同一個 Python 行程中，同一時間只有一個執行緒在執行 Python 位元碼，所以 CPU 密集的工作用多執行緒不會加速。
+
+    解法：**多行程 (multiprocessing)**，或使用釋放 GIL 的函式庫（NumPy 的許多運算）。I/O 密集的工作（下載、讀檔）則用執行緒或 asyncio 就有效。要注意行程間資料傳遞（序列化）的成本。
+  </Accordion>
+
+  <Accordion title="Q7. What SQL techniques do you use for time-series data? Explain window functions.">
+    Window function 在不縮減列數的情況下，對一組相關列做計算，常見用途：
+
+    - 每個代碼取最新一筆（用排名或 row number 搭配分區）
+    - 滾動平均、累計與差分（用 lag / lead）
+    - 排名與分組內百分位
+
+    設計與效能：依時間與代碼建立索引或分區、避免在大表上做多餘的全表掃描、了解 join 型別對結果列數的影響。對 tick 資料量大時，欄式儲存或時序資料庫通常比列式 OLTP 更適合。
+  </Accordion>
+
+  <Accordion title="Q8. How do you make a data pipeline idempotent and safe to backfill?">
+    Idempotent 指重跑同一個任務得到相同結果，不會產生重複資料。
+
+    - 以日期分區，寫入時覆蓋整個分區，或使用 upsert（以主鍵更新）
+    - 任務只依賴明確的輸入（日期參數、版本化資料），不依賴「現在」的時間
+    - 保留原始資料與轉換後資料，轉換可重跑
+    - 回補時限制範圍、先寫到暫存再切換，並記錄版本
+
+    這些原則也讓失敗重試變得安全。
+  </Accordion>
+</AccordionGroup>
+
+## Linux and Docker
+
+<AccordionGroup>
+  <Accordion title="Q9. A research job is running slowly on a Linux server. How do you investigate?">
+    由外而內逐層排查：
+
+    - **CPU 與記憶體：** 用 top 或 htop 看是否 CPU 吃滿、是否發生 swap。
+    - **磁碟 I/O：** 用 iostat 之類的工具看讀寫等待。
+    - **網路：** 看是否在等待遠端資料來源。
+    - **程式本身：** 用 profiler 找出熱點；用 strace 觀察系統呼叫是否卡在 I/O。
+    - **資源限制：** 檢查 ulimit、cgroup（容器內）是否限制了 CPU 或記憶體。
+
+    原則：先確認瓶頸屬於 CPU、記憶體、I/O 還是等待外部系統，再決定優化方向。
+  </Accordion>
+
+  <Accordion title="Q10. What is the difference between a Docker image and a container? Why use Docker for research?">
+    **Image** 是唯讀、分層的範本，包含作業系統層、相依套件與程式。**Container** 是由 image 啟動的執行中實例，帶有可寫層。
+
+    用於研究的好處：環境可重現（同一個 image 在筆電與伺服器行為一致）、相依套件版本鎖定、方便交付與排程。注意：資料與結果應放在 volume 或外部儲存，不要放在容器可寫層，因為容器移除後會消失；image 內不要放密碼或金鑰。
+  </Accordion>
+
+  <Accordion title="Q11. Batch versus streaming for market data: how do you choose?">
+    - **Batch：** 日終回測、研究、報表。實作簡單、易於重跑與驗證，延遲以分鐘到小時計。
+    - **Streaming：** 即時報價、風險、對沖與做市。延遲低，但需處理亂序、重複、斷線與背壓，驗證與回放較複雜。
+
+    常見做法是兩者並用：即時路徑供交易使用，同時寫入儲存，之後以批次重算並對帳，確保兩邊一致。
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Regression, time series and backtesting](/quantitative-research/interview/statistics-backtesting)
+- [ETF market making and arbitrage](/quantitative-research/interview/etf-market-making)
