@@ -43,15 +43,22 @@
             "pages": [
               {
                 "group": "Concepts",
-                "pages": []
+                "pages": [
+                  "equity-derivatives/global/etf-creation-redemption"
+                ]
               },
               {
                 "group": "Delta-1",
-                "pages": []
+                "pages": [
+                  "equity-derivatives/global/delta-1-otc",
+                  "equity-derivatives/global/delta-1-hedging"
+                ]
               },
               {
                 "group": "Comparison",
-                "pages": []
+                "pages": [
+                  "equity-derivatives/global/market-comparison"
+                ]
               }
             ]
           },
@@ -59,10 +66,13 @@
             "group": "Hong Kong",
             "icon": "building-columns",
             "pages": [
+              "equity-derivatives/hk/overview",
               {
                 "group": "Cash equities & ETF",
                 "pages": [
-                  "equity-derivatives/hk/cash-etf/trading-rules"
+                  "equity-derivatives/hk/cash-etf/trading-rules",
+                  "equity-derivatives/hk/cash-etf/market-maker-rules",
+                  "equity-derivatives/hk/cash-etf/creation-redemption"
                 ]
               },
               {
@@ -76,41 +86,8 @@
               },
               {
                 "group": "Listed derivatives",
-                "pages": []
-              }
-            ]
-          },
-          {
-            "group": "Listed Derivatives",
-            "pages": [
-              {
-                "group": "HKEX Warrant",
                 "pages": [
-                  "equity-derivatives/hk-warrant-issuance",
-                  "equity-derivatives/hk-warrant-liquidity-provider-rules",
-                  "equity-derivatives/hk-derivative-warrant-trading-rules",
-                  "equity-derivatives/hk-cbbc-rules"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Delta-1 & ETF",
-            "pages": [
-              "page-2",
-              {
-                "group": "Delta-1",
-                "pages": [
-                  "equity-derivatives/delta-1-listed-derivatives",
-                  "equity-derivatives/delta-1-otc-derivatives"
-                ]
-              },
-              {
-                "group": "ETF",
-                "pages": [
-                  "equity-derivatives/hk-etf-trading-rules",
-                  "equity-derivatives/hk-etf-market-maker-rules",
-                  "equity-derivatives/hk-etf-creation-redemption"
+                  "equity-derivatives/hk/listed-derivatives/overview"
                 ]
               }
             ]
