@@ -75,6 +75,7 @@
               {
                 "group": "Cash equities & ETF",
                 "pages": [
+                  "equities-derivatives/hk/cash-etf/trading-rules",
                   "equity-derivatives/hk/cash-etf/trading-rules",
                   "equity-derivatives/hk/cash-etf/market-maker-rules",
                   "equity-derivatives/hk/cash-etf/creation-redemption"
