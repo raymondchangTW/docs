@@ -61,7 +61,9 @@
             "pages": [
               {
                 "group": "Cash equities & ETF",
-                "pages": []
+                "pages": [
+                  "equity-derivatives/hk/cash-etf/trading-rules"
+                ]
               },
               {
                 "group": "Warrants & CBBC",
