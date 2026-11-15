@@ -1,192 +1,64 @@
 ---
-title: "Quant developer mock interview: system design and coding"
-sidebarTitle: "Mock Interview"
-description: "Mock interview for quantitative developer roles: market data design, backtest framework, pricing service, testing numerical code, concurrency and incidents."
+title: "Quant developer mock interview: overview and loop"
+sidebarTitle: "Overview"
+description: "How quant developer interview loops are structured, what each round tests, and a map of the mock interview pages on system design, code quality and incidents."
 keywords:
   - "mock interview"
   - "quant developer"
+  - "interview loop"
   - "system design"
-  - "market data"
-  - "backtesting framework"
+  - "low latency"
   - "Python"
   - "SQL"
-  - "Docker"
 icon: "comments"
 ---
 
-This is a mock interview for Quantitative Dev roles, focused on system design, code quality and production reliability. Each question has a main question, common follow-ups and answer points. The answers are design principles and thinking frameworks and contain no code. Ask separately if you want code examples.
+This section is a mock interview for Quantitative Dev roles. Each page covers one round type with a main question, the follow-ups interviewers commonly ask, and answer points. The answers are design principles and thinking frameworks and contain no code. Ask separately if you want code examples.
 
 For statistics and research methods, see the Quantitative Research [Mock Interview](/quantitative-research/mock-interview). For trading desk practice, see the Equities & Derivatives [Mock Interview](/equities-derivatives/interview/mock-interview).
 
 <Info>
-  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or technology stack.
+  **Status of this page.** Last checked on 15 November 2026. The questions are general practice material. The loop description below is a summary of public candidate reports and interview guides listed under Sources, so formats differ by firm and change over time. Always confirm the format with the recruiter.
 </Info>
 
-## System design
+## How a quant developer loop is usually structured
 
-<AccordionGroup>
-  <Accordion title="Q1. Design a market data ingestion and storage system for ETF, stock and futures prices used by both research and live pricing.">
-    **Clarify requirements first:** latency needs (live quotes or end-of-day research), data volume, number of sources, retention period, and who the users are.
+Public interview guides describe the developer loop as a software engineering loop adapted to trading systems, not a mental-math screen like the trader loop. Questions tend to cluster into five areas:
 
-    **Architecture:**
+- Coding, in C++ and Python
+- Data structures and algorithms
+- Systems, low-latency reasoning and concurrency
+- Light probability and math
+- Behavioral and fit
 
-    - **Ingestion layer:** One adapter per source, normalizing each vendor format into one internal schema (symbol, UTC timestamp, quote, trade, source, receive time). Keep raw data immutably.
-    - **Real-time path:** A low-latency message queue or stream feeding the pricing and risk services. Handle out-of-order data, duplicates, disconnects and backpressure.
-    - **Historical storage:** Time-series or columnar storage partitioned by date and symbol. The real-time path writes continuously, and a batch job later recomputes and reconciles.
-    - **Quality and monitoring:** Automated detection and alerting for gaps, stale data, outliers and latency.
+Three flavors are commonly described: a language-agnostic algorithm-first loop, a C++-first low-latency loop, and a data-leaning platform seat where Python, SQL and pipelines matter most. The job description usually indicates which one you are facing. Trading-specific system design, such as an order book, a matching engine or a market data handler, is increasingly used in place of generic web-scale design questions.
 
-    **Follow-up:** How does research avoid getting data that was only known later?
+## Pages in this section
 
-    → Record both event time and receive time, and query point-in-time when models read data. Keep versions of corrected data and never overwrite old values. See [Data engineering](/quantitative-research/interview/data-engineering).
-  </Accordion>
+<Columns cols={2}>
+  <Card title="System design" icon="sitemap" href="/quantitative-dev/mock/system-design">
+    Market data, backtesting, pricing service, order book, OMS and kill switches.
+  </Card>
 
-  <Accordion title="Q2. Design a backtesting framework. Event-driven or vectorized?">
-    - **Vectorized:** Fast and simple to implement, suitable for signal research and daily-frequency strategies. The weakness is that path-dependent logic (stops, position limits, volume constraints) is hard to model.
-    - **Event-driven:** Consumes events in time order (quotes, trades, order acknowledgements) and can share logic with the live system. It is more realistic but slower and more complex.
+  <Card title="Code quality" icon="code" href="/quantitative-dev/mock/code-quality">
+    Testing numerical code, determinism, money types, pull request review.
+  </Card>
 
-    A common approach is to use vectorized code to screen ideas quickly, then validate candidates with an event-driven run for costs and execution.
+  <Card title="Python, SQL and concurrency" icon="database" href="/quantitative-dev/mock/python-sql-concurrency">
+    Pandas performance, SQL for trades and quotes, races, locks and the GIL.
+  </Card>
 
-    **Design points:**
+  <Card title="Operations and incidents" icon="triangle-exclamation" href="/quantitative-dev/mock/operations-incidents">
+    Silent job failures, feed gaps, exchange disconnects, bad prices, deployments.
+  </Card>
 
-    - One time axis, and signals can only use data known at that time.
-    - Pluggable cost models: spread, fees, borrow, slippage.
-    - **Reproducibility:** Record code version, data version, parameters and random seed, so the same inputs give the same result.
-    - Produce reports and P&L attribution, not just a Sharpe ratio.
+  <Card title="Behavioral questions" icon="comments" href="/quantitative-dev/mock/behavioral">
+    STAR answers for conflict, ownership, prioritization and motivation.
+  </Card>
+</Columns>
 
-    **Follow-up:** How do you prevent look-ahead bias?
+## Sources
 
-    → Enforce it in the architecture: strategies get data only through an interface that returns data before the current time. Add a test that deliberately corrupts future data and checks the results do not change. See [Regression and backtesting](/quantitative-research/interview/statistics-backtesting) Q8.
-  </Accordion>
-
-  <Accordion title="Q3. Design a live pricing and hedging service for an ETF market maker. How do you make it safe?">
-    **Functional breakdown:** market data input, fair value calculation, quote generation, inventory and risk, and hedge suggestions or execution.
-
-    **Safety design:**
-
-    - **Stale data protection:** If any input has not updated within a time limit, quotes automatically widen or are pulled.
-    - **Sanity checks:** Reject quotes that deviate too far from fair value or show abnormal price jumps.
-    - **Risk limits:** Hard limits on position, notional, order rate and order size.
-    - **Kill switch:** Manual or automatic, pulling all quotes immediately.
-    - **Isolation:** Keep pricing, execution and risk checks separate so one failing module does not take down the rest.
-    - **Observability:** Monitor latency, rejection rate and position breaks, with alerts.
-
-    **Follow-up:** How do you recover position state after a restart?
-
-    → Treat fills as the source of truth (event sourcing, or rebuilding from execution reports). After a restart, reconcile with the broker or clearing positions first, then resume quoting. Do not rely on in-memory accumulated values as the only source.
-  </Accordion>
-</AccordionGroup>
-
-## Code quality
-
-<AccordionGroup>
-  <Accordion title="Q4. How do you test numerical and pricing code?">
-    - **Analytical benchmarks:** Compare against cases with closed-form solutions, such as Black-Scholes for European options.
-    - **Property tests:** Check relationships that must always hold, such as put-call parity, prices monotonic in strike, and delta between 0 and 1.
-    - **Numeric tolerance:** Never compare floats for equality. Use absolute or relative tolerances.
-    - **Golden tests:** Save verified outputs and confirm results do not change during refactoring.
-    - **Randomness:** Fix the seed for Monte Carlo and verify convergence statistically.
-    - **Edge cases:** Extreme volatility, near expiry, deep in and out of the money, zero rates.
-
-    **Follow-up:** Why does a parallel computation give slightly different trailing digits each run?
-
-    → Floating-point addition is not associative, so parallelism changes the summation order and therefore the trailing digits. Verify agreement within tolerance, and if you need bit-for-bit identical results, fix the summation order.
-  </Accordion>
-
-  <Accordion title="Q5. Float or Decimal for prices and money? How do you handle tick sizes?">
-    Floating point cannot represent many decimal fractions exactly (for example 0.1), so errors accumulate. Floats are usually fine for research and analytics, but accounting, settlement and order prices should use decimal fixed-point or integers.
-
-    **Tick size:** Store prices as an integer number of ticks, and align order prices to a valid tick before sending. Different price bands may have different tick sizes. The specific rules depend on the exchange, see [Trading rules](/equities-derivatives/hk/cash-etf/trading-rules). Define the rounding rule explicitly and apply it in one place, so different modules do not handle it separately.
-  </Accordion>
-
-  <Accordion title="Q6. How would you review a pull request that changes a pricing function?">
-    - Start with the purpose of the change and its blast radius: who calls this function.
-    - Check formulas, units, signs, boundary conditions, time zones and input validation.
-    - Check that tests cover the new behavior and compare outputs against the old version.
-    - Look at performance changes and memory, and whether configuration, passwords or keys were written into the code.
-    - Release plan: whether it needs a staged rollout or shadow mode, and whether it can be rolled back quickly.
-
-    Leave style issues to automated tools, and focus human review on correctness and risk.
-  </Accordion>
-</AccordionGroup>
-
-## Python, SQL and concurrency
-
-<AccordionGroup>
-  <Accordion title="Q7. A pandas job on a large dataset runs out of memory or is too slow. How do you investigate?">
-    Measure first, then optimize.
-
-    - **Memory:** Check dtypes (numeric precision, categorical for strings), read only the columns you need, and process in chunks.
-    - **Speed:** Use a profiler to find hot spots, avoid row-by-row iteration, and use vectorized and grouped operations.
-    - **Format and storage:** Switch to a columnar file format with partitioning and read only the partitions you need.
-    - **Beyond one machine:** Consider in-database computation or distributed tools.
-
-    See [Data engineering](/quantitative-research/interview/data-engineering) Q5.
-  </Accordion>
-
-  <Accordion title="Q8. A SQL query on a large price table suddenly became slow. How do you diagnose it?">
-    - Read the execution plan (explain plan): is there a full table scan, and is the join order sensible?
-    - Check whether indexes and partitions match the query filters (symbol and time range).
-    - Check whether table statistics are out of date or the data volume suddenly grew.
-    - Check whether a function applied to a column prevents index use, or a join produces unexpected duplicate rows.
-
-    Principle: diagnose with the plan and measurements, do not guess first.
-  </Accordion>
-
-  <Accordion title="Q9. Position updates arrive from several threads or processes. What can go wrong and how do you design for it?">
-    - **Race conditions:** Two threads read and then write the same position, and one update overwrites the other.
-    - **Duplicate messages:** A network retry causes the same fill to be processed twice.
-    - **Out-of-order messages:** Fill and cancel acknowledgements arrive in a different order from reality.
-
-    **Design:** Use a single writer or a lock, deduplicate idempotently on fill ID, handle ordering with sequence numbers, and rebuild positions from events. Reconcile regularly against external positions.
-
-    **Follow-up:** Does Python's GIL make these problems go away?
-
-    → No. The GIL only protects individual bytecode instructions, so compound operations (read, compute, write) can still be interleaved, and multiple processes have completely separate memory. See [Data engineering](/quantitative-research/interview/data-engineering) Q6.
-  </Accordion>
-</AccordionGroup>
-
-## Operations and incidents
-
-<AccordionGroup>
-  <Accordion title="Q10. A container running a nightly job is killed with no error message. How do you investigate?">
-    A common cause is running out of memory (an OOM kill).
-
-    - Check the container's exit status and reason, and the host's system logs for OOM records.
-    - Check the container's memory and CPU limits.
-    - Compare data volume with earlier runs, or look for recent code changes.
-    - Switch to chunked processing or adjust the resource settings.
-
-    **Prevention:** Add memory monitoring and failure alerts to the job so there are no silent failures. See [Data engineering](/quantitative-research/interview/data-engineering) Q9 and Q10.
-  </Accordion>
-
-  <Accordion title="Q11. A wrong price was published to clients for 10 minutes. Walk me through your response.">
-    **Order: stop the bleeding, assess, fix, review.**
-
-    - **Stop the bleeding:** Use the kill switch or fall back to a backup source immediately to stop publishing the bad price.
-    - **Assess:** Determine which clients, trades and positions were affected and by how much, and notify risk, compliance and the relevant managers.
-    - **Fix:** Find the root cause (data, configuration or a code change), and verify the fix before resuming.
-    - **Review:** Write a blameless postmortem with the timeline, root cause, why it was not detected sooner and follow-up actions (automated checks, limits, tests).
-
-    Specific compliance and reporting obligations follow the firm's and regulators' rules. In the interview, say that you would escalate according to company procedure.
-  </Accordion>
-</AccordionGroup>
-
-## Behavioral questions
-
-<AccordionGroup>
-  <Accordion title="Q12. Tell me about a time you disagreed with a colleague on a technical design.">
-    Use the STAR structure: Situation, Task, Action, Result.
-
-    Key points: replace subjective argument with data or a prototype, state the trade-offs of each option clearly, and explain how you reached consensus. Fill in your own real experience.
-  </Accordion>
-
-  <Accordion title="Q13. You are asked to deliver a feature in two weeks, but it needs a risky refactor. What do you do?">
-    Clarify what must be delivered and what skipping the refactor would cost. Propose two or three options: ship a minimal viable version first, refactor in stages, or delay and explain the risk. Agree the trade-off with stakeholders, and reduce risk with automated tests and feature flags. This type of question tests project management and communication, and there is no single correct answer.
-  </Accordion>
-</AccordionGroup>
-
-## Related pages
-
-- [Mock Interview (Quantitative Research)](/quantitative-research/mock-interview)
-- [Mock Interview (Equities & Derivatives)](/equities-derivatives/interview/mock-interview)
-- [Data engineering questions](/quantitative-research/interview/data-engineering)
+- [Quant Developer Interview Questions and Prep (Exponent)](https://www.tryexponent.com/blog/quant-developer-interview-guide)
+- [The quant developer interview loop, round by round (techinterview.org)](https://www.techinterview.org/post/3233477393/quant-developer-interview-loop/)
+- [Practice for quant developer interviews (TraderMath)](https://www.tradermath.org/role-tracks/quantitative-developer)

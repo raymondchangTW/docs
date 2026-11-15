@@ -1,0 +1,181 @@
+---
+title: "Quant dev mock interview: system design"
+sidebarTitle: "System design"
+description: "System design mock interview for quant developers: market data ingestion, backtesting framework, pricing service, order book, OMS and kill switches."
+keywords:
+  - "mock interview"
+  - "quant developer"
+  - "system design"
+  - "order book"
+  - "matching engine"
+  - "market data"
+  - "OMS"
+  - "kill switch"
+icon: "sitemap"
+---
+
+Trading system design rounds ask you to reason about latency budgets, deterministic behavior, fault tolerance and risk controls, which generic web-scale prep does not cover. This page has eight design questions with follow-ups and answer points. The answers are principles, not code.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or technology stack. Latency and throughput figures vary by firm tier and are deliberately left out.
+</Info>
+
+## A framework for any trading design question
+
+1. **Clarify scope:** exchange side (matching engine, order book) or participant side (market data handler, strategy, order management, risk)? Which latency tier: microseconds, milliseconds, or minute bars?
+2. **List requirements:** functional needs, latency and throughput targets, correctness guarantees (never lose an order, never double-process a fill), and failure behavior.
+3. **Sketch components and data flow,** then deep-dive on the hardest part.
+4. **Cover failure modes:** crashes, gaps, duplicates, slow consumers, bad data, operator error.
+5. **Cover observability and safety:** monitoring, replay, limits and kill switches.
+
+## Market data and research platforms
+
+<AccordionGroup>
+  <Accordion title="Q1. Design a market data ingestion and storage system for ETF, stock and futures prices used by both research and live pricing.">
+    **Clarify requirements first:** latency needs (live quotes or end-of-day research), data volume, number of sources, retention period, and who the users are.
+
+    **Architecture:**
+
+    - **Ingestion layer:** One adapter per source, normalizing each vendor format into one internal schema (symbol, UTC timestamp, quote, trade, source, receive time). Keep raw data immutably.
+    - **Real-time path:** A low-latency message queue or stream feeding the pricing and risk services. Handle out-of-order data, duplicates, disconnects and backpressure.
+    - **Historical storage:** Time-series or columnar storage partitioned by date and symbol. The real-time path writes continuously, and a batch job later recomputes and reconciles.
+    - **Quality and monitoring:** Automated detection and alerting for gaps, stale data, outliers and latency.
+
+    **Follow-up:** How does research avoid getting data that was only known later?
+
+    → Record both event time and receive time, and query point-in-time when models read data. Keep versions of corrected data and never overwrite old values. See [Data engineering](/quantitative-research/interview/data-engineering).
+  </Accordion>
+
+  <Accordion title="Q2. Design a market data distribution system for several strategies on the same machine or network.">
+    **Core pieces:** feed handlers that decode exchange messages, an in-memory order book per instrument, sequence gap detection, and a fan-out layer that publishes normalized updates to consumers.
+
+    **Design points:**
+
+    - **Redundant feeds:** Consume two copies of the same feed and arbitrate by sequence number, so a dropped packet on one line is covered by the other.
+    - **Gap recovery:** Track sequence numbers per channel. On a gap, request a retransmission or a snapshot, and mark the affected book as uncertain until it is repaired.
+    - **Fan-out:** Decide between latency and flexibility. Shared memory or multicast gives the lowest latency, while a message bus is easier to operate. Slow consumers must not block fast ones, so use bounded queues and a drop or disconnect policy.
+    - **Normalization:** One internal format with explicit time zones, price scaling and instrument identifiers.
+    - **Replay:** Record the input stream so any session can be replayed for debugging and testing.
+
+    **Follow-up:** What should downstream strategies do while a book is in an uncertain state?
+
+    → Layer the defense: prevent gaps where possible, detect them quickly, recover, and in the meantime trade less aggressively or pause quoting for the affected instruments.
+  </Accordion>
+
+  <Accordion title="Q3. Design a backtesting framework. Event-driven or vectorized?">
+    - **Vectorized:** Fast and simple to implement, suitable for signal research and daily-frequency strategies. The weakness is that path-dependent logic (stops, position limits, volume constraints) is hard to model.
+    - **Event-driven:** Consumes events in time order (quotes, trades, order acknowledgements) and can share logic with the live system. It is more realistic but slower and more complex.
+
+    A common approach is to use vectorized code to screen ideas quickly, then validate candidates with an event-driven run for costs and execution.
+
+    **Design points:**
+
+    - One time axis, and signals can only use data known at that time.
+    - Pluggable cost models: spread, fees, borrow, slippage.
+    - **Reproducibility:** Record code version, data version, parameters and random seed, so the same inputs give the same result.
+    - Accurate replay of recorded market data, walk-forward validation, and reports with P&L attribution, not just a Sharpe ratio.
+
+    **Follow-up:** How do you prevent look-ahead bias?
+
+    → Enforce it in the architecture: strategies get data only through an interface that returns data before the current time. Add a test that deliberately corrupts future data and checks the results do not change. See [Regression and backtesting](/quantitative-research/interview/statistics-backtesting) Q8.
+  </Accordion>
+
+  <Accordion title="Q4. How do you bridge research code and production code?">
+    The risk is that the research version and the production version of a strategy drift apart, so backtest results stop describing live behavior.
+
+    - **Shared core:** Put signal and pricing logic in one library used by both research notebooks and the live system.
+    - **Same data interface:** The strategy reads data through the same abstraction in backtest and live, with a replay source in one and a live feed in the other.
+    - **Parity tests:** Run the live code path on recorded data and compare its decisions with the backtest output.
+    - **Shadow mode:** Run new logic in production with real data but no orders, and compare it with expectations before enabling trading.
+    - **Configuration, not copies:** Parameters live in versioned configuration, not edited copies of the code.
+  </Accordion>
+</AccordionGroup>
+
+## Trading components
+
+<AccordionGroup>
+  <Accordion title="Q5. Design an in-memory order book and matching engine for one venue.">
+    **Requirements to confirm:** order types (limit, market, cancel), matching rule (price-time priority), operations needed (add, cancel by order ID, best bid and ask, depth), and that the book fits in memory on one machine.
+
+    **Data structures:**
+
+    - Each side of the book is a sorted structure of price levels, so the best price is fast to read.
+    - Each price level holds a first-in, first-out queue of orders, which implements time priority.
+    - A hash map from order ID to the order's position allows cancellation without scanning the book.
+    - Cache the best bid and best ask so top-of-book reads are constant time.
+
+    **Matching:** An incoming order is matched against the opposite side, best price first and oldest order first within a price, producing trades until it is filled or no longer crosses. Any remainder rests in the book.
+
+    **Follow-up 1:** Why do real engines often run the book on a single thread?
+
+    → A single writer per instrument gives a deterministic, auditable sequence of events with no lock contention, and it keeps price-time priority simple to guarantee. Parallelism comes from partitioning by instrument, not from sharing one book across threads.
+
+    **Follow-up 2:** Orders arrive on several network threads. How do you keep it correct and fast?
+
+    → Funnel all inbound messages into one ordered queue (sequenced) that the matching thread consumes. Keep the hot path free of allocation, blocking calls and disk writes, and write the event log asynchronously.
+
+    **Follow-up 3:** What happens if the engine crashes?
+
+    → The event log is the source of truth. Replaying it into a fresh process rebuilds the book exactly, which is why determinism matters. Persistent trade records must stay consistent with the in-memory state.
+  </Accordion>
+
+  <Accordion title="Q6. Design an order management system (OMS).">
+    The OMS turns trading decisions into exchange orders, tracks each order's lifecycle, and keeps its positions consistent with the exchange.
+
+    - **Order state machine:** New, acknowledged, partially filled, filled, canceled, rejected, with explicit legal transitions. Illegal transitions are logged and alerted, not ignored.
+    - **Idempotency:** Give every order a unique client order ID so that retries after a timeout cannot create duplicates.
+    - **Concurrency:** Several strategies may submit at once. Serialize state changes per order, and enforce pre-trade limits atomically with submission.
+    - **Reconciliation:** Compare internal orders and positions with the broker or exchange regularly and at startup, and treat the external record as the authority.
+    - **Persistence:** Write every state change to a durable log so that a restart can rebuild the open order set.
+
+    **Follow-up:** An acknowledgement never arrives after you send an order. What do you do?
+
+    → Do not assume it failed. Mark the order as unknown, query the order status from the venue or broker, and only then resend or cancel. Blind resends are how duplicate orders happen.
+  </Accordion>
+
+  <Accordion title="Q7. Design a live pricing and hedging service for an ETF market maker. How do you make it safe?">
+    **Functional breakdown:** market data input, fair value calculation, quote generation, inventory and risk, and hedge suggestions or execution.
+
+    **Safety design:**
+
+    - **Stale data protection:** If any input has not updated within a time limit, quotes automatically widen or are pulled.
+    - **Sanity checks:** Reject quotes that deviate too far from fair value or show abnormal price jumps.
+    - **Risk limits:** Hard limits on position, notional, order rate and order size.
+    - **Isolation:** Keep pricing, execution and risk checks separate so one failing module does not take down the rest.
+    - **Observability:** Monitor latency, rejection rate and position breaks, with alerts.
+
+    **Follow-up:** How do you recover position state after a restart?
+
+    → Treat fills as the source of truth (event sourcing, or rebuilding from execution reports). After a restart, reconcile with the broker or clearing positions first, then resume quoting. Do not rely on in-memory accumulated values as the only source. See [ETF and Delta-1](/quantitative-research/interview/etf-market-making).
+  </Accordion>
+
+  <Accordion title="Q8. Design the kill switch for an automated trading system. How do you make sure the kill switch itself cannot fail?">
+    **Layers:** Use more than one level of control, for example per-strategy circuit breakers, a software control in the order management layer, and a control on the network path to the exchange.
+
+    **Triggers:** P&L loss thresholds, position or notional breaches, error or reject rates, abnormal order rates, loss of market data, and manual action by an operator.
+
+    **Actions:** Cancel open orders, block new ones, and optionally flatten positions under supervision. Define clearly who can reset it and how.
+
+    **Making it reliable:**
+
+    - Keep it independent from the code it protects, so a bug in a strategy cannot disable it.
+    - Fail closed: if the kill switch loses contact with the system, the default is to stop.
+    - Test it regularly in a controlled way, because an untested kill switch is not a control.
+    - Give operators a simple, fast manual path that does not depend on the main application.
+
+    Public interview guides often cite Knight Capital's 2012 trading loss as the reason these controls matter.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Code quality](/quantitative-dev/mock/code-quality)
+- [Operations and incidents](/quantitative-dev/mock/operations-incidents)
+- [Mock Interview overview](/quantitative-dev/mock-interview)
+
+## Sources
+
+- [Algorithmic Trading System Architecture (techinterview.org)](https://www.techinterview.org/post/3233474598/algorithmic-trading-architecture/)
+- [System Design: Electronic Trading Platform (techinterview.org)](https://www.techinterview.org/post/3233474476/system-design-design-electronic-trading-platform-order-book-matching-engine-market-data-feed-low-latency-colocation/)
+- [Design an in-memory order matching engine (PracHub)](https://prachub.com/interview-questions/design-an-in-memory-order-matching-engine)
+- [Quant Developer Interview Questions and Prep (Exponent)](https://www.tryexponent.com/blog/quant-developer-interview-guide)

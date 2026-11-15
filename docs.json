@@ -146,9 +146,14 @@
         "tab": "Quantitative Dev",
         "groups": [
           {
-            "group": "Interview",
+            "group": "Mock Interview",
             "pages": [
-              "quantitative-dev/mock-interview"
+              "quantitative-dev/mock-interview",
+              "quantitative-dev/mock/system-design",
+              "quantitative-dev/mock/code-quality",
+              "quantitative-dev/mock/python-sql-concurrency",
+              "quantitative-dev/mock/operations-incidents",
+              "quantitative-dev/mock/behavioral"
             ]
           }
         ]

@@ -1,0 +1,123 @@
+---
+title: "Quant dev mock interview: operations and incidents"
+sidebarTitle: "Operations"
+description: "Operations mock interview for quant developers: silent job failures, feed gaps, exchange disconnects, wrong prices, safe deployments and postmortems."
+keywords:
+  - "mock interview"
+  - "quant developer"
+  - "incidents"
+  - "operations"
+  - "postmortem"
+  - "exchange disconnect"
+  - "deployment"
+  - "monitoring"
+icon: "triangle-exclamation"
+---
+
+Interviewers want to know whether you can keep a trading or data system healthy and respond calmly when it is not. This page has seven operations and incident questions with follow-ups and answer points. The answers are frameworks, and specific compliance and reporting duties follow each firm's and regulator's rules.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practices, not any firm's incident process.
+</Info>
+
+## A framework for incident questions
+
+1. **Stop the bleeding:** Limit further damage first (pause, kill switch, fall back to a backup source).
+2. **Assess impact:** Who and what is affected, and by how much? Notify risk, compliance and managers as procedures require.
+3. **Diagnose:** Find the root cause with evidence from logs, metrics and recorded data.
+4. **Fix and verify:** Apply the fix, verify it, then resume carefully.
+5. **Review:** Write a blameless postmortem with a timeline, root cause, detection gap and follow-up actions.
+
+## Data and batch jobs
+
+<AccordionGroup>
+  <Accordion title="Q1. A container running a nightly job is killed with no error message. How do you investigate?">
+    A common cause is running out of memory (an OOM kill).
+
+    - Check the container's exit status and reason, and the host's system logs for OOM records.
+    - Check the container's memory and CPU limits.
+    - Compare data volume with earlier runs, or look for recent code changes.
+    - Switch to chunked processing or adjust the resource settings.
+
+    **Prevention:** Add memory monitoring and failure alerts to the job so there are no silent failures. See [Data engineering](/quantitative-research/interview/data-engineering) Q9 and Q10.
+  </Accordion>
+
+  <Accordion title="Q2. A daily data pipeline silently skipped yesterday and nobody noticed until a researcher complained. How do you prevent a repeat?">
+    - **Freshness monitoring:** Alert when expected data for a trading day has not arrived by a set time, using the trading calendar to know what is expected.
+    - **Row count and value checks:** Compare each day's volume of data with recent history and flag large deviations.
+    - **Job-level alerts:** Alert on failure and also on jobs that never started.
+    - **Safe re-runs:** Make the pipeline idempotent so a backfill for the missing day is safe. See [Data engineering](/quantitative-research/interview/data-engineering) Q8.
+    - **Ownership:** Each dataset has a named owner and a documented recovery runbook.
+
+    The principle is that silence must never be treated as success.
+  </Accordion>
+</AccordionGroup>
+
+## Live connectivity and data
+
+<AccordionGroup>
+  <Accordion title="Q3. You detect a gap in the sequence numbers of a market data feed. What do you do?">
+    - **Detect:** Track the expected next sequence number per channel and flag any jump.
+    - **Contain:** Mark affected books as uncertain so strategies do not trade on a possibly wrong book. Widen quotes or pause for those instruments.
+    - **Recover:** Use the redundant feed if you have one, request retransmission, or fetch a snapshot and rebuild the book from the incremental updates that follow it.
+    - **Verify and resume:** Check the rebuilt book for sanity (for example it is not crossed) before trading again.
+    - **Record:** Log the gap for later analysis, because frequent gaps point to a network or capacity problem.
+  </Accordion>
+
+  <Accordion title="Q4. Your connection to an exchange or broker drops in the middle of the day. Walk me through the recovery.">
+    - **Know your state:** The system keeps its own sent and received sequence numbers and a durable log of all messages.
+    - **Reconnect:** Use the backup connection if one is ready, otherwise reconnect and log on again.
+    - **Gap fill:** Compare sequence numbers with the counterparty and request resends for messages you missed. Handle messages the counterparty did not receive.
+    - **Reconcile orders and positions:** After reconnecting, query open orders and positions from the venue and compare them with your records. Treat the venue as the authority.
+    - **Do not blindly resend:** Orders in an unknown state must be checked, because resending can create duplicates.
+    - **Safety:** While disconnected, stop generating new orders, and consider whether open orders should be cancelled on disconnect.
+  </Accordion>
+
+  <Accordion title="Q5. A wrong price was published to clients for 10 minutes. Walk me through your response.">
+    **Order: stop the bleeding, assess, fix, review.**
+
+    - **Stop the bleeding:** Use the kill switch or fall back to a backup source immediately to stop publishing the bad price.
+    - **Assess:** Determine which clients, trades and positions were affected and by how much, and notify risk, compliance and the relevant managers.
+    - **Fix:** Find the root cause (data, configuration or a code change), and verify the fix before resuming.
+    - **Review:** Write a blameless postmortem with the timeline, root cause, why it was not detected sooner and follow-up actions (automated checks, limits, tests).
+
+    Specific compliance and reporting obligations follow the firm's and regulators' rules. In the interview, say that you would escalate according to company procedure.
+  </Accordion>
+</AccordionGroup>
+
+## Change management
+
+<AccordionGroup>
+  <Accordion title="Q6. How do you deploy a change to a live pricing or trading system safely?">
+    - **Pre-release:** Tests including replay of recorded sessions, and review of the change and its blast radius.
+    - **Shadow mode:** Run the new version on live data without sending orders, and compare its decisions with the current version.
+    - **Staged rollout:** Enable for a small set of instruments or a small size first, with tight limits and close monitoring.
+    - **Feature flags:** Turn the new behavior on and off without redeploying.
+    - **Consistency checks:** Verify that every instance runs the same version and configuration, because partial deployments are a classic cause of incidents.
+    - **Rollback:** A rehearsed, fast path back to the previous version, with clear criteria for when to use it.
+    - **Timing:** Avoid risky changes at market open, close and around major events.
+
+    Public interview guides frequently cite Knight Capital's 2012 loss when motivating deployment controls and kill switches.
+  </Accordion>
+
+  <Accordion title="Q7. How do you write a good postmortem?">
+    - **Blameless:** Focus on how the system and process allowed the failure, not on who made the mistake.
+    - **Timeline:** What happened, when it was detected, when it was mitigated and when it was resolved.
+    - **Impact:** Clients, trades, positions and money affected, stated factually.
+    - **Root cause and contributing factors:** Distinguish the trigger from the underlying weaknesses (missing checks, unclear ownership, weak monitoring).
+    - **Detection gap:** Why it was not caught earlier, and which alert would have caught it.
+    - **Actions:** Specific, owned, time-bound follow-ups such as new automated checks, tighter limits, extra tests or runbook updates, tracked to completion.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [System design](/quantitative-dev/mock/system-design)
+- [Python, SQL and concurrency](/quantitative-dev/mock/python-sql-concurrency)
+- [Behavioral questions](/quantitative-dev/mock/behavioral)
+- [Mock Interview overview](/quantitative-dev/mock-interview)
+
+## Sources
+
+- [Algorithmic Trading System Architecture (techinterview.org)](https://www.techinterview.org/post/3233474598/algorithmic-trading-architecture/)
+- [What Interview Questions Test Quant Development Skills (OfflinePixel)](https://offline-pixel.github.io/blogs/what-interview-questions-test-quant-development-skills/)

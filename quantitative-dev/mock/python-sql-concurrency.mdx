@@ -1,0 +1,155 @@
+---
+title: "Quant dev mock interview: Python, SQL and concurrency"
+sidebarTitle: "Python, SQL, concurrency"
+description: "Python, SQL and concurrency mock interview for quant developers: pandas performance, trade and quote queries, races, deadlocks, locks and the GIL."
+keywords:
+  - "mock interview"
+  - "quant developer"
+  - "Python"
+  - "SQL"
+  - "concurrency"
+  - "window functions"
+  - "deadlock"
+  - "GIL"
+icon: "database"
+---
+
+Python-centric and data-leaning quant developer roles test research tooling, data pipelines and the SQL needed to answer questions about trades, quotes, fills and positions. Concurrency questions appear in almost every loop. This page has ten questions with follow-ups and answer points, described in words rather than code.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice questions. C++-first firms go much deeper on lock-free structures and memory models than the conceptual level here.
+</Info>
+
+## Python
+
+<AccordionGroup>
+  <Accordion title="Q1. A pandas job on a large dataset runs out of memory or is too slow. How do you investigate?">
+    Measure first, then optimize.
+
+    - **Memory:** Check dtypes (numeric precision, categorical for strings), read only the columns you need, and process in chunks.
+    - **Speed:** Use a profiler to find hot spots, avoid row-by-row iteration, and use vectorized and grouped operations.
+    - **Format and storage:** Switch to a columnar file format with partitioning and read only the partitions you need.
+    - **Beyond one machine:** Consider in-database computation or distributed tools.
+
+    See [Data engineering](/quantitative-research/interview/data-engineering) Q5.
+  </Accordion>
+
+  <Accordion title="Q2. Why can NumPy code be much faster than pure Python, and what are the common ways to lose that speed?">
+    NumPy stores numbers in contiguous typed arrays and runs loops in compiled code, which avoids per-element interpreter overhead and uses the CPU cache well.
+
+    **Ways to lose the speed:**
+
+    - Looping over elements in Python instead of using array operations
+    - Creating many temporary arrays in a long expression
+    - Accidental copies caused by non-contiguous slices or mixed dtypes
+    - Converting between Python objects and arrays repeatedly
+    - Using object dtype, which falls back to slow Python objects
+
+    **Follow-up:** When is a view different from a copy, and why does it matter?
+
+    → A view shares memory with the original, so a change through one is visible in the other. A copy is independent. Confusing the two causes both bugs (unexpected mutation) and performance problems (unnecessary copies).
+  </Accordion>
+
+  <Accordion title="Q3. Why does Python's GIL matter for research code? How do you use multiple cores?">
+    The GIL allows only one thread to execute Python bytecode at a time within a process, so multithreading does not speed up CPU-bound work.
+
+    Solutions: **multiprocessing**, or libraries that release the GIL (many NumPy operations). For I/O-bound work (downloads, file reads), threads or asyncio are effective. Mind the cost of passing data between processes (serialization).
+  </Accordion>
+</AccordionGroup>
+
+## SQL for trading data
+
+<AccordionGroup>
+  <Accordion title="Q4. A SQL query on a large price table suddenly became slow. How do you diagnose it?">
+    - Read the execution plan (explain plan): is there a full table scan, and is the join order sensible?
+    - Check whether indexes and partitions match the query filters (symbol and time range).
+    - Check whether table statistics are out of date or the data volume suddenly grew.
+    - Check whether a function applied to a column prevents index use, or a join produces unexpected duplicate rows.
+
+    Principle: diagnose with the plan and measurements, do not guess first.
+  </Accordion>
+
+  <Accordion title="Q5. Trading SQL rounds use schemas like trades, quotes, orders, fills and positions. What question types should you expect?">
+    Typical themes, each with the technique to name:
+
+    - **Data-quality checks:** Find trades with no matching instrument in a reference table. Use an anti-join (a left join filtered to missing matches). Prefer it to a NOT IN subquery, which behaves unexpectedly when NULL values are present.
+    - **Exposure and netting:** Net positions by counterparty. Apply a sign to buys and sells before summing.
+    - **Order-to-fill summaries:** Count fills and average price per order. Use a left join so unfilled orders still appear.
+    - **Top-N per group and running totals:** Use ranking or row-number functions partitioned by day (choose based on how ties should be treated), and ordered windowed sums for cumulative P&L.
+    - **Share of total:** Each trade's share of daily volume, using a windowed sum over a partition.
+    - **Fill rates:** Classify orders as full, partial or unfilled with conditional counts, then take ratios.
+
+    **Frequent pitfalls:** sign errors on buy and sell logic, mixing up row filters and group filters, and mishandling ties.
+  </Accordion>
+
+  <Accordion title="Q6. How would you compute rolling statistics, build OHLC bars from ticks, and detect gaps in a time series in SQL?">
+    - **Rolling statistics** (for example a 20-day volatility): a windowed aggregate partitioned by symbol, with an explicit frame of the previous N rows.
+    - **OHLC bars:** Group by truncated time bucket. High and low are the maximum and minimum price, while open and close are the first and last prices in time order within each bucket.
+    - **Gap detection:** Compare each timestamp with the previous one for the same symbol (lag), then filter for differences larger than a threshold.
+    - **Forward-filling sparse data:** Build a calendar-by-symbol grid, left join the observations, and carry the last known value forward.
+    - **Period-over-period change:** Aggregate in a common table expression first, then compare each period with the previous one.
+
+    **Follow-up:** How do you pair each trade with the latest quote before it?
+
+    → An as-of join: for each trade, take the most recent quote at or before its timestamp, never one after. See [Data engineering](/quantitative-research/interview/data-engineering) Q3.
+  </Accordion>
+</AccordionGroup>
+
+## Concurrency
+
+<AccordionGroup>
+  <Accordion title="Q7. Position updates arrive from several threads or processes. What can go wrong and how do you design for it?">
+    - **Race conditions:** Two threads read and then write the same position, and one update overwrites the other.
+    - **Duplicate messages:** A network retry causes the same fill to be processed twice.
+    - **Out-of-order messages:** Fill and cancel acknowledgements arrive in a different order from reality.
+
+    **Design:** Use a single writer or a lock, deduplicate idempotently on fill ID, handle ordering with sequence numbers, and rebuild positions from events. Reconcile regularly against external positions.
+
+    **Follow-up:** Does Python's GIL make these problems go away?
+
+    → No. The GIL only protects individual bytecode instructions, so compound operations (read, compute, write) can still be interleaved, and multiple processes have completely separate memory.
+  </Accordion>
+
+  <Accordion title="Q8. Two threads transfer money between the same two accounts and the program sometimes hangs. What is happening?">
+    This is a **deadlock**: thread A holds the lock on account 1 and waits for account 2, while thread B holds account 2 and waits for account 1.
+
+    **Fixes:**
+
+    - **Lock ordering:** Always acquire locks in one global order, for example by account ID, regardless of transfer direction.
+    - **Fewer locks:** Use one lock for the whole operation if contention is low, or a single-writer design that avoids locking.
+    - **Timeouts and detection:** Acquire with a timeout and back off, and log lock waits so hangs can be diagnosed.
+
+    The four conditions for deadlock are mutual exclusion, hold and wait, no preemption and circular wait. Breaking any one of them prevents it, and lock ordering breaks circular wait.
+  </Accordion>
+
+  <Accordion title="Q9. When do you use a lock-free structure and when a mutex? What is the ABA problem?">
+    - **Lock-free:** Suited to latency-critical paths such as market data feeds and order entry, where blocking is unacceptable. It is harder to write and verify correctly.
+    - **Mutex:** Simpler and perfectly adequate when contention is low and occasional blocking is acceptable.
+    - **Spinlock versus mutex:** A spinlock burns CPU but avoids sleeping, so it suits very short critical sections. A mutex uses less CPU but has higher wake-up latency, which suits longer sections.
+
+    **ABA problem:** A value changes from A to B and back to A between a thread's read and its compare-and-swap. The swap succeeds even though the state changed underneath it. Common remedies include tagged or double-width compare-and-swap, hazard pointers, and epoch-based reclamation.
+
+    For Python-centric roles, a conceptual understanding is usually enough. C++-first firms test the details in depth.
+  </Accordion>
+
+  <Accordion title="Q10. When would you choose threads, processes or asyncio for a data service?">
+    - **asyncio or threads:** I/O-bound work such as many concurrent connections, downloads or database calls. Async avoids thread overhead for many mostly idle connections.
+    - **Processes:** CPU-bound work such as heavy numerical computation, because each process has its own interpreter and avoids the GIL. Budget for serialization costs when moving data between processes.
+    - **Native extensions:** Libraries that release the GIL give thread-level parallelism for numerical code.
+    - **Mixed designs:** An async front end that hands CPU-heavy work to a process pool.
+
+    Always measure, because overhead from process startup, serialization and context switching can outweigh the gains for small tasks.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Code quality](/quantitative-dev/mock/code-quality)
+- [Operations and incidents](/quantitative-dev/mock/operations-incidents)
+- [Mock Interview overview](/quantitative-dev/mock-interview)
+
+## Sources
+
+- [SQL Interview Questions for Trading and Quant Roles (Quantt)](https://www.quantt.co.uk/resources/sql-interview-questions-trading)
+- [What Interview Questions Test Quant Development Skills (OfflinePixel)](https://offline-pixel.github.io/blogs/what-interview-questions-test-quant-development-skills/)
+- [Practice for quant developer interviews (TraderMath)](https://www.tradermath.org/role-tracks/quantitative-developer)

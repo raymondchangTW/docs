@@ -1,0 +1,113 @@
+---
+title: "Quant dev mock interview: code quality"
+sidebarTitle: "Code quality"
+description: "Code quality mock interview for quant developers: testing pricing code, determinism, float versus decimal, tick sizes, testability and pull request review."
+keywords:
+  - "mock interview"
+  - "quant developer"
+  - "code quality"
+  - "testing"
+  - "determinism"
+  - "floating point"
+  - "tick size"
+  - "code review"
+icon: "code"
+---
+
+In trading and pricing code, a small numerical or logic error can turn into real losses, so interviewers probe how you test, review and structure code. This page has seven questions with follow-ups and answer points. The answers are principles and contain no code.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general engineering practices, not any firm's standards.
+</Info>
+
+## Testing
+
+<AccordionGroup>
+  <Accordion title="Q1. How do you test numerical and pricing code?">
+    - **Analytical benchmarks:** Compare against cases with closed-form solutions, such as Black-Scholes for European options.
+    - **Property tests:** Check relationships that must always hold, such as put-call parity, prices monotonic in strike, and delta between 0 and 1.
+    - **Numeric tolerance:** Never compare floats for equality. Use absolute or relative tolerances.
+    - **Golden tests:** Save verified outputs and confirm results do not change during refactoring.
+    - **Randomness:** Fix the seed for Monte Carlo and verify convergence statistically.
+    - **Edge cases:** Extreme volatility, near expiry, deep in and out of the money, zero rates.
+
+    **Follow-up:** Why does a parallel computation give slightly different trailing digits each run?
+
+    → Floating-point addition is not associative, so parallelism changes the summation order and therefore the trailing digits. Verify agreement within tolerance, and if you need bit-for-bit identical results, fix the summation order.
+  </Accordion>
+
+  <Accordion title="Q2. What does determinism mean for a trading system, and how do you achieve it?">
+    Determinism means identical inputs produce identical outputs. It is what makes replay, debugging and post-incident analysis possible, and it supports accurate backtesting.
+
+    **Common threats and fixes:**
+
+    - **Wall-clock time:** Inject a clock that can be driven by recorded timestamps instead of reading the system time directly.
+    - **Randomness:** Seed generators explicitly and record the seed.
+    - **Iteration order:** Do not depend on the order of unordered collections.
+    - **Parallel reductions:** Fix the order of floating-point accumulation when exact results matter.
+    - **External state:** Pass all inputs in explicitly (market data, configuration, positions) so a run can be reproduced from a recorded input set.
+
+    **Follow-up:** How do you prove two runs are identical?
+
+    → Log a stable hash of inputs and outputs per step and compare across runs, and run the same recorded session twice in CI as a regression test.
+  </Accordion>
+
+  <Accordion title="Q3. How do you make a trading component testable?">
+    - **Inject dependencies:** Clock, market data source, order gateway and position store come in as interfaces, so tests can substitute fakes.
+    - **Replay-based tests:** Feed recorded market data and assert on the orders produced.
+    - **Simulated venue:** A simple exchange simulator that can reject, delay, partially fill and disconnect, so error paths are exercised and not just the happy path.
+    - **Small pure functions:** Keep pricing and sizing logic free of I/O so it is easy to test exhaustively.
+    - **Failure injection:** Test stale data, duplicated messages, out-of-order messages and sudden disconnects on purpose.
+  </Accordion>
+</AccordionGroup>
+
+## Data types and correctness
+
+<AccordionGroup>
+  <Accordion title="Q4. Float or Decimal for prices and money? How do you handle tick sizes?">
+    Floating point cannot represent many decimal fractions exactly (for example 0.1), so errors accumulate. Floats are usually fine for research and analytics, but accounting, settlement and order prices should use decimal fixed-point or integers.
+
+    **Tick size:** Store prices as an integer number of ticks, and align order prices to a valid tick before sending. Different price bands may have different tick sizes. The specific rules depend on the exchange, see [Trading rules](/equities-derivatives/hk/cash-etf/trading-rules). Define the rounding rule explicitly and apply it in one place, so different modules do not handle it separately.
+  </Accordion>
+
+  <Accordion title="Q5. What goes wrong with time handling in trading code?">
+    - **Time zones and daylight saving:** Store UTC internally and convert only at the edges.
+    - **Trading calendars:** Holidays, half days and auction periods differ per market, so use a maintained calendar rather than weekday logic.
+    - **Clock differences:** Exchange timestamps, vendor timestamps and local receive times can disagree. Record which clock each timestamp comes from.
+    - **Precision:** Millisecond, microsecond and nanosecond sources must not be mixed silently.
+    - **Day boundaries:** Define what "the same day" means for markets in different time zones.
+  </Accordion>
+</AccordionGroup>
+
+## Review and maintainability
+
+<AccordionGroup>
+  <Accordion title="Q6. How would you review a pull request that changes a pricing function?">
+    - Start with the purpose of the change and its blast radius: who calls this function.
+    - Check formulas, units, signs, boundary conditions, time zones and input validation.
+    - Check that tests cover the new behavior and compare outputs against the old version.
+    - Look at performance changes and memory, and whether configuration, passwords or keys were written into the code.
+    - Release plan: whether it needs a staged rollout or shadow mode, and whether it can be rolled back quickly.
+
+    Leave style issues to automated tools, and focus human review on correctness and risk.
+  </Accordion>
+
+  <Accordion title="Q7. What logging and metrics would you add to a live trading component?">
+    - **Structured logs** with a correlation ID that follows an order or quote through every component, so one decision can be reconstructed end to end.
+    - **Metrics:** Latency percentiles, message rates, queue depths, rejection rates, stale-data counters and position breaks.
+    - **Audit trail:** An append-only record of orders, fills, parameter changes and operator actions.
+    - **Alerts** on symptoms that matter (no market data, rising rejects, position mismatch), not on every warning.
+    - **Cost awareness:** Logging on the hot path can itself add latency, so buffer it and write asynchronously.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [System design](/quantitative-dev/mock/system-design)
+- [Python, SQL and concurrency](/quantitative-dev/mock/python-sql-concurrency)
+- [Mock Interview overview](/quantitative-dev/mock-interview)
+
+## Sources
+
+- [Algorithmic Trading System Architecture (techinterview.org)](https://www.techinterview.org/post/3233474598/algorithmic-trading-architecture/)
+- [Quant Developer Interview Questions and Prep (Exponent)](https://www.tryexponent.com/blog/quant-developer-interview-guide)
