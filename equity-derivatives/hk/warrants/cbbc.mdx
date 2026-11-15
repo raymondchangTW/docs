@@ -2,24 +2,33 @@
 title: "CBBC rules: product terms, mandatory call and liquidity provision"
 sidebarTitle: "CBBC"
 description: "Product terms, mandatory call events, residual value, liquidity provision and trading considerations for callable bull/bear contracts listed on HKEX."
-keywords: ["HKEX", "CBBC", "callable bull bear contracts", "mandatory call event", "residual value", "Category R", "Category N", "call price", "knock-out"]
+keywords:
+  - "HKEX"
+  - "CBBC"
+  - "callable bull bear contracts"
+  - "mandatory call event"
+  - "residual value"
+  - "Category R"
+  - "Category N"
+  - "call price"
+  - "knock-out"
 icon: "bullseye"
 ---
 
 A callable bull/bear contract (CBBC) gives the holder a right, but not an obligation, to buy (bull) or sell (bear) an underlying asset at a predetermined strike price or level on the expiry date. When the underlying hits the call price or level, a mandatory call event (MCE) occurs and the CBBC terminates early. This page covers CBBC product terms, the MCE and residual value mechanics, liquidity provision and cost differences from derivative warrants (DWs).
 
 <Info>
-**Status of this page.** Last checked on 15 November 2026. Product terms follow the HKEX CBBC Product Sheet marked "Last updated: 18 June 2026". The Chapter 15A overhaul took effect in two stages: 1 May 2026 for key product requirements and 1 July 2026 for most other amendments. Always confirm against the current Product Sheet and the listing document of the specific issue.
+  **Status of this page.** Last checked on 15 November 2026. Product terms follow the HKEX CBBC Product Sheet marked "Last updated: 18 June 2026". The Chapter 15A overhaul took effect in two stages: 1 May 2026 for key product requirements and 1 July 2026 for most other amendments. Always confirm against the current Product Sheet and the listing document of the specific issue.
 </Info>
 
-Related pages: [warrant issuance](/equity-derivatives/hk-warrant-issuance), [liquidity provider rules](/equity-derivatives/hk-warrant-liquidity-provider-rules) and [trading rules and costs](/equity-derivatives/hk-derivative-warrant-trading-rules).
+Related pages: [warrant issuance](/equity-derivatives/hk/warrants/issuance), [liquidity provider rules](/equity-derivatives/hk/warrants/liquidity-provider-rules) and [trading rules and costs](/equity-derivatives/hk/warrants/trading-rules).
 
 ## Differences from derivative warrants
 
 | Item | DW | CBBC |
-|------|----|------|
+| --- | --- | --- |
 | Early termination | None | Terminates on a mandatory call event |
-| Minimum issue price | HK$0.15 (not for further issues) | None, but cannot be issued below the HK$0.01 minimum trading price |
+| Minimum issue price | HK\$0.15 (not for further issues) | None, but cannot be issued below the HK\$0.01 minimum trading price |
 | Minimum expiry, new issue | 6 months | 3 months |
 | Valuation at expiry, listed securities | Average closing price over the five business days before expiry | Closing price on the trading day before expiry |
 | Residual value | Not applicable | Category R only |
@@ -33,14 +42,14 @@ Related pages: [warrant issuance](/equity-derivatives/hk-warrant-issuance), [liq
 The terms below come from the HKEX CBBC Product Sheet marked "Last updated: 18 June 2026".
 
 | Item | Requirement |
-|------|-------------|
+| --- | --- |
 | Product class | Leveraged structured product |
 | Style | European. Other styles require prior consultation with the Exchange. |
 | Category | Residual value (R) or no residual value (N) |
 | Type | Bull or bear |
 | Collateral | Uncollateralised |
-| Minimum issue size | HK$6 million market capitalisation at issue |
-| Minimum issue price | None for new, emulation and further issues. Cannot be issued below the minimum trading price of HK$0.01. |
+| Minimum issue size | HK\$6 million market capitalisation at issue |
+| Minimum issue price | None for new, emulation and further issues. Cannot be issued below the minimum trading price of HK\$0.01. |
 | Expiry, new and emulation issues | Normally at least 3 months and at most 5 years from listing. Does not apply to further issues. |
 | Entitlement ratio, listed securities | 1, 2, 5, 8, 10, 20, 50, 80, 100, 200, 500, 800 or 1,000 CBBCs per share, higher values in multiples of 500, or one CBBC per 1, 10 or 100 shares |
 | Board lot, listed securities | One board lot entitles the holder to a whole number of underlying board lots, or to one-tenth of an underlying board lot (cash settlement only) |
@@ -59,7 +68,7 @@ The terms below come from the HKEX CBBC Product Sheet marked "Last updated: 18 J
 ## Mandatory call event
 
 | Type | Trigger |
-|------|---------|
+| --- | --- |
 | Bull CBBC | Spot price or level is at or below the call price or level at any time during a trading day in the observation period |
 | Bear CBBC | Spot price or level is at or above the call price or level at any time during a trading day in the observation period |
 
@@ -70,7 +79,7 @@ For an underlying that is not listed on the Exchange, the issuer needs a feasibl
 ### Category N and Category R
 
 | Category | Strike versus call | Outcome of an MCE |
-|----------|--------------------|-------------------|
+| --- | --- | --- |
 | N, no residual value | Call price equals strike price | The CBBC has no residual value and the holder loses the whole investment |
 | R, residual value | Call price differs from strike price | The holder may receive a residual value, which can be zero |
 
@@ -81,7 +90,7 @@ The Product Sheet states that each CBBC has a strike and a call price but does n
 The MCE valuation period runs from the time of the MCE to the end of the following trading session. The residual value of a Category R CBBC is calculated from the extreme spot price in that period.
 
 | Type | Residual value per CBBC |
-|------|-------------------------|
+| --- | --- |
 | Bull | (Lowest spot price or level in the MCE valuation period minus the strike) divided by the entitlement ratio |
 | Bear | (Strike minus the highest spot price or level in the MCE valuation period) divided by the entitlement ratio |
 
@@ -93,10 +102,10 @@ CBBC issuers build a funding cost into the price. HKEX lists funding costs among
 
 ## Liquidity provision
 
-CBBCs follow the same quote request and active quote framework as DWs, with different active quote parameters. The full framework is on the [liquidity provider rules](/equity-derivatives/hk-warrant-liquidity-provider-rules) page.
+CBBCs follow the same quote request and active quote framework as DWs, with different active quote parameters. The full framework is on the [liquidity provider rules](/equity-derivatives/hk/warrants/liquidity-provider-rules) page.
 
 | Parameter | Requirement |
-|-----------|-------------|
+| --- | --- |
 | QR maximum spread | 20 spreads |
 | QR minimum size | 20 board lots |
 | QR maximum response time | 10 minutes |
@@ -110,26 +119,26 @@ CBBCs follow the same quote request and active quote framework as DWs, with diff
 **QR exemptions** are the same as for DWs, plus the period after an MCE.
 
 <Warning>
-**Unresolved discrepancy.** A law-firm summary of the 2026 amendments states that, from 1 July 2026, the 20-board-lot minimum is deleted from the Listing Rules and the exemption for the first five minutes after market open is removed. The HKEX Product Sheets dated 18 June 2026 still show both. Confirm the operative service levels in the listing document.
+  **Unresolved discrepancy.** A law-firm summary of the 2026 amendments states that, from 1 July 2026, the 20-board-lot minimum is deleted from the Listing Rules and the exemption for the first five minutes after market open is removed. The HKEX Product Sheets dated 18 June 2026 still show both. Confirm the operative service levels in the listing document.
 </Warning>
 
 ## Trading and costs
 
-- CBBCs use the same structured products spread table (code 06) as DWs. See the minimum spread table on the [trading rules and costs](/equity-derivatives/hk-derivative-warrant-trading-rules) page.
+- CBBCs use the same structured products spread table (code 06) as DWs. See the minimum spread table on the [trading rules and costs](/equity-derivatives/hk/warrants/trading-rules) page.
 - The HKEX trading fee and the SFC and AFRC levies apply as for other securities. Brokers' fee schedules show stamp duty normally applying only to stocks, so CBBC trades are not normally charged it. Verify the exemption against an official HKEX or Government source.
 - The Rules of the Exchange provide short selling exceptions for structured product liquidity providers and hedging participants. The sources checked state the general no-short-selling position for DWs only, so confirm the position for CBBCs.
 
 ## 2026 changes affecting CBBCs
 
 | Change | Effective |
-|--------|-----------|
+| --- | --- |
 | Minimum issue price requirement for CBBCs removed | 1 May 2026 |
-| Minimum market capitalisation at issue lowered from HK$10 million to HK$6 million | 1 May 2026 |
+| Minimum market capitalisation at issue lowered from HK\$10 million to HK\$6 million | 1 May 2026 |
 | Prescriptive product terms deleted from the Listing Rules. Issuers follow the Product Sheet. | 1 July 2026 |
 | New permitted entitlement ratios | 1 July 2026 |
 | New issuer eligibility requirements | 1 July 2026, with transition to 30 June 2027 for existing issuers |
 
-For issuer eligibility and the launch process, see [warrant issuance](/equity-derivatives/hk-warrant-issuance).
+For issuer eligibility and the launch process, see [warrant issuance](/equity-derivatives/hk/warrants/issuance).
 
 ## Points to verify before relying on this page
 
