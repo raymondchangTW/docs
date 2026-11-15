@@ -312,5 +312,8 @@
       "destination": "/equities-derivatives/:slug*",
       "permanent": true
     }
-  ]
+  ],
+  "background": {
+    "decoration": "gradient"
+  }
 }
