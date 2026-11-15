@@ -44,12 +44,15 @@
               {
                 "group": "Concepts",
                 "pages": [
+                  "equities-derivatives/global/etf-creation-redemption",
                   "equity-derivatives/global/etf-creation-redemption"
                 ]
               },
               {
                 "group": "Delta-1",
                 "pages": [
+                  "equities-derivatives/global/delta-1-otc",
+                  "equities-derivatives/global/delta-1-hedging",
                   "equity-derivatives/global/delta-1-otc",
                   "equity-derivatives/global/delta-1-hedging"
                 ]
@@ -57,6 +60,7 @@
               {
                 "group": "Comparison",
                 "pages": [
+                  "equities-derivatives/global/market-comparison",
                   "equity-derivatives/global/market-comparison"
                 ]
               }
@@ -66,6 +70,7 @@
             "group": "Hong Kong",
             "icon": "building-columns",
             "pages": [
+              "equities-derivatives/hk/overview",
               "equity-derivatives/hk/overview",
               {
                 "group": "Cash equities & ETF",
@@ -87,6 +92,7 @@
               {
                 "group": "Listed derivatives",
                 "pages": [
+                  "equities-derivatives/hk/listed-derivatives/overview",
                   "equity-derivatives/hk/listed-derivatives/overview"
                 ]
               }
