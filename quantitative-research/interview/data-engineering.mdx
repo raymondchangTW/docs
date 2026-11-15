@@ -14,50 +14,50 @@ keywords:
 icon: "database"
 ---
 
-這一頁整理量化職位會問的資料工程與系統題，涵蓋 Python、SQL、Linux、Docker 與市場資料處理。答案是概念與設計原則，不含程式碼。需要程式範例時，再另外請求。
+This page collects data engineering and systems questions asked in quantitative roles, covering Python, SQL, Linux, Docker and market data handling. The answers are concepts and design principles and contain no code. Ask separately if you want code examples.
 
 <Info>
-  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些是通用的工程實務，不代表任何特定公司的技術堆疊。
+  **Status of this page.** Last checked on 15 November 2026. These are general engineering practices, not any firm's specific technology stack.
 </Info>
 
 ## Market data
 
 <AccordionGroup>
   <Accordion title="Q1. How do you check the quality of a market data feed or historical price table?">
-    先分類問題，再逐項檢查：
+    Classify the problems first, then check each:
 
-    - **缺值與缺日：** 對照交易日曆，找出缺少的日期。
-    - **重複與順序：** 相同時間戳與代碼的重複列、時間倒序。
-    - **異常值：** 價格或報酬超出合理範圍、價格為 0 或負、成交量異常。
-    - **陳舊價格 (stale)：** 長時間價格不變，可能是停牌也可能是資料中斷。
-    - **一致性：** 開高低收的關係（高不低於開收）、不同來源之間的差異。
-    - **公司行動：** 拆併股與股息造成的價格斷層。
+    - **Missing values and days:** Compare against the trading calendar to find missing dates.
+    - **Duplicates and ordering:** Duplicate rows for the same timestamp and symbol, and out-of-order timestamps.
+    - **Outliers:** Prices or returns outside a plausible range, zero or negative prices, abnormal volume.
+    - **Stale prices:** A long run of unchanged prices may be a halt or a feed interruption.
+    - **Consistency:** The open-high-low-close relationships (high not below open or close) and differences between sources.
+    - **Corporate actions:** Price breaks caused by splits and dividends.
 
-    做法：把檢查寫成自動化規則並記錄結果，異常時告警而不是靜默修正，並保留原始資料。
+    Implementation: write the checks as automated rules and log the results, alert on anomalies instead of silently fixing them, and keep the raw data.
   </Accordion>
 
   <Accordion title="Q2. What are corporate actions and how do they affect backtests?">
-    股息、拆股、併股、配股、代碼或名稱變更、合併與下市等。
+    Dividends, splits, reverse splits, rights issues, ticker or name changes, mergers and delistings.
 
-    若價格沒有調整，拆股會被誤判成暴跌，造成錯誤訊號。要區分**調整後價格**（用於報酬計算與訊號）與**未調整價格**（用於實際可成交的價格、手數與名目金額）。回測要用事件發生當時已知的調整資訊，避免前視。
+    Without adjustment, a split looks like a crash and produces false signals. Separate **adjusted prices** (for return calculation and signals) from **unadjusted prices** (for actually tradable prices, lot sizes and notionals). A backtest should use the adjustment information that was known at the time of the event, to avoid look-ahead.
   </Accordion>
 
   <Accordion title="Q3. How do you align trades and quotes in time, and what is a point-in-time (as-of) join?">
-    As-of join：對每一筆交易，取**該時間點之前（含）最近的一筆報價**，而不是用相同時間戳精確比對，因為報價與成交很少剛好同時。
+    An as-of join takes, for each trade, **the most recent quote at or before that timestamp**, rather than matching timestamps exactly, because quotes and trades rarely coincide.
 
-    要注意：
+    Watch for:
 
-    - 時區與不同交易所時鐘的差異
-    - 時間戳精度（毫秒、微秒）與資料來源的延遲
-    - 不能取到「之後」的報價，否則是前視偏誤
+    - Time zone and exchange clock differences
+    - Timestamp precision (milliseconds, microseconds) and source latency
+    - Never taking a quote from after the trade, which is look-ahead bias
 
-    在 SQL 與 pandas 都有對應的做法，面試時可說明邏輯，不必背語法。
+    Both SQL and pandas support this. In an interview, explain the logic rather than recite syntax.
   </Accordion>
 
   <Accordion title="Q4. How do you handle time zones and trading calendars across markets?">
-    內部統一以 UTC 儲存時間戳，顯示與業務邏輯再轉換到市場當地時間。每個市場有自己的交易日曆、半日市與假期，要用維護中的日曆資料而不是假設週一到週五。
+    Store timestamps in UTC internally and convert to the market's local time for display and business logic. Each market has its own trading calendar, half days and holidays, so use a maintained calendar rather than assuming Monday to Friday.
 
-    跨市場分析（例如港股 ETF 對美股成分）要明確定義「同一時點」，因為兩邊開收盤時間不重疊，這也會影響 iNAV 的新鮮度。
+    For cross-market analysis (for example a Hong Kong ETF against US constituents), define explicitly what "the same moment" means, because opening and closing hours do not overlap. This also affects how fresh the iNAV is.
   </Accordion>
 </AccordionGroup>
 
@@ -65,36 +65,36 @@ icon: "database"
 
 <AccordionGroup>
   <Accordion title="Q5. Why is vectorized code faster than a Python loop, and when can you not vectorize?">
-    NumPy 與 pandas 把迴圈放在已編譯的底層（C）執行，避開 Python 直譯器每次迭代的開銷，並且利用連續記憶體與 SIMD。
+    NumPy and pandas run loops in compiled code (C), avoiding the per-iteration overhead of the Python interpreter and using contiguous memory and SIMD.
 
-    難以向量化的情況：每一步依賴前一步的狀態（路徑相依，例如帶止損的逐筆模擬）、複雜的條件分支。這時可考慮 Numba 或改寫成較少迴圈的形式，或用 C++ 實作關鍵部分。先量測再優化，不要憑感覺。
+    Hard to vectorize: each step depends on the state of the previous step (path-dependent logic such as a step-by-step simulation with stops) and complex branching. Options then include Numba, restructuring to reduce loops, or implementing the critical part in C++. Measure before optimizing rather than going by feel.
   </Accordion>
 
   <Accordion title="Q6. Why does Python's GIL matter for research code? How do you use multiple cores?">
-    GIL 使同一個 Python 行程中，同一時間只有一個執行緒在執行 Python 位元碼，所以 CPU 密集的工作用多執行緒不會加速。
+    The GIL allows only one thread to execute Python bytecode at a time within a process, so multithreading does not speed up CPU-bound work.
 
-    解法：**多行程 (multiprocessing)**，或使用釋放 GIL 的函式庫（NumPy 的許多運算）。I/O 密集的工作（下載、讀檔）則用執行緒或 asyncio 就有效。要注意行程間資料傳遞（序列化）的成本。
+    Solutions: **multiprocessing**, or libraries that release the GIL (many NumPy operations). For I/O-bound work (downloads, file reads), threads or asyncio are effective. Mind the cost of passing data between processes (serialization).
   </Accordion>
 
   <Accordion title="Q7. What SQL techniques do you use for time-series data? Explain window functions.">
-    Window function 在不縮減列數的情況下，對一組相關列做計算，常見用途：
+    A window function computes over a set of related rows without collapsing them. Common uses:
 
-    - 每個代碼取最新一筆（用排名或 row number 搭配分區）
-    - 滾動平均、累計與差分（用 lag / lead）
-    - 排名與分組內百分位
+    - Latest row per symbol (ranking or row numbers within a partition)
+    - Rolling averages, cumulative sums and differences (lag and lead)
+    - Ranking and percentiles within a group
 
-    設計與效能：依時間與代碼建立索引或分區、避免在大表上做多餘的全表掃描、了解 join 型別對結果列數的影響。對 tick 資料量大時，欄式儲存或時序資料庫通常比列式 OLTP 更適合。
+    Design and performance: index or partition by time and symbol, avoid unnecessary full table scans, and understand how join types affect row counts. For large tick data, columnar storage or a time-series database usually suits better than row-based OLTP.
   </Accordion>
 
   <Accordion title="Q8. How do you make a data pipeline idempotent and safe to backfill?">
-    Idempotent 指重跑同一個任務得到相同結果，不會產生重複資料。
+    Idempotent means re-running the same task gives the same result with no duplicate data.
 
-    - 以日期分區，寫入時覆蓋整個分區，或使用 upsert（以主鍵更新）
-    - 任務只依賴明確的輸入（日期參數、版本化資料），不依賴「現在」的時間
-    - 保留原始資料與轉換後資料，轉換可重跑
-    - 回補時限制範圍、先寫到暫存再切換，並記錄版本
+    - Partition by date and overwrite the whole partition on write, or use an upsert keyed on the primary key
+    - Make tasks depend only on explicit inputs (date parameter, versioned data), not on the current time
+    - Keep raw and transformed data separately so transforms can be re-run
+    - Limit backfill scope, write to staging and then swap, and record versions
 
-    這些原則也讓失敗重試變得安全。
+    The same principles make retries after failure safe.
   </Accordion>
 </AccordionGroup>
 
@@ -102,28 +102,28 @@ icon: "database"
 
 <AccordionGroup>
   <Accordion title="Q9. A research job is running slowly on a Linux server. How do you investigate?">
-    由外而內逐層排查：
+    Work from the outside in:
 
-    - **CPU 與記憶體：** 用 top 或 htop 看是否 CPU 吃滿、是否發生 swap。
-    - **磁碟 I/O：** 用 iostat 之類的工具看讀寫等待。
-    - **網路：** 看是否在等待遠端資料來源。
-    - **程式本身：** 用 profiler 找出熱點；用 strace 觀察系統呼叫是否卡在 I/O。
-    - **資源限制：** 檢查 ulimit、cgroup（容器內）是否限制了 CPU 或記憶體。
+    - **CPU and memory:** Use top or htop to see whether CPU is saturated or the system is swapping.
+    - **Disk I/O:** Use a tool such as iostat to see read and write waits.
+    - **Network:** Check whether the job is waiting on a remote data source.
+    - **The program itself:** Use a profiler to find hot spots, and strace to see whether it is blocked in system calls.
+    - **Resource limits:** Check ulimit and cgroup limits (inside containers) for CPU or memory caps.
 
-    原則：先確認瓶頸屬於 CPU、記憶體、I/O 還是等待外部系統，再決定優化方向。
+    Principle: first confirm whether the bottleneck is CPU, memory, I/O or waiting on an external system, then decide how to optimize.
   </Accordion>
 
   <Accordion title="Q10. What is the difference between a Docker image and a container? Why use Docker for research?">
-    **Image** 是唯讀、分層的範本，包含作業系統層、相依套件與程式。**Container** 是由 image 啟動的執行中實例，帶有可寫層。
+    An **image** is a read-only, layered template containing the OS layer, dependencies and code. A **container** is a running instance started from an image, with a writable layer.
 
-    用於研究的好處：環境可重現（同一個 image 在筆電與伺服器行為一致）、相依套件版本鎖定、方便交付與排程。注意：資料與結果應放在 volume 或外部儲存，不要放在容器可寫層，因為容器移除後會消失；image 內不要放密碼或金鑰。
+    Benefits for research: reproducible environments (the same image behaves the same on a laptop and a server), pinned dependency versions, and easy delivery and scheduling. Keep data and results in volumes or external storage, not in the container's writable layer, which disappears when the container is removed. Do not bake passwords or keys into images.
   </Accordion>
 
   <Accordion title="Q11. Batch versus streaming for market data: how do you choose?">
-    - **Batch：** 日終回測、研究、報表。實作簡單、易於重跑與驗證，延遲以分鐘到小時計。
-    - **Streaming：** 即時報價、風險、對沖與做市。延遲低，但需處理亂序、重複、斷線與背壓，驗證與回放較複雜。
+    - **Batch:** End-of-day backtests, research and reports. Simple to build, easy to re-run and validate, with latency measured in minutes to hours.
+    - **Streaming:** Live quotes, risk, hedging and market making. Low latency, but you must handle out-of-order data, duplicates, disconnects and backpressure, and validation and replay are harder.
 
-    常見做法是兩者並用：即時路徑供交易使用，同時寫入儲存，之後以批次重算並對帳，確保兩邊一致。
+    A common pattern uses both: a real-time path for trading that also writes to storage, followed by a batch recompute and reconciliation so the two stay consistent.
   </Accordion>
 </AccordionGroup>
 

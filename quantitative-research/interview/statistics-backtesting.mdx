@@ -15,37 +15,37 @@ keywords:
 icon: "chart-line"
 ---
 
-這一頁整理統計建模、時間序列與回測的面試題。重點是會不會指出常見陷阱：前視偏誤、過度配適、多重檢定與非定態。
+This page collects interview questions on statistical modeling, time series and backtesting. The key test is whether you spot the common traps: look-ahead bias, overfitting, multiple testing and non-stationarity.
 
 <Info>
-  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些是標準計量與量化研究框架，不代表任何特定公司的方法。
+  **Status of this page.** Last checked on 15 November 2026. These are standard econometrics and quantitative research frameworks, not any firm's specific methods.
 </Info>
 
 ## Regression
 
 <AccordionGroup>
   <Accordion title="Q1. What are the OLS assumptions? What breaks when each one fails?">
-    - **線性且正確設定：** 遺漏變數或函數形式錯誤，會使係數偏誤。
-    - **外生性（誤差與解釋變數無關）：** 失效（內生性）使係數偏誤且不一致，這是最嚴重的問題。
-    - **同質變異 (homoskedasticity)：** 失效時係數仍無偏，但標準誤錯誤，要用 robust 標準誤。
-    - **無自相關：** 時間序列常失效，同樣影響標準誤，用 Newey-West (HAC) 修正。
-    - **無完全共線性：** 失效時係數無法識別。
+    - **Linearity and correct specification:** Omitted variables or the wrong functional form bias the coefficients.
+    - **Exogeneity (errors uncorrelated with regressors):** If it fails (endogeneity), coefficients are biased and inconsistent. This is the most serious problem.
+    - **Homoskedasticity:** If it fails, coefficients remain unbiased but standard errors are wrong. Use robust standard errors.
+    - **No autocorrelation:** Often fails in time series and also affects standard errors. Use Newey-West (HAC) corrections.
+    - **No perfect multicollinearity:** If it fails, coefficients are not identified.
 
-    重點區分：異質變異與自相關影響**標準誤（推論）**，內生性影響**係數本身**。
+    The key distinction: heteroskedasticity and autocorrelation affect **standard errors (inference)**, while endogeneity affects **the coefficients themselves**.
   </Accordion>
 
   <Accordion title="Q2. What is multicollinearity and does it hurt prediction?">
-    解釋變數之間高度相關。後果：係數估計的變異數變大、對資料微小變動很敏感、個別係數難以解釋，但**整體預測力通常不受影響**。
+    It means the explanatory variables are highly correlated. Consequences: coefficient estimates have higher variance, are sensitive to small data changes and are hard to interpret individually, but **overall predictive power is usually unaffected**.
 
-    偵測：VIF 與條件數。處理：移除或合併變數、做 PCA、或使用 ridge 這類正則化。若目標是預測而非解釋係數，影響較小。
+    Detection: VIF and the condition number. Remedies: drop or combine variables, use PCA, or use regularization such as ridge. If the goal is prediction rather than interpreting coefficients, the impact is smaller.
   </Accordion>
 
   <Accordion title="Q3. Ridge versus Lasso: what is the difference and when do you prefer each?">
-    - **Ridge (L2)：** 係數整體往 0 收縮但不會剛好等於 0，適合許多小而相關的效應，穩定共線性問題。
-    - **Lasso (L1)：** 能把部分係數壓成剛好 0，具有變數選擇效果，適合稀疏訊號，但遇到高度相關的變數時選擇不穩定。
-    - **Elastic net：** 兩者混合。
+    - **Ridge (L2):** Shrinks all coefficients toward zero but never exactly to zero. Good with many small, correlated effects, and it stabilizes collinearity.
+    - **Lasso (L1):** Can set some coefficients exactly to zero, which performs variable selection. Good for sparse signals, but selection is unstable among highly correlated variables.
+    - **Elastic net:** A mix of the two.
 
-    兩者都是用一點偏誤換取較低變異數 (bias-variance tradeoff)。正則化強度用交叉驗證選，且在時間序列要用不洗牌的切分方式。
+    Both trade a little bias for lower variance (the bias-variance tradeoff). Choose the penalty strength by cross-validation, and for time series use splits that do not shuffle.
   </Accordion>
 </AccordionGroup>
 
@@ -53,32 +53,32 @@ icon: "chart-line"
 
 <AccordionGroup>
   <Accordion title="Q4. What is stationarity and why does it matter? What is spurious regression?">
-    弱定態：平均數與變異數不隨時間變，自共變異數只依賴落差。多數統計推論（包含迴歸、預測）假設定態。
+    Weak stationarity means the mean and variance do not change over time and the autocovariance depends only on the lag. Most statistical inference, including regression and forecasting, assumes stationarity.
 
-    對兩個獨立的隨機漫步（非定態）做迴歸，常得到很高的 R² 與顯著的係數，但毫無意義，這叫**偽迴歸 (spurious regression)**。做法是對報酬或差分後的序列建模，或檢定單根（如 ADF 檢定）。
+    Regressing one random walk (non-stationary) on another independent random walk often gives a high R² and significant coefficients that mean nothing. This is **spurious regression**. The fix is to model returns or differenced series, or to test for unit roots (for example the ADF test).
   </Accordion>
 
   <Accordion title="Q5. What is cointegration and how is it used in pairs trading or ETF-basket arbitrage?">
-    兩個非定態序列的某個線性組合若是定態，就是共整合。價差會圍繞長期均衡波動，偏離後傾向回歸。
+    If some linear combination of two non-stationary series is stationary, they are cointegrated. The spread fluctuates around a long-run equilibrium and tends to revert after deviations.
 
-    檢定：Engle-Granger（先迴歸，再對殘差做單根檢定）或 Johansen。應用：交易價差而非單一價格，如個股對指數、ETF 對其成分籃子。
+    Tests: Engle-Granger (regress, then run a unit root test on the residual) or Johansen. Application: trade the spread rather than a single price, such as a stock against an index or an ETF against its constituent basket.
 
-    風險：共整合關係可能破裂（結構性改變），所以要監控價差的半衰期與關係穩定度，並設停損。估計誤差、樣本期選擇會讓回測看起來比實際好。
+    Risk: the cointegrating relationship can break (structural change), so monitor the spread's half-life and the stability of the relationship, and use stop losses. Estimation error and the choice of sample period can make a backtest look better than reality.
   </Accordion>
 
   <Accordion title="Q6. How do you estimate volatility? Compare close-to-close, EWMA and GARCH.">
-    - **Close-to-close：** 報酬的樣本標準差，簡單但忽略日內資訊，窗口長度是取捨。
-    - **EWMA：** `σ²_t = λ σ²_{t−1} + (1 − λ) r²_{t−1}`，近期權重較高，反應快，λ 通常接近 1。
-    - **GARCH(1,1)：** `σ²_t = ω + α r²_{t−1} + β σ²_{t−1}`，可捕捉波動叢聚與向長期水準均值回歸，EWMA 是其特例（ω = 0、α + β = 1）。
+    - **Close-to-close:** The sample standard deviation of returns. Simple, but ignores intraday information, and the window length is a tradeoff.
+    - **EWMA:** `σ²_t = λ σ²_{t−1} + (1 − λ) r²_{t−1}`. Recent observations get more weight so it reacts quickly, with λ usually close to 1.
+    - **GARCH(1,1):** `σ²_t = ω + α r²_{t−1} + β σ²_{t−1}`. It captures volatility clustering and mean reversion to a long-run level. EWMA is a special case (ω = 0, α + β = 1).
 
-    另有利用日內高低價的估計量（如 Parkinson、Garman-Klass），比 close-to-close 效率高，但對跳空與離散報價敏感。
+    There are also range-based estimators using intraday high and low (for example Parkinson and Garman-Klass) that are more efficient than close-to-close, but they are sensitive to jumps and discrete quotes.
   </Accordion>
 
   <Accordion title="Q7. VaR versus Expected Shortfall: what is the difference and why do regulators prefer ES?">
-    - **VaR(α)：** 在信賴水準 α 下，損失不會超過的門檻。不說明超過門檻後會多慘。
-    - **Expected Shortfall：** 損失超過 VaR 時的平均損失。
+    - **VaR(α):** The loss threshold that is not exceeded at confidence level α. It says nothing about how bad losses are beyond the threshold.
+    - **Expected Shortfall:** The average loss given that the loss exceeds VaR.
 
-    ES 是**一致性風險度量**（滿足次可加性），VaR 不一定滿足，因此在分散投資時 VaR 可能顯示風險增加。ES 對尾部形狀更敏感，但回測比 VaR 難。
+    ES is a **coherent risk measure** (it is subadditive), while VaR is not always, so with diversification VaR can suggest risk increases. ES is more sensitive to the tail shape but harder to backtest than VaR.
   </Accordion>
 </AccordionGroup>
 
@@ -86,50 +86,50 @@ icon: "chart-line"
 
 <AccordionGroup>
   <Accordion title="Q8. Name the common backtest biases and how you guard against them.">
-    - **前視偏誤 (look-ahead)：** 用了當時還不知道的資料。用 point-in-time 資料，並確認訊號時間早於交易時間。
-    - **存活者偏誤 (survivorship)：** 只包含現在還存在的標的。使用含下市標的的資料。
-    - **資料窺探與過度配適：** 對同一份資料反覆調參。保留樣本外資料、walk-forward 驗證。
-    - **交易成本與市場衝擊被低估：** 用實際價差、費用、借券成本與可成交量。
-    - **公司行動處理錯誤：** 股息、拆併股、代碼變更要正確調整。
+    - **Look-ahead bias:** Using data that was not known at the time. Use point-in-time data and confirm that the signal time precedes the trade time.
+    - **Survivorship bias:** Including only names that still exist. Use data that includes delisted securities.
+    - **Data snooping and overfitting:** Tuning repeatedly on the same data. Hold out out-of-sample data and use walk-forward validation.
+    - **Understated costs and market impact:** Use realistic spreads, fees, borrow costs and tradable volume.
+    - **Corporate action errors:** Dividends, splits and ticker changes must be adjusted correctly.
   </Accordion>
 
   <Accordion title="Q9. You tested 100 strategies and the best has t = 2.5. Is it real?">
-    不一定。多重檢定下，即使全部都沒有真實效果，100 個策略中預期有約 5 個在 5% 水準下顯著，最大 t 值遠高於 2 並不意外。
+    Not necessarily. With multiple testing, even if none has a real effect, about 5 of 100 strategies are expected to be significant at the 5% level, so a maximum t well above 2 is unsurprising.
 
-    處理方式：
+    Responses:
 
-    - 調整門檻（Bonferroni、Benjamini-Hochberg 控制 FDR）
-    - 計算 deflated Sharpe ratio，考慮嘗試次數
-    - 用真正未使用過的樣本外資料驗證
-    - 要求有經濟邏輯，而不只是統計顯著
+    - Adjust the threshold (Bonferroni, or Benjamini-Hochberg to control the false discovery rate)
+    - Compute a deflated Sharpe ratio that accounts for the number of trials
+    - Validate on genuinely unused out-of-sample data
+    - Require an economic rationale, not just statistical significance
 
-    Bonferroni 下，100 次檢定時單次門檻約為 0.05 / 100 = 0.0005，對應 t 值約 3.5。
+    Under Bonferroni with 100 tests, the per-test threshold is about 0.05 / 100 = 0.0005, which corresponds to a t-statistic of roughly 3.5.
   </Accordion>
 
   <Accordion title="Q10. What are the limits of the Sharpe ratio?">
-    年化 Sharpe = 日 Sharpe × √252 的做法假設報酬獨立同分佈。限制：
+    Annualizing a daily Sharpe by multiplying by √252 assumes i.i.d. returns. Limits:
 
-    - 報酬有自相關時，用 √252 縮放會高估或低估。
-    - 忽略偏態與峰度：賣出選擇權之類的策略可有高 Sharpe 但有崩盤尾部風險。
-    - 樣本太短時估計誤差大，且會被多重嘗試膨脹。
-    - 可被操縱：平滑估值、低流動性資產的報酬會低估波動。
+    - With autocorrelation, √252 scaling over- or understates the annual figure.
+    - It ignores skew and kurtosis. A strategy that sells options can show a high Sharpe while carrying crash tail risk.
+    - Estimates are noisy on short samples and inflated by multiple trials.
+    - It can be manipulated: smoothed valuations and illiquid assets understate volatility.
 
-    補充指標：Sortino、最大回撤、Calmar、尾部風險度量。
+    Complementary measures: Sortino, maximum drawdown, Calmar and tail risk measures.
   </Accordion>
 
   <Accordion title="Q11. How do you cross-validate a time-series model?">
-    不能隨機洗牌，否則未來資訊會洩漏到訓練集。
+    You cannot shuffle randomly, otherwise future information leaks into the training set.
 
-    - **Walk-forward / expanding window：** 依時間往前滾動，用過去訓練、用之後測試。
-    - **Purged and embargoed CV：** 當標籤涵蓋一段時間（例如未來 5 日報酬）時，移除訓練與測試邊界附近重疊的樣本，並加上禁區 (embargo)。
+    - **Walk-forward or expanding window:** Roll forward in time, train on the past and test on what follows.
+    - **Purged and embargoed CV:** When labels span a period (for example a 5-day forward return), remove samples near the train-test boundary that overlap, and add an embargo period.
 
-    同時，特徵與標籤的時間對齊要檢查，避免用到 t 時點還不可得的資料。
+    Also check the time alignment of features and labels so nothing uses data that was not yet available at time t.
   </Accordion>
 
   <Accordion title="Q12. What does PCA on a stock return matrix tell you?">
-    對報酬共變異數（或相關）矩陣做特徵分解。第一主成分通常是**市場因子**（所有股票同向）；後面的成分常對應產業或風格因子。
+    It is an eigendecomposition of the return covariance (or correlation) matrix. The first principal component is usually the **market factor** (all stocks moving together), and later components often correspond to sector or style factors.
 
-    用途：降維、辨識風險因子、建立因子對沖、清洗共變異數矩陣。限制：主成分是統計構造，不一定有經濟解釋，且對尺度與樣本期敏感；樣本數相對於股票數太少時，共變異數估計噪音很大。
+    Uses: dimension reduction, identifying risk factors, building factor hedges, and cleaning the covariance matrix. Limits: components are statistical constructs without guaranteed economic meaning, they are sensitive to scaling and sample period, and when the number of observations is small relative to the number of stocks, the covariance estimate is very noisy.
   </Accordion>
 </AccordionGroup>
 

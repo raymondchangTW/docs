@@ -13,49 +13,49 @@ keywords:
 icon: "dice"
 ---
 
-這一頁整理量化研究面試常見的機率與統計題。題目用英文（面試通常以英文進行），答案以繁體中文說明思路與結果，每題先講直覺，再給計算。
+This page collects common probability and statistics questions from quantitative research interviews. Each answer gives the intuition first, then the calculation.
 
 <Info>
-  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些是通用題型與解法框架，不代表任何特定公司的題庫。數字結果已逐題驗算。
+  **Status of this page.** Last checked on 15 November 2026. These are general question types and solution frameworks, not any firm's question bank. The numerical results have been recomputed.
 </Info>
 
 ## Expectation and conditional probability
 
 <AccordionGroup>
   <Accordion title="Q1. You flip a fair coin repeatedly. What is the expected number of flips until the first head?">
-    這是幾何分佈。每次成功機率 p = 1/2，期望次數 = 1/p = **2**。
+    This is a geometric distribution. With success probability p = 1/2, the expected number of flips is 1/p = **2**.
 
-    遞迴寫法：E = 1 + (1/2) × 0 + (1/2) × E，解得 E = 2。面試官通常想看你是否會用第一步分析 (first-step analysis) 建立遞迴。
+    As a recursion: E = 1 + (1/2) × 0 + (1/2) × E, so E = 2. Interviewers usually want to see that you can set up first-step analysis.
   </Accordion>
 
   <Accordion title="Q2. What is the expected number of flips to see HH? And to see HT? Why are they different?">
-    用 first-step analysis。
+    Use first-step analysis.
 
-    **HH：** 令 E0 為從頭開始的期望，E1 為已經有一個 H 時的期望。
+    **HH:** Let E0 be the expectation from the start and E1 the expectation after one head.
 
-    - E0 = 1 + (1/2) E1 + (1/2) E0，得 E0 = 2 + E1
-    - E1 = 1 + (1/2) × 0 + (1/2) E0，得 E1 = 1 + E0 / 2
-    - 代入後 E0 = **6**
+    - E0 = 1 + (1/2) E1 + (1/2) E0, so E0 = 2 + E1
+    - E1 = 1 + (1/2) × 0 + (1/2) E0, so E1 = 1 + E0 / 2
+    - Substituting gives E0 = **6**
 
-    **HT：** 已有 H 之後，再擲到 H 仍停在「已有 H」的狀態（E1 = 1 + (1/2) E1，所以 E1 = 2），E0 = 2 + E1 = **4**。
+    **HT:** After a head, another head leaves you in the same state (E1 = 1 + (1/2) E1, so E1 = 2). Then E0 = 2 + E1 = **4**.
 
-    差異來源：HH 失敗（擲到 T）後要完全重來，HT 失敗（擲到 H）後仍保有一個 H。這是 pattern 自我重疊 (autocorrelation of the pattern) 造成的。
+    The difference: a failed HH attempt (a tail) resets you completely, while a failed HT attempt (a head) still leaves you with a useful head. This comes from how the pattern overlaps with itself.
   </Accordion>
 
   <Accordion title="Q3. A test detects a disease with 99% sensitivity and has a 5% false positive rate. Prevalence is 1%. You test positive. What is the probability you have the disease?">
-    用 Bayes 定理：
+    Use Bayes' theorem:
 
     `P(D | +) = P(+ | D) P(D) / [P(+ | D) P(D) + P(+ | not D) P(not D)]`
 
     `= 0.99 × 0.01 / (0.99 × 0.01 + 0.05 × 0.99) = 0.0099 / 0.0594 ≈ 16.7%`
 
-    重點是 base rate：盛行率低時，即使檢測準確，大部分陽性仍是偽陽性。交易上的類比：罕見事件的訊號（例如異常價差）即使命中率高，若事件本身很少發生，大多數訊號仍是雜訊。
+    The point is the base rate: when prevalence is low, most positives are false positives even for an accurate test. The trading analogy: a signal for a rare event (for example an abnormal spread) is mostly noise if the event itself is rare, even when the hit rate looks high.
   </Accordion>
 
   <Accordion title="Q4. Monty Hall: should you switch? Explain without just quoting the answer.">
-    應該換，勝率 **2/3**，不換是 1/3。
+    Yes. Switching wins with probability **2/3**, staying wins with 1/3.
 
-    直覺：你一開始選中車的機率是 1/3，這個機率不會因為主持人打開一扇有羊的門而改變。剩下的 2/3 機率集中到另一扇沒被打開的門。關鍵前提：主持人知道車在哪、且一定打開有羊的門。如果主持人是隨機開門而剛好開到羊，結論就不同（換與不換機率相同）。
+    Intuition: your first pick is right with probability 1/3, and that does not change when the host opens a door with a goat. The remaining 2/3 concentrates on the other unopened door. The key assumption is that the host knows where the car is and always opens a goat door. If the host opens a door at random and happens to reveal a goat, the conclusion changes (switching and staying are equally likely to win).
   </Accordion>
 </AccordionGroup>
 
@@ -63,22 +63,22 @@ icon: "dice"
 
 <AccordionGroup>
   <Accordion title="Q5. You roll a fair die and are paid the face value. You may reroll once and must keep the second result. What is the fair value of the game?">
-    不能重擲時的期望是 3.5。因此第一次擲出的點數若大於 3.5 就保留，否則重擲。
+    Without a reroll the expectation is 3.5, so keep the first roll if it is above 3.5 and reroll otherwise.
 
-    - 保留 4、5、6（機率 1/2，平均 5）
-    - 重擲（機率 1/2，期望 3.5）
+    - Keep 4, 5 or 6 (probability 1/2, average 5)
+    - Reroll (probability 1/2, expected value 3.5)
 
-    公平價值 = 0.5 × 5 + 0.5 × 3.5 = **4.25**。
+    Fair value = 0.5 × 5 + 0.5 × 3.5 = **4.25**.
 
-    延伸：若可以重擲兩次，第一次的門檻變成 4.25，只保留 5、6（機率 1/3，平均 5.5），價值 = (1/3) × 5.5 + (2/3) × 4.25 ≈ **4.67**。這是用 backward induction 把「選擇權價值」逐步往前推，與美式選擇權的最佳履約邏輯相同。
+    Extension: with two rerolls available, the threshold for the first roll becomes 4.25, so you keep only 5 or 6 (probability 1/3, average 5.5). Value = (1/3) × 5.5 + (2/3) × 4.25 ≈ **4.67**. This is backward induction, the same logic as optimal exercise of an American option.
   </Accordion>
 
   <Accordion title="Q6. What is the expected value of the maximum of two fair dice?">
-    `P(max = k) = (2k − 1) / 36`，k = 1 到 6。
+    `P(max = k) = (2k − 1) / 36` for k = 1 to 6.
 
     `E[max] = Σ k (2k − 1) / 36 = (2 × 91 − 21) / 36 = 161 / 36 ≈ 4.47`
 
-    檢查：兩顆骰子的最大值應高於單顆期望 3.5，4.47 合理。
+    Sanity check: the maximum of two dice should exceed the single-die expectation of 3.5, and 4.47 does.
   </Accordion>
 </AccordionGroup>
 
@@ -86,44 +86,44 @@ icon: "dice"
 
 <AccordionGroup>
   <Accordion title="Q7. Does zero correlation imply independence? Give a counterexample.">
-    **不一定。** 相關係數只衡量線性關係。
+    **No.** Correlation only measures linear dependence.
 
-    反例：X ~ N(0, 1)，Y = X²。Y 完全由 X 決定，所以不獨立，但 `Cov(X, Y) = E[X³] − E[X] E[X²] = 0`，相關係數為 0。
+    Counterexample: X ~ N(0, 1) and Y = X². Y is fully determined by X, so they are dependent, yet `Cov(X, Y) = E[X³] − E[X] E[X²] = 0`.
 
-    例外：若 (X, Y) 聯合服從多元常態，零相關就等於獨立。金融上的意義：報酬之間相關為 0，不代表尾部風險或波動率不會同時放大。
+    Exception: if (X, Y) are jointly normal, zero correlation does imply independence. In finance, zero correlation between returns does not mean tail risk or volatility will not rise together.
   </Accordion>
 
   <Accordion title="Q8. State the central limit theorem. Where does it break down for financial returns?">
-    **內容：** 對獨立同分佈、變異數有限的隨機變數，標準化後的樣本平均會收斂到常態分佈。
+    **Statement:** For i.i.d. random variables with finite variance, the standardized sample mean converges to a normal distribution.
 
-    **在金融上失效或收斂很慢的情況：**
+    **Where it fails or converges slowly in finance:**
 
-    - **厚尾 (fat tails)：** 變異數無限或四階動差很大時，收斂很慢，樣本平均與樣本變異數不穩定。
-    - **相依性：** 報酬並非獨立，波動叢聚 (volatility clustering) 讓有效樣本數小於名目樣本數。
-    - **非定態：** 分佈隨時間改變，歷史樣本不代表未來。
+    - **Fat tails:** With infinite variance, or a very large fourth moment, convergence is slow and sample means and variances are unstable.
+    - **Dependence:** Returns are not independent. Volatility clustering makes the effective sample size smaller than the nominal one.
+    - **Non-stationarity:** The distribution changes over time, so history may not represent the future.
 
-    實務含意：用常態假設估信賴區間、VaR 會低估尾部。
+    Practical consequence: normal-based confidence intervals and VaR understate tail risk.
   </Accordion>
 
   <Accordion title="Q9. A strategy has an annualized Sharpe ratio of 1.0 over 4 years of daily data. Is the mean return statistically significant?">
-    t 統計量約等於「年化 Sharpe × √年數」：`t ≈ 1.0 × √4 = 2`，剛好在 5% 顯著水準的邊緣（雙尾臨界值約 1.96）。
+    The t-statistic is roughly the annualized Sharpe times the square root of the number of years: `t ≈ 1.0 × √4 = 2`. That is right at the edge of 5% significance (two-tailed critical value about 1.96).
 
-    需要補充的警告：
+    Caveats:
 
-    - 這假設日報酬獨立且變異數固定。有自相關或波動叢聚時，標準誤會被低估，需使用 Newey-West 之類的 HAC 標準誤。
-    - 如果這個策略是從很多候選策略中挑出來的，t = 2 並不夠，需要做多重檢定校正。見 [Regression, time series and backtesting](/quantitative-research/interview/statistics-backtesting)。
+    - This assumes independent daily returns with constant variance. With autocorrelation or volatility clustering, standard errors are understated and you should use HAC (Newey-West) standard errors.
+    - If the strategy was picked from many candidates, t = 2 is not enough and you need a multiple-testing correction. See [Regression, time series and backtesting](/quantitative-research/interview/statistics-backtesting).
   </Accordion>
 
   <Accordion title="Q10. What does a p-value of 0.03 mean, and what does it not mean?">
-    **意義：** 在虛無假設為真的前提下，觀察到至少這麼極端的結果的機率是 3%。
+    **Meaning:** If the null hypothesis is true, the probability of observing a result at least this extreme is 3%.
 
-    **不是：**
+    **It is not:**
 
-    - 虛無假設為真的機率是 3%
-    - 效果有 97% 的機率是真的
-    - 效果大或有經濟意義
+    - The probability that the null hypothesis is true
+    - A 97% probability that the effect is real
+    - A measure of how large or economically meaningful the effect is
 
-    補充：p-value 受樣本數影響，樣本夠大時微小效果也能顯著。要同時報告效果大小與信賴區間。
+    Note that p-values depend on sample size, so with enough data even a tiny effect is significant. Report effect size and confidence intervals alongside the p-value.
   </Accordion>
 </AccordionGroup>
 

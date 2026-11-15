@@ -13,57 +13,57 @@ keywords:
 icon: "comments"
 ---
 
-這一頁是股票與衍生品交易台（Delta-1、ETF 做市與套利、權證）方向的模擬面試。每題包含主問題、常見追問與回答要點，答案是思考框架。市場規則細節請看本站對應頁面，這裡不重複。
+This is a mock interview for equities and derivatives trading desks (Delta-1, ETF market making and arbitrage, warrants). Each question has a main question, common follow-ups and answer points, and the answers are thinking frameworks. For market rule details, see the matching pages on this site, which are not repeated here.
 
-偏量化研究的模擬題放在 Quantitative Research 分頁的 [Mock Interview](/quantitative-research/mock-interview)。
+More research-oriented mock questions are on the Quantitative Research [Mock Interview](/quantitative-research/mock-interview).
 
 <Info>
-  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些是通用的練習框架，不代表任何特定公司的面試內容或交易台做法。具體規則、數字與條款以各市場頁面與當下的交易所文件為準。
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or desk practice. Specific rules, numbers and terms are governed by each market's pages and the current exchange documents.
 </Info>
 
 ## ETF market making and arbitrage
 
 <AccordionGroup>
   <Accordion title="Q1. A Hong Kong-listed ETF tracking US stocks trades at a 1% premium to its last NAV while the US market is closed. Is this an arbitrage?">
-    **不一定。** 先問 NAV 是否陳舊。US 收盤後的 NAV 是前一個收盤價，而 ETF 在香港時段反映的是市場對美股開盤的預期。
+    **Not necessarily.** First ask whether the NAV is stale. The NAV after the US close is the previous closing value, while the ETF during Hong Kong hours reflects the market's expectation of where US stocks will open.
 
-    **檢查步驟：**
+    **Steps to check:**
 
-    - 用仍在交易的美股指數期貨、ADR 或匯率重算「即時公允價值」，再與 ETF 價格比較。
-    - 若偏離在重算後消失，就是資訊落差，不是錯價。
-    - 若仍有偏離，再考慮套利成本與執行可行性。
+    - Recompute a live fair value using US index futures that are still trading, ADRs or FX, and compare it with the ETF price.
+    - If the deviation disappears after recomputing, it was an information lag, not a mispricing.
+    - If a deviation remains, then consider arbitrage costs and execution feasibility.
 
-    **追問：** 繼續套利，你會怎麼鎖定？
+    **Follow-up:** If you go ahead, how do you lock it in?
 
-    → 可用還在交易的相關期貨先對沖方向性部位，待成分股市場開盤後再處理籃子與申購贖回。殘餘風險有基差、匯率、開盤跳空與申購贖回截止時間。見 [ETF creation, redemption and arbitrage (Hong Kong)](/equities-derivatives/hk/cash-etf/creation-redemption)。
+    → You can use related futures that are still trading to hedge the directional exposure first, then deal with the basket and creation or redemption once the constituent market opens. Residual risks are basis, FX, the opening gap and creation and redemption cut-off times. See [ETF creation, redemption and arbitrage (Hong Kong)](/equities-derivatives/hk/cash-etf/creation-redemption).
   </Accordion>
 
   <Accordion title="Q2. Why is creation and redemption arbitrage not risk free?">
-    - **執行風險 (legging)：** 買進整個成分股籃子與賣出 ETF 不是同時完成，中間價格會動。
-    - **結算與時間差：** 申購贖回有截止時間與交割週期，部位在這段期間曝險於市場。
-    - **籃子與實際組成差異：** 實際申購清單與指數成分、現金成分可能不同。
-    - **借券與融資：** 贖回套利需要做空籃子，借券可得性與成本變動。
-    - **規模與流動性：** 成分股流動性差時，實際成交價格與理論值不同。
+    - **Execution risk (legging):** Buying the whole constituent basket and selling the ETF do not happen at the same moment, and prices move in between.
+    - **Settlement and timing:** Creation and redemption have cut-off times and settlement cycles, and the position is exposed to the market during that gap.
+    - **Basket versus actual composition:** The actual creation list can differ from the index constituents or the cash component.
+    - **Borrow and financing:** A redemption arbitrage needs the basket shorted, and borrow availability and cost can change.
+    - **Size and liquidity:** With illiquid constituents, real fills differ from theoretical values.
 
-    **追問：** 這些風險哪些可以用期貨對沖？
+    **Follow-up:** Which of these risks can be hedged with futures?
 
-    → 方向性的市場風險可以，執行、借券與籃子差異風險不行。見 [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)。
+    → Directional market risk can, but execution, borrow and basket-difference risks cannot. See [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging).
   </Accordion>
 
   <Accordion title="Q3. You are long 10 million of an ETF and short index futures as a hedge. The futures basis widens. What happens to your P&L?">
-    基差 (期貨減現貨) 擴大代表期貨相對現貨變貴。你是空期貨、多 ETF，所以帳面上會有**未實現損失**。
+    A wider basis (futures minus spot) means the futures become richer relative to spot. You are long the ETF and short the futures, so you have an **unrealized loss** on the position.
 
-    但基差在到期時收斂到 0，所以如果持有到期，這個損失會回轉（忽略保證金融資與展期成本）。如果在基差擴大時提前平倉或展期，就會把損失實現。
+    But the basis converges to zero at expiry, so if you hold to expiry the loss reverses (ignoring margin financing and roll cost). If you close out or roll while the basis is wide, you realize the loss.
 
-    **追問：** 這個損失要不要止損？
+    **Follow-up:** Should you stop out?
 
-    → 先判斷基差擴大的原因：融資成本、股息預期、程式化買盤造成的暫時性失衡，還是結構性改變；再看保證金與資金容量、部位限額。基差有自然收斂的特性，但在收斂之前你需要有能力撑得住。
+    → First work out why the basis widened: financing cost, dividend expectations, a temporary imbalance caused by program buying, or a structural change. Then look at margin and funding capacity and position limits. The basis tends to converge, but you must be able to carry the position until it does.
   </Accordion>
 
   <Accordion title="Q4. How does an ex-dividend date affect an ETF and its futures hedge?">
-    成分股除息時，指數水準下跌約等於股息權重總和，ETF 的 NAV 也會反映這個變化。期貨價格在訂價時已經包含預期股息，因此期貨與現貨在除息日的變動不同步。
+    When constituents go ex-dividend, the index level falls by roughly the weighted dividend amount, and the ETF's NAV reflects that change. The futures price already includes the expected dividend, so futures and spot do not move in sync around the ex-date.
 
-    重點是「預期股息」與「實際股息」的差異會變成基差風險。另外 ETF 持有人何時收到股息、是否再投資，取決於該 ETF 的文件條款，面試時可說明需要查該產品說明書。
+    The key point is that the difference between expected and actual dividends becomes basis risk. When ETF holders receive dividends and whether they are reinvested depends on the ETF's own documents, so say in the interview that you would check the product documentation.
   </Accordion>
 </AccordionGroup>
 
@@ -71,23 +71,23 @@ icon: "comments"
 
 <AccordionGroup>
   <Accordion title="Q5. A client wants to go short a hard-to-borrow stock via a total return swap. How do you price it?">
-    客戶做空時，發行方的對沖是買入或借券的對應部位。價格要反映：
+    When the client is short, the issuer's hedge is the corresponding long or borrowed position. The price needs to reflect:
 
-    - 對沖資金的融資利差與資本占用
-    - **借券成本**，硬借券時通常相當高而且會變動
-    - 股息處理與稅務
-    - 可能被召回券的風險
+    - The funding spread on the hedge and the capital usage
+    - **Borrow cost**, which is typically high for hard-to-borrow names and can change
+    - Dividend handling and tax
+    - The risk that the stock loan is recalled
 
-    **追問：** 如果借券方召回債券怎麼辦？
+    **Follow-up:** What if the lender recalls the stock?
 
-    → 先尋找其他借券來源；若找不到，需要在合約中有對應條款（例如提前終止或調整費用），否則發行方本身承擔缺口。具體條款依合約，見 [OTC derivatives](/equities-derivatives/global/delta-1-otc)。
+    → First look for another borrow source. If none is available, you need a matching clause in the contract (for example early termination or a fee adjustment), otherwise the issuer carries the gap. The specific terms depend on the contract. See [OTC derivatives](/equities-derivatives/global/delta-1-otc).
   </Accordion>
 
   <Accordion title="Q6. How does the hedge of a swap differ if the client is long versus short?">
-    - **客戶做多：** 發行方買入現貨對沖，需要融資，客戶支付融資成本。
-    - **客戶做空：** 發行方需要空頭對沖，產生現金並需借券，客戶支付借券費、收取扣除後的利息收益。
+    - **Client long:** The issuer buys the stock to hedge, which needs funding, and the client pays the funding cost.
+    - **Client short:** The issuer needs a short hedge, which generates cash and requires borrowing the stock. The client pays the borrow fee and receives the interest on cash net of costs.
 
-    兩邊都有股息與稅務效果。面試要講清楚客戶方向決定了發行方要哪一種融資與借券曝險。
+    Both sides have dividend and tax effects. In the interview, be clear that the client's direction determines which funding and borrow exposure the issuer holds.
   </Accordion>
 </AccordionGroup>
 
@@ -95,15 +95,15 @@ icon: "comments"
 
 <AccordionGroup>
   <Accordion title="Q7. You issued call warrants and the stock jumps 5%. What happens to your hedge and your P&L?">
-    發行 call 權證等於空頭選擇權，是 **short gamma**。
+    Issuing call warrants is the same as being short an option, so you are **short gamma**.
 
-    - 股價上漲時，選擇權 delta 變大，你的對沖部位不足，需要在更高的價格**追加買入股票**。
-    - 這就是 short gamma 的損失：追高買、殺低賣。近似損益為 `−(1/2) Γ S² (ΔS / S)²`。
-    - Theta 收益和權利金部分抵消這個損失，實現波動高於定價用的隱含波動率時整體虧損。
+    - When the stock rises, the option's delta increases and your hedge is too small, so you need to **buy more stock** at the higher price.
+    - That is the cost of short gamma: buying high and selling low. The approximate P&L is `−(1/2) Γ S² (ΔS / S)²`.
+    - Theta income, together with the premium collected, offsets part of this loss. Overall you lose when realized volatility is above the implied volatility used in pricing.
 
-    **追問：** 除了 delta 還有什麼風險？
+    **Follow-up:** What other risks do you have besides delta?
 
-    → vega（隱含波動率變動）、股息、利率、跨座添加的跳空風險。見 [Derivatives and Greeks](/quantitative-research/interview/derivatives-greeks) Q7、Q8。發行與流動性規則見 [Warrants issuance](/equities-derivatives/hk/warrants/issuance) 與 [liquidity provider rules](/equities-derivatives/hk/warrants/liquidity-provider-rules)。
+    → Vega (changes in implied volatility), dividends, interest rates, and jump risk across the gap. See [Derivatives and Greeks](/quantitative-research/interview/derivatives-greeks) Q7 and Q8. For issuance and liquidity rules, see [Warrants issuance](/equities-derivatives/hk/warrants/issuance) and [liquidity provider rules](/equities-derivatives/hk/warrants/liquidity-provider-rules).
   </Accordion>
 </AccordionGroup>
 
@@ -111,15 +111,15 @@ icon: "comments"
 
 <AccordionGroup>
   <Accordion title="Q8. Tell me about a time you had to prioritize between a pricing request and a production issue.">
-    用 STAR 結構：情境 (Situation)、任務 (Task)、行動 (Action)、結果 (Result)。
+    Use the STAR structure: Situation, Task, Action, Result.
 
-    重點：如何評估影響（客戶、風險、金額）、如何溝通優先順序、如何事後檢討。請用你自己的真實經歷填入，面試官會追問細節。
+    Key points: how you assessed impact (client, risk, size), how you communicated the priority, and how you reviewed it afterwards. Fill in your own real experience, as the interviewer will probe for details.
   </Accordion>
 
   <Accordion title="Q9. Describe a project where requirements changed midway. How did you handle scope?">
-    建議結構：預期目標→發現變更的原因→評估時程與風險→與利害關係人確認取捨→結果與學到的事。
+    Suggested structure: the original goal, why the change came up, your assessment of schedule and risk, how you agreed the trade-off with stakeholders, and the result and what you learned.
 
-    請填入你自己的專案經驗。這類問題沒有標準答案，面試官看的是你如何思考與溝通。
+    Fill in your own project experience. There is no standard answer to this type of question, and the interviewer is looking at how you think and communicate.
   </Accordion>
 </AccordionGroup>
 

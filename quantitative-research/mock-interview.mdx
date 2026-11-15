@@ -12,57 +12,57 @@ keywords:
 icon: "comments"
 ---
 
-這一頁是量化研究 (Quantitative Research) 方向的模擬面試。每題包含主問題、面試官常見的追問，以及回答要點。題目偏情境與開放式，用來練習結構化思考；基礎公式題請看 [Interview questions](/quantitative-research/interview/probability-statistics) 各頁。
+This is a mock interview for Quantitative Research roles. Each scenario has a main question, the follow-ups interviewers commonly ask, and answer points. The questions are open-ended and meant for practicing structured thinking. For basic formula questions, see the pages under [Interview questions](/quantitative-research/interview/probability-statistics).
 
-與股票衍生品、ETF 做市實務直接相關的模擬題，放在 Equities & Derivatives 分頁的 [Mock Interview](/equities-derivatives/interview/mock-interview)。
+Mock questions closer to trading desk practice (ETF market making, Delta-1, warrants) are on the Equities & Derivatives [Mock Interview](/equities-derivatives/interview/mock-interview).
 
 <Info>
-  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些是練習用的通用題目與回答框架，不代表任何特定公司的面試內容。數字題已驗算。
+  **Status of this page.** Last checked on 15 November 2026. These are general practice questions and answer frameworks, not any firm's interview content. The numerical questions have been recomputed.
 </Info>
 
 ## Research design
 
 <AccordionGroup>
   <Accordion title="Scenario 1. You see ETF prices deviate from NAV intraday. How would you build and test a mean-reversion signal?">
-    **回答結構：假設、資料、訊號、檢驗、成本。**
+    **Answer structure: hypothesis, data, signal, validation, costs.**
 
-    - **假設：** 偏離若來自流動性衝擊或暫時性供需失衡，會在套利成本範圍內回歸；若來自 NAV 陳舊，則不是機會。先釐清偏離的成因。
-    - **資料：** ETF 報價與成交、成分股或期貨的同步價格、匯率、成本資料。時間戳必須對齊，且只用當時已知的資訊 (point-in-time)。
-    - **訊號：** 偏離幅度（價差除以其歷史波動或估計成本）、偏離持續時間、成交量條件。
-    - **檢驗：** 用事件時間看偏離之後的 markout；檢查回歸速度（半衰期）；分時段、分標的、分市場狀態看穩定性。
-    - **成本：** 價差、手續費、借券與融資、對沖滑價。扣完成本後還有多少期望值，才是答案。
+    - **Hypothesis:** If the deviation comes from a liquidity shock or a temporary supply-demand imbalance, it reverts within the arbitrage cost band. If it comes from a stale NAV, it is not an opportunity. First clarify the source of the deviation.
+    - **Data:** ETF quotes and trades, synchronized prices for constituents or futures, FX, and cost data. Timestamps must be aligned and only information known at the time may be used (point-in-time).
+    - **Signal:** The size of the deviation (the gap divided by its historical volatility or by estimated cost), how long it has persisted, and a volume condition.
+    - **Validation:** Use event-time markouts after a deviation, check the speed of reversion (half-life), and check stability across time of day, names and market regimes.
+    - **Costs:** Spread, fees, borrow and funding, and hedging slippage. The expected value after costs is the answer.
 
-    **追問：** 如何確認不是 NAV 陳舊造成的假訊號？
+    **Follow-up:** How do you confirm it is not a false signal from a stale NAV?
 
-    → 用更即時的公允價值估計（相關期貨、ADR、匯率）重算偏離。若偏離在換成即時公允價值後消失，原本的訊號是資訊落差，不是錯價。見 [ETF 與 Delta-1](/quantitative-research/interview/etf-market-making) Q1、Q3。
+    → Recompute the deviation using a more live fair value estimate (related futures, ADRs, FX). If the deviation disappears, the original signal was an information lag, not a mispricing. See [ETF and Delta-1](/quantitative-research/interview/etf-market-making) Q1 and Q3.
   </Accordion>
 
   <Accordion title="Scenario 2. A colleague shows a backtest with Sharpe 2.0 on 3 years of daily data. What do you ask?">
-    **先問怎麼得到的，再問會不會失效。**
+    **First ask how it was obtained, then ask whether it will persist.**
 
-    - 嘗試過多少個版本、多少參數？（多重檢定與資料窺探）
-    - 是否有樣本外或 walk-forward 驗證？樣本外期間有沒有被拿來調過參數？
-    - 資料有沒有存活者偏誤、前視偏誤、公司行動調整錯誤？
-    - 交易成本、衝擊與可成交量如何假設？容量多大？
-    - 報酬分佈：偏態、最大回撤、集中在少數幾天嗎？有沒有賣出尾部風險的特徵？
+    - How many versions and parameters were tried? (multiple testing and data snooping)
+    - Is there out-of-sample or walk-forward validation, and was the out-of-sample period ever used to tune parameters?
+    - Does the data have survivorship bias, look-ahead bias or corporate action errors?
+    - What transaction cost, impact and tradable volume assumptions were used? What is the capacity?
+    - What does the return distribution look like: skew, maximum drawdown, concentration in a few days? Is there a short-tail-risk profile?
 
-    **數字檢查：** 年化 Sharpe 2.0、3 年，t 約為 `2.0 × √3 ≈ 3.5`，看似很顯著。但若從 100 個候選中挑出最佳，Bonferroni 門檻約 t = 3.5，剛好在邊緣，需再做 deflated Sharpe 並用真正的樣本外資料驗證。見 [Regression and backtesting](/quantitative-research/interview/statistics-backtesting) Q9。
+    **Numerical check:** Annualized Sharpe 2.0 over 3 years gives `t ≈ 2.0 × √3 ≈ 3.5`, which looks very significant. But if it was the best of 100 candidates, the Bonferroni threshold is also about t = 3.5, so it sits right at the edge. You would need a deflated Sharpe ratio and truly unused out-of-sample data. See [Regression and backtesting](/quantitative-research/interview/statistics-backtesting) Q9.
 
-    **追問：** 你會建議上線嗎？
+    **Follow-up:** Would you recommend going live?
 
-    → 不直接上線。建議小規模、有明確停損與監控的前向測試 (paper or small size)，並事先定義「何時判定訊號失效」。
+    → Not directly. Recommend a small-size forward test with explicit stop losses and monitoring, and define in advance when you will conclude the signal has failed.
   </Accordion>
 
   <Accordion title="Scenario 3. How would you estimate the fair value of an ETF when its underlying market is closed?">
-    思路：用還在交易的相關資產，推估底層市場開盤時的價格。
+    Approach: use related assets that are still trading to estimate where the underlying market would price at the open.
 
-    - 找領先指標：相關指數期貨（若有近 24 小時交易）、ADR、匯率、類似標的 ETF。
-    - 估計關係：把 ETF 或指數的報酬對這些變數做迴歸，並檢查殘差，估計誤差帶。
-    - 輸出不只是點估計，也要輸出不確定性，用於決定報價價差。
+    - Find leading indicators: related index futures (if they trade close to 24 hours), ADRs, FX, and similar ETFs.
+    - Estimate the relationship: regress the ETF or index return on these variables, check the residuals and estimate an error band.
+    - Output not just a point estimate but also the uncertainty, and use it to set the quoted spread.
 
-    **追問：** 這個關係在什麼時候會失效？
+    **Follow-up:** When does this relationship fail?
 
-    → 開盤跳空、個股或事件特別消息、期貨與現貨基差變動、股息日、匯率劇烈波動、成分權重與期貨標的不同。需要用滾動視窗與穩定性檢驗監控，而不是一次估計到底。
+    → Opening gaps, stock-specific news or events, changes in the futures-spot basis, ex-dividend dates, sharp FX moves, and differences between constituent weights and the futures' underlying. Monitor with rolling windows and stability tests rather than estimating once.
   </Accordion>
 </AccordionGroup>
 
@@ -70,29 +70,29 @@ icon: "comments"
 
 <AccordionGroup>
   <Accordion title="Scenario 4. I roll two fair dice. Make me a two-sided market on the sum.">
-    **第一步：公允價值。** 兩顆骰子點數和的期望值為 7，變異數為 `2 × 35/12 = 35/6 ≈ 5.83`，標準差約 2.42。
+    **Step 1: Fair value.** The expected sum of two dice is 7. The variance is `2 × 35/12 = 35/6 ≈ 5.83`, so the standard deviation is about 2.42.
 
-    **第二步：報價。** 以 7 為中心，兩邊各留一個價差，例如 bid 6.5、ask 7.5。價差的目的在補償風險與可能的逆向選擇。
+    **Step 2: Quote.** Center on 7 and leave a spread on each side, for example bid 6.5 and ask 7.5. The spread compensates for risk and possible adverse selection.
 
-    **追問 1：** 如果你看得到其中一顆骰子，你的公允價值會變成什麼？
+    **Follow-up 1:** If you could see one of the dice, what would your fair value become?
 
-    → 若已知其中一顆為 d，公允價值 = d + 3.5。這就是資訊優勢，對手若比你多看一顆，就會在你的報價錯價時打你。
+    → If one die shows d, fair value is d + 3.5. That is an information advantage: a counterparty who sees one die more than you will trade against your quote whenever it is off.
 
-    **追問 2：** 對手每次都買你的 ask 或賣你的 bid，你怎麼想？
+    **Follow-up 2:** The counterparty always buys your ask or sells your bid. What do you conclude?
 
-    → 對手的交易方向本身是資訊。若他只在特定情況出手，代表他可能掌握你沒有的資訊，應擴大價差、縮小量或調整中心。這就是逆向選擇。
+    → The direction of the trade is itself information. If they trade only in specific situations, they may know something you do not, so widen the spread, reduce size or move your midpoint. This is adverse selection.
 
-    **追問 3：** 你累積了庫存後怎麼辦？
+    **Follow-up 3:** How do you handle inventory once it builds up?
 
-    → 把報價中心往庫存反方向移，使庫存更容易被平掉。見 [ETF 與 Delta-1](/quantitative-research/interview/etf-market-making) Q6。
+    → Shift the quote midpoint against the inventory so it is easier to flatten. See [ETF and Delta-1](/quantitative-research/interview/etf-market-making) Q6.
   </Accordion>
 
   <Accordion title="Scenario 5. You flip a fair coin until you see two heads in a row, and I pay you 1 per flip. How much would you pay to play?">
-    付出的上限等於期望次數乘以每次支付的金額。期望需要擲 **6** 次才出現 HH（見 [Probability](/quantitative-research/interview/probability-statistics) Q2），因此公平價格是 6。
+    The most you would pay equals the expected number of flips times the payment per flip. The expected number of flips to see HH is **6** (see [Probability](/quantitative-research/interview/probability-statistics) Q2), so the fair price is 6.
 
-    **追問：** 如果改成等 HT 呢？
+    **Follow-up:** What if the game ends on HT instead?
 
-    → 期望 4 次，公平價格 4。兩者不同是因為 HH 失敗後要從頭來，而 HT 失敗後仍保留一個 H。
+    → The expected number of flips is 4, so the fair price is 4. They differ because after a failed HH attempt you start over, while after a failed HT attempt you still hold a head.
   </Accordion>
 </AccordionGroup>
 
@@ -100,34 +100,34 @@ icon: "comments"
 
 <AccordionGroup>
   <Accordion title="Scenario 6. Design a pipeline to build 1-minute bars from tick data of several venues. What can go wrong?">
-    **設計原則：** 原始資料不可變、轉換可重跑、輸出依日期分區、每個步驟可驗證。
+    **Design principles:** Immutable raw data, re-runnable transforms, output partitioned by date, and every step verifiable.
 
-    - **匯入：** 保留原始檔，記錄來源與接收時間。
-    - **清洗：** 去重、處理亂序、過濾無效報價，異常值只標記不靜默修正。
-    - **對齊：** 統一為 UTC，以交易所交易日曆決定交易時段與休市。
-    - **聚合：** 明確定義 bar 的邊界與時間戳（以區間開始或結束標記）。無成交的分鐘要決定留空或沿用前值，並且要標記。
-    - **驗證：** 與另一個來源或日資料對帳；比較成交量合計與總量。
+    - **Ingest:** Keep the raw files and record the source and receive time.
+    - **Clean:** Deduplicate, handle out-of-order records, filter invalid quotes, and flag outliers rather than silently fixing them.
+    - **Align:** Use UTC, and use each exchange's trading calendar to define sessions and closures.
+    - **Aggregate:** Define bar boundaries and timestamps explicitly (marked at interval start or end). Decide whether minutes with no trades are left empty or carry the previous value, and flag them.
+    - **Validate:** Reconcile against another source or daily data, and compare summed volume with total volume.
 
-    **可能出問題：** 時鐘不同步、集合競價或收盤價的處理、資料延遲與補送、公司行動、交易所合併或拆分標的代碼。
+    **What can go wrong:** Clock desynchronization, handling of auction and closing prices, late or replayed data, corporate actions, and ticker changes after exchange mergers or splits.
 
-    **追問：** 如何讓它可以安全回補？
+    **Follow-up:** How do you make it safe to backfill?
 
-    → 以日期分區，覆寫整個分區或用 upsert，任務只依賴明確輸入。見 [Data engineering](/quantitative-research/interview/data-engineering) Q8。
+    → Partition by date, overwrite whole partitions or use upserts, and make tasks depend only on explicit inputs. See [Data engineering](/quantitative-research/interview/data-engineering) Q8.
   </Accordion>
 
   <Accordion title="Scenario 7. How do you attribute daily P&L for a delta-hedged book?">
-    把損益拆成可以解釋的來源，對不上的部分才是「無法解釋」：
+    Split P&L into explainable sources, so that only what does not reconcile is "unexplained":
 
-    - **Delta：** 部位 delta 乘以價格變動。
-    - **Gamma：** `(1/2) × Γ × (價格變動)²`。
-    - **Theta：** 時間價值損耗。
-    - **Vega：** 隱含波動率變動乘以 vega。
-    - **其他：** 股息、利率、借券成本、交易成本與滑價、基差。
-    - **Unexplained：** 總損益減去以上，持續偏大代表模型或資料有問題。
+    - **Delta:** Position delta times the price move.
+    - **Gamma:** `(1/2) × Γ × (price move)²`.
+    - **Theta:** Time value decay.
+    - **Vega:** The change in implied volatility times vega.
+    - **Other:** Dividends, interest rates, borrow cost, trading cost and slippage, basis.
+    - **Unexplained:** Total P&L minus the above. A persistently large residual points to a model or data problem.
 
-    **追問：** 無法解釋的部分一直偏大，你怎麼查？
+    **Follow-up:** The unexplained part is persistently large. How do you investigate?
 
-    → 先查資料（價格時點是否一致、公司行動、匯率），再查 Greeks 的計算與大幅度變動時的高階項（價格變動大時二階近似不夠），最後才懷疑策略本身。
+    → Check the data first (price timing consistency, corporate actions, FX), then the Greeks calculation and the higher-order terms for large moves (a second-order approximation is not enough when the price moves a lot). Only then suspect the strategy itself.
   </Accordion>
 </AccordionGroup>
 
