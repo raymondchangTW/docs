@@ -1,0 +1,179 @@
+---
+title: "Quant interview: machine learning in finance"
+sidebarTitle: "Machine learning"
+description: "Quant interview questions on machine learning in finance: low signal-to-noise, return prediction design, purged and combinatorial cross-validation, triple-barrier labels, meta-labeling, fractional differentiation, boosting versus forests, feature importance, evaluation, alpha decay and model risk."
+icon: "brain"
+keywords:
+  - "quant interview"
+  - "machine learning"
+  - "purged cross-validation"
+  - "triple barrier"
+  - "meta-labeling"
+  - "fractional differentiation"
+  - "gradient boosting"
+  - "feature importance"
+  - "alpha decay"
+  - "backtest overfitting"
+---
+
+This page covers machine learning questions for quantitative research interviews. They are not general data science questions: the interviewer wants to see whether you can handle noisy, non-stationary, time-ordered data and tell a real signal from leakage and overfitting. The common thread is validation. Most strong answers start by auditing how the data, labels and splits were built before talking about the model. The statistical foundations are on [Statistical models](/quantitative-research/interview/statistical-models) and [Regression and backtesting](/quantitative-research/interview/statistics-backtesting).
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks drawn from public interview guides and research literature, not any firm's methods or interview content. Numerical examples are illustrative.
+</Info>
+
+## Problem framing
+
+<AccordionGroup>
+  <Accordion title="Q1. Why is machine learning harder in finance than in image or text problems, and what does that imply for model choice?">
+    - **Low signal-to-noise:** Most of the variation in returns is noise, so a useful model can have a very small predictive R squared. Complex models fit the noise easily.
+    - **Non-stationarity:** The relationships change with regimes, crowding and policy. A pattern from one period can mean something else later.
+    - **Limited effective sample:** Years of daily data are only a few thousand observations, and neighboring observations are strongly dependent.
+    - **Feedback and costs:** Your own trading affects prices, and costs can remove a small edge.
+
+    **Implications:** start with simple, regularized models as the baseline, add complexity only when validation supports it, and expect live performance below the backtest. With fewer than about a thousand observations a linear model often wins, and with much more data and rich features gradient boosting usually does better.
+  </Accordion>
+
+  <Accordion title="Q2. Design a model to predict short-horizon equity returns from a large, noisy feature set. Walk me through it.">
+    A structured answer covers six steps:
+
+    1. **Universe and data:** point-in-time data, including delisted names, with timestamps showing when each value was known.
+    2. **Labels:** define the target and the holding horizon (see Q4), with returns net of an estimated cost where possible.
+    3. **Features:** economically motivated, made stationary or cross-sectionally normalized, with multicollinearity handled by grouping, regularization or dimension reduction.
+    4. **Validation:** walk-forward or purged and embargoed cross-validation (Q3), with tuning kept inside the training folds.
+    5. **Evaluation:** out-of-sample metrics that match the use (Q8), including realistic transaction costs and turnover.
+    6. **Monitoring:** how you detect alpha decay and decide between a full retrain and an online update (Q9).
+
+    Say at the start which of these you consider the biggest risk. For most financial problems it is leakage in step 4.
+  </Accordion>
+</AccordionGroup>
+
+## Validation and leakage
+
+<AccordionGroup>
+  <Accordion title="Q3. Why does k-fold cross-validation fail on financial data, and what do purging, embargo and combinatorial purged CV do?">
+    K-fold assumes independent observations. Financial labels are built over **overlapping time windows** (for example a five-day forward return), so a training sample can share information with a test sample, and the model effectively sees part of the answer. Serial correlation adds a second path for leakage.
+
+    - **Purging:** remove from the training set any observation whose label window overlaps the time range of the test labels.
+    - **Embargo:** also drop a buffer of observations right after the test set, to remove leakage from serial correlation that the labels do not show.
+    - **Combinatorial purged cross-validation (CPCV):** split the data into N groups, choose k of them as the test set in every possible way, purge and embargo around each, and recombine the test predictions into several full backtest paths. With six groups and two test groups there are 15 splits and 5 paths, which gives a distribution of performance instead of a single path.
+
+    **Walk-forward versus purged CV:** walk-forward trains only on the past, so it is the most honest simulation of a track record. Purged CV uses data more efficiently and is better for comparing models, but it trains on data from both sides of the test set, so it is not a track record.
+  </Accordion>
+
+  <Accordion title="Q4. What is the triple-barrier method, and what is meta-labeling?">
+    **Fixed-horizon labels** (the sign of the return after N days) ignore the path and the risk taken. The **triple-barrier method** sets three barriers for each event: an upper profit-taking barrier, a lower stop-loss barrier (both often scaled by recent volatility) and a vertical time limit. The label depends on which barrier is touched first.
+
+    **Meta-labeling** splits the job in two. A primary model decides the side of the trade (long or short). A secondary model, trained on the primary model's signals, predicts whether that signal will be profitable and is used to filter trades or size them. It lets you keep a simple, explainable primary rule and improve precision with a second layer, at the cost of another model to validate.
+
+    **Follow-up:** What is the risk?
+
+    → Overlapping labels are not independent, so the effective sample size is smaller than the number of events, and sample weights should reflect that overlap.
+  </Accordion>
+
+  <Accordion title="Q5. Prices are non-stationary but differencing removes the memory. What can you do about features?">
+    Taking returns makes a price series stationary but throws away its long-term level information. Options:
+
+    - **Fractional differentiation:** difference by a fraction between 0 and 1, and choose the smallest amount that passes a stationarity test, which keeps as much memory as possible.
+    - **Normalize relative to context:** z-scores over a rolling window, ratios to moving averages, or cross-sectional ranks at each date.
+    - **Use economically stationary quantities:** spreads, yields and valuation ratios instead of raw levels.
+
+    Check each transformation for leakage. A rolling statistic must use only data available before the prediction time, and a full-sample normalization uses the future.
+  </Accordion>
+</AccordionGroup>
+
+## Models and features
+
+<AccordionGroup>
+  <Accordion title="Q6. Compare random forests and gradient boosting on a noisy, non-stationary return series.">
+    - **Random forest:** averages many deep, decorrelated trees, which mainly **reduces variance**. It is fairly robust to noise and needs little tuning, but it can be too weak at capturing subtle structure.
+    - **Gradient boosting:** builds trees one after another, each correcting the previous errors, which mainly **reduces bias**. It is often stronger on rich data, but later rounds can fit the noise.
+
+    **How to use boosting safely on noisy data:** small learning rate, shallow trees, subsampling of rows and columns, early stopping on a validation period that respects time order, and strong regularization.
+
+    A good answer also names alternatives: a regularized linear model is a strong baseline, and the extra complexity of trees should earn its place in the out-of-sample, net-of-cost results.
+  </Accordion>
+
+  <Accordion title="Q7. How do you select features when many are highly correlated, and why can feature importance mislead?">
+    - **Lasso** zeros out one of two correlated predictors, but which one it keeps is unstable. **Ridge** spreads weight across them. **Elastic net** mixes the two. Every penalty is also a prior: ridge corresponds to a normal prior on the coefficients and lasso to a Laplace prior.
+    - **PCA** gives orthogonal factors at the cost of interpretability.
+    - **Grouping:** cluster correlated features and select or average within clusters.
+    - **Economic plausibility:** drop features that you cannot explain.
+
+    **Importance pitfalls:** impurity-based importance in trees favors features with many distinct values and is computed in sample. **Permutation importance** measured out of sample is better, but with correlated features, shuffling one leaves its substitute in place, so the importance is understated. Clustering features before measuring importance reduces this problem.
+  </Accordion>
+
+  <Accordion title="Q8. How do you evaluate a return-prediction model beyond accuracy?">
+    Classification accuracy or mean squared error can look fine while the strategy makes no money. Use measures tied to the trading use:
+
+    - **Information coefficient:** the rank correlation between predictions and subsequent returns, by date, with its stability over time and its decay across horizons.
+    - **Portfolio results net of costs:** Sharpe ratio, drawdown, turnover and capacity, with realistic spreads, fees, borrow and market impact.
+    - **Hit rate and payoff asymmetry**, because a high hit rate with small gains and rare large losses can still lose money.
+    - **Stability across regimes, sectors and size buckets**, not just in aggregate.
+
+    A small, stable information coefficient with low turnover can be worth more than a larger one that needs heavy trading.
+  </Accordion>
+</AccordionGroup>
+
+## Production and risk
+
+<AccordionGroup>
+  <Accordion title="Q9. Performance is decaying live. How do you decide between a full retrain and an online update?">
+    First diagnose why:
+
+    - **Data or pipeline problem:** a changed feed, a late field or a unit change. Fix this before touching the model.
+    - **Distribution shift:** compare live feature distributions with the training period (for example a population stability measure) and check whether the signal correlations have changed.
+    - **Alpha decay:** the edge was real but has eroded through crowding or adaptation.
+
+    **Trade-offs:** a full retrain (rolling or expanding window) is slower and more expensive but can restructure the model. An online or incremental update is cheap and adapts quickly but can chase noise. A rolling window adapts faster than an expanding one, while an expanding window is more stable. Define the monitoring metrics, the thresholds and the retraining schedule in advance, and keep a fallback.
+  </Accordion>
+
+  <Accordion title="Q10. When would you use deep learning in finance, and what are the risks?">
+    Deep models fit when there is a **lot of data** and a structure that simpler models cannot represent, such as high-frequency order book data, text or alternative data. On daily data for a limited universe they usually overfit.
+
+    **Risks:** many parameters against a small effective sample, sensitivity to the random seed and to hyperparameters, difficulty in explaining the output, and a larger validation burden. Always compare against a simple baseline on the same splits, and report the variation across seeds, not the best run.
+  </Accordion>
+
+  <Accordion title="Q11. Your backtest looks great. Why do you not trust it?">
+    The interviewer wants to hear a systematic way to doubt a result. A checklist:
+
+    - **Leakage:** through data, labels, features or tuning. Were splits purged, and was normalization fitted only on the training window?
+    - **Number of trials:** how many variants were tried? The best of many is biased upward, so adjust for the number of trials (for example with a deflated Sharpe ratio) and estimate the probability of backtest overfitting.
+    - **Costs and capacity:** realistic spreads, impact, borrow and turnover.
+    - **Sample issues:** survivorship, look-ahead in the universe and a period dominated by one regime.
+    - **Economic story:** is there a reason the edge should exist and persist?
+
+    Then say what you would do: a genuinely held-out period or paper trading, a smaller initial allocation, and live tracking against the backtest.
+  </Accordion>
+
+  <Accordion title="Q12. What does model risk management look like for an ML trading model?">
+    - **Explainability:** be able to say what drives the signal, using methods such as feature attribution, and check that the drivers make sense.
+    - **Stability:** test sensitivity to small input changes, retraining dates and random seeds.
+    - **Monitoring:** input distributions, prediction distribution, live versus backtest performance and slippage, with alerts.
+    - **Controls:** position and loss limits, a fallback model or rule, and a kill switch that does not depend on the model.
+    - **Documentation and review:** data lineage, assumptions, validation results and independent review.
+
+    For the engineering side, see the Quantitative Dev [research-to-production bridge](/quantitative-dev/mock/system-design) and [operations](/quantitative-dev/mock/operations-incidents) questions.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Statistical models](/quantitative-research/interview/statistical-models)
+- [Regression and backtesting](/quantitative-research/interview/statistics-backtesting)
+- [Data engineering and systems](/quantitative-research/interview/data-engineering)
+- [Mock Interview (Quantitative Research)](/quantitative-research/mock-interview)
+
+## Sources
+
+- [Machine learning quant interview guide](https://quantvault.org/machine-learning-quant-interview-guide.html), QuantVault
+- [Machine learning interview questions](https://quantvault.org/machine-learning-interview-questions.html), QuantVault
+- [Bayesian ML, overfitting and error metrics](https://quantvault.org/problem-1526-bayesian-ml-overfitting-and-error-metrics.html), QuantVault
+- [Purged cross-validation](https://en.wikipedia.org/wiki/Purged_cross-validation), Wikipedia
+- [The 7 reasons most machine learning funds fail](https://quantpedia.com/why-machine-learning-funds-fail/), Quantpedia summary of de Prado
+- [Cross-validation for financial data: purging and embargoing](https://www.tradinginterview.com/courses/machine-learning/lessons/cross-validation-for-financial-data-purging-and-embargoing/), TradingInterview
+- [Backtesting interview questions](https://www.tradermath.org/articles/backtesting-interview-questions), TraderMath
+- [Quant research interview questions: 25 real examples](https://www.quantt.co.uk/resources/quant-research-interview-questions), Quantt
+- [Two Sigma quant researcher interview](https://myntbit.com/blog/two-sigma-quant-researcher-interview), MyntBit
+- [Two Sigma interview report](https://www.glassdoor.sg/Interview/Two-Sigma-Interview-E241045-RVW104003545.htm), Glassdoor candidate report
+- [Random forest versus GBDT trade-offs](https://dataford.io/questions/explain-the-trade-offs-between-using-a-random-forest-versus-a-gradient-boosted-decision-tree-gbdt-on-highly-noisy-non-stationary-financial-time-series), Dataford

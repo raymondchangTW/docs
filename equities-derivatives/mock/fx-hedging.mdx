@@ -1,0 +1,150 @@
+---
+title: "FX hedging mock interview"
+sidebarTitle: "FX hedging"
+description: "Mock interview questions on FX hedging for equity derivatives and ETF desks: covered interest parity, forward points, hedged ETFs, the HKD peg, cross-currency basis, quanto versus compo swaps and options versus forwards."
+icon: "money-bill-transfer"
+keywords:
+  - "mock interview"
+  - "FX hedging"
+  - "covered interest parity"
+  - "forward points"
+  - "currency hedged ETF"
+  - "HKD peg"
+  - "cross-currency basis"
+  - "quanto"
+---
+
+This page covers FX hedging questions for equity derivatives, Delta-1 and ETF desks. Equity desks meet FX whenever the stock, ETF or index is in a different currency from the book, the client or the funding. Interviewers want to see that you can price the hedge, name what is left over, and tell a cost of carry from a view on the currency. Formulas are given in words where possible, and numerical examples are illustrative.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or desk practice. Rates, the exchange rate regime and product terms change, so check current figures from the central bank, the issuer and the product documents.
+</Info>
+
+## Forward pricing and cost of hedging
+
+<AccordionGroup>
+  <Accordion title="Q1. How is an FX forward priced, and what do forward points tell you?">
+    Under **covered interest parity**, the forward rate is the spot rate multiplied by the growth factor of the quoted currency divided by the growth factor of the base currency over the same period. Forward points are the forward minus the spot.
+
+    **The key point:** forward points come from the interest rate differential, not from a forecast of where the currency will trade. A higher-yielding quoted currency means a forward above spot.
+
+    **Illustration (not market quotes):** EUR/USD spot 1.1925, one-year EUR rate 1.25% and USD rate 1.75%. The forward is about 1.1925 times 1.0175 divided by 1.0125, or roughly 1.1984, so the points are about 59 pips and the euro trades at a forward premium.
+
+    **Follow-up:** Does the formula hold exactly in the market?
+
+    → It is a no-arbitrage relationship, but it assumes matching compounding, no transaction costs and no frictions in borrowing. In practice the cross-currency basis (Q5) and balance sheet costs move the forward away from the simple formula.
+  </Accordion>
+
+  <Accordion title="Q2. What is the difference between covered and uncovered interest parity? Why does it matter for a carry trade?">
+    - **Covered:** uses a forward contract to lock the exchange rate, so the return in either currency is the same. It must hold, or there is an arbitrage.
+    - **Uncovered:** replaces the forward with the expected future spot rate. It is an equilibrium hypothesis, and it often fails.
+
+    A **carry trade** borrows the low-yield currency and invests in the high-yield currency without hedging. It earns the interest differential if the exchange rate does not move against it, so it is effectively a bet that uncovered parity fails. A hedged version earns nothing extra, because the forward removes the differential.
+  </Accordion>
+
+  <Accordion title="Q3. Why does hedging a foreign equity position cost money, or earn money?">
+    A hedged position sells the foreign currency forward. The result of the hedge is driven by the **interest rate differential** between the two currencies, plus the bid-ask spread on both the near and far legs of the forward.
+
+    - If the home currency has the lower interest rate, the investor typically pays to hedge a foreign position. If the home rate is higher, the hedge earns a carry.
+    - Illiquid currency pairs cost more to hedge.
+    - Over time the hedge cost accumulates, so a hedged strategy can differ from its unhedged version even when the currency does not move.
+
+    **Follow-up:** Does hedging always lower risk?
+
+    → Not necessarily. When the foreign stock market and the foreign currency tend to move in opposite directions (the investor's returns on the stocks fall when the currency strengthens), unhedged returns can be less volatile than local-currency returns. Japanese equities against the dollar are the example often given. Hedging therefore depends on the correlation between the asset and the currency, not only on the size of the FX move.
+  </Accordion>
+</AccordionGroup>
+
+## Hedged products and market making
+
+<AccordionGroup>
+  <Accordion title="Q4. How does a currency-hedged ETF work, and where does the hedge go wrong?">
+    The fund holds the foreign basket and sells the foreign currency forward against the investor's reference currency. Many funds use **one-month forwards** and roll them regularly.
+
+    **Where it goes wrong:**
+
+    - **Hedge ratio drift:** the forward covers a fixed amount. If the basket rises from 10 million to 12 million during the month, part of the position is unhedged until the next reset.
+    - **Hedge frequency trade-off:** monthly resets are cheaper but less precise than daily resets.
+    - **Cost:** the interest rate differential and forward spreads reduce returns, and providers often recover costs through a somewhat higher expense ratio.
+    - **Emerging market currencies:** high interest rates and wide spreads make hedging expensive, so few hedged products exist.
+
+    **Follow-up:** How would you tell how well a hedged ETF hedged?
+
+    → Compare its tracking difference with the local-currency index, and separate the expense ratio from the hedge cost and the tracking error.
+  </Accordion>
+
+  <Accordion title="Q5. What is the cross-currency basis, and why does it matter for hedging?">
+    The cross-currency basis is the amount by which the cost of borrowing one currency by swapping into it differs from borrowing it directly in the cash market. It adds to or subtracts from the forward points on top of the interest rate differential.
+
+    Before the 2008 crisis it was close to zero for major currencies, and since then it has been more volatile and has sometimes widened a lot. When it widens, hedging into a currency that is in demand becomes more expensive than the interest rate differential alone suggests. Mention that dealer balance sheet limits and quarter-end funding pressure are typical reasons for a wider basis.
+  </Accordion>
+
+  <Accordion title="Q6. You make markets in an HKD-listed ETF that holds Japanese stocks. Which FX exposures do you have and how do you hedge them?">
+    The ETF's fair value depends on the Japanese basket in yen, and its price is in Hong Kong dollars, so there are **two currency steps**: yen to US dollars and US dollars to Hong Kong dollars.
+
+    - **Hedge the yen leg** with USD/JPY forwards or yen futures, plus the equity hedge (for example Nikkei or TOPIX futures, which have their own currency exposure depending on the contract).
+    - **The USD/HKD leg** is small in normal times because of the peg (Q7), but it is not zero, and its forward points are linked to the HIBOR and USD interest rate difference.
+    - **Fair value inputs:** use the live yen rate, because the ETF should reprice when the yen moves even if the stocks do not.
+
+    State which instruments you would use for each leg, how the FX hedge is resized when the ETF inventory changes, and what residual basis remains.
+  </Accordion>
+</AccordionGroup>
+
+## Hong Kong specifics
+
+<AccordionGroup>
+  <Accordion title="Q7. How does the Hong Kong dollar peg work, and what does it mean for hedging USD/HKD?">
+    Hong Kong operates a Linked Exchange Rate System under currency board principles. The HKMA stands ready to buy HKD and sell USD at the **weak-side convertibility undertaking of 7.85**, and to sell HKD and buy USD at the **strong-side level of 7.75**. The Hong Kong dollar can trade anywhere inside that band.
+
+    - **Mechanics:** when a convertibility undertaking is triggered, the aggregate balance of the banking system contracts (weak side) or expands (strong side), which pushes HKD interest rates up or down and helps return the exchange rate to the band.
+    - **Carry trades:** when HKD interest rates are below USD rates, investors sell HKD for USD to earn the difference, which pushes the spot toward the weak side. The weak-side undertaking was triggered a number of times in 2022 in this way.
+    - **Hedging cost:** USD/HKD forward points mainly reflect the difference between HKD and USD interest rates, so the carry is usually small compared with the cost of hedging a floating currency.
+
+    **Follow-up:** What is the tail risk?
+
+    → A change in the regime, which is a low-probability event that the market prices through options and long-dated forwards. State that you would use the exchange rate band and the central bank's published figures, and not rely on an old number.
+  </Accordion>
+</AccordionGroup>
+
+## Structures and alternatives
+
+<AccordionGroup>
+  <Accordion title="Q8. A client wants a swap on a US stock paid in Hong Kong dollars. Explain the difference between a compo swap and a quanto swap.">
+    - **Compo (no currency protection):** the client receives the stock's return in US dollars converted at the final exchange rate, so the client bears the FX risk. The dealer holds the US stock, funds it in US dollars and must hedge the currency exposure on the notional, and also on the gains and losses as the stock moves, which means resizing the FX hedge as the stock moves.
+    - **Quanto (fixed exchange rate):** the stock's return is paid in Hong Kong dollars at a fixed rate agreed at the start. The client has no FX risk. The dealer has a **correlation exposure** between the stock and the currency, because the size of the FX hedge needed depends on the stock's move.
+
+    **Pricing:** a quanto adjusts the forward of the stock by roughly the negative of the correlation times the stock volatility times the FX volatility, so the quanto forward is above or below the plain forward depending on the sign of the correlation. The dealer also charges for the cost of the correlation and FX volatility risk.
+  </Accordion>
+
+  <Accordion title="Q9. When would you hedge a foreign currency exposure with an option instead of a forward?">
+    A forward is an **obligation** that locks the rate with no premium, and an option is **flexibility** that costs a premium.
+
+    - Use a **forward** when the exposure is certain in size and date (a known dividend, a settled hedge, a fixed cash flow). It is cheaper and has no upside.
+    - Use an **option** when the exposure is uncertain (a pending bid, a conditional cash flow) so that you do not end up over-hedged, or when you want to keep the benefit of a favorable move.
+
+    **Follow-up:** What new risks does a derivative hedge add?
+
+    → Basis risk if the hedge does not match the exposure, counterparty and margin risk, and the funding of margin calls on a forward that moves against you while the underlying exposure has not yet settled.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+- [ETF market making](/equities-derivatives/mock/etf-market-making)
+- [Delta-1 and swaps](/equities-derivatives/mock/delta-1-swaps-financing)
+- [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
+- [Market comparison](/equities-derivatives/global/market-comparison)
+
+## Sources
+
+- [Understanding currency hedging](https://www.ubs.com/ch/en/assetmanagement/insights/asset-class-perspectives/etf/articles/understanding-currency-hedging.html), UBS Asset Management
+- [The currency hedging dilemma](https://www.morningstar.com/funds/currency-hedging-dilemma), Morningstar
+- [How currency-hedged ETFs protect you from currency risk](https://www.justetf.com/en-fr/news/etf/why-currency-hedged-etfs-are-rising-in-popularity.html), justETF
+- [Currency hedged ETFs: mitigating currency risks](https://etf.dws.com/en-us/knowledge/focus-topics/currency-hedged-etfs-mitigating-currency-risks-from-international-equities), DWS Xtrackers
+- [Forward points](https://milltech.com/resources/glossary/forward-points), Milltech
+- [Interest rate parity: covered and uncovered](https://ryanoconnellfinance.com/interest-rate-parity/), Ryan O'Connell Finance
+- [Top 8 FX interview questions](https://salesandtrading.org/blogs/st/fx-interview-questions), salesandtrading.org
+- [Derivatives and hedging interview questions](https://www.preplounge.com/de/finance-interview-questions/derivatives-hedging-interview-questions-for-finance-390?lang=en), PrepLounge
+- [Monetary stability, Annual Report 2022](https://www.hkma.gov.hk/media/eng/publication-and-research/annual-report/2022/14_Monetary_Stability.pdf), Hong Kong Monetary Authority
+- [Linked Exchange Rate System operations: mechanism and theory](https://www.hkma.gov.hk/media/eng/publication-and-research/research/research-memorandums/2018/RM11-2018.pdf), Hong Kong Monetary Authority

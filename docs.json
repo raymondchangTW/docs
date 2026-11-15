@@ -107,7 +107,8 @@
               "equities-derivatives/mock/options-greeks-volatility",
               "equities-derivatives/mock/delta-1-swaps-financing",
               "equities-derivatives/mock/warrants-structured-products",
-              "equities-derivatives/mock/markets-risk-behavioral"
+              "equities-derivatives/mock/markets-risk-behavioral",
+              "equities-derivatives/mock/fx-hedging"
             ]
           }
         ]
@@ -123,6 +124,8 @@
               "quantitative-research/interview/etf-market-making",
               "quantitative-research/interview/statistics-backtesting",
               "quantitative-research/interview/data-engineering",
+              "quantitative-research/interview/statistical-models",
+              "quantitative-research/interview/ml-in-finance",
               "quantitative-research/mock-interview"
             ]
           },

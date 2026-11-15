@@ -1,0 +1,187 @@
+---
+title: "Quant interview: statistical models in finance"
+sidebarTitle: "Statistical models"
+description: "Quant interview questions on statistical models in finance: ARMA identification, mean reversion half-life, GARCH persistence, Kalman filters, cointegration versus correlation, regime switching, factor models, covariance shrinkage, heavy tails, bootstrapping and local versus stochastic volatility."
+icon: "wave-square"
+keywords:
+  - "quant interview"
+  - "ARMA"
+  - "GARCH"
+  - "Kalman filter"
+  - "cointegration"
+  - "regime switching"
+  - "factor model"
+  - "covariance shrinkage"
+  - "extreme value"
+  - "local volatility"
+  - "stochastic volatility"
+---
+
+This page goes deeper into the statistical models that research interviews ask about once the basics are covered: time series structure, state-space filtering, factor and covariance models, tail behavior and volatility models. The basics (OLS assumptions, stationarity, EWMA, VaR and backtest biases) are on [Regression and backtesting](/quantitative-research/interview/statistics-backtesting). Interviewers use these questions to see whether you know what a model assumes, how it fails and what you would check before trusting it.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are standard econometrics and quantitative finance frameworks, not any firm's specific methods. Numerical examples are illustrative.
+</Info>
+
+## Time series models
+
+<AccordionGroup>
+  <Accordion title="Q1. Here are the ACF and PACF of a residual series. How do you pick an ARMA model?">
+    Match the cut-off pattern:
+
+    - **AR(p):** the partial autocorrelation cuts off after lag p, while the autocorrelation decays gradually.
+    - **MA(q):** the autocorrelation cuts off after lag q, while the partial autocorrelation decays gradually.
+    - **ARMA:** both decay gradually, so the order is chosen by information criteria.
+
+    **Then check the fit:** the residuals should look like white noise (for example a Ljung-Box test on the residual autocorrelations), and the series should be stationary first. Use BIC when you want a parsimonious model and have enough data, and AIC when predictive accuracy matters more than the number of parameters.
+
+    **Follow-up:** Do ARMA models forecast returns well?
+
+    → Usually not by much. Return autocorrelation is small, so the forecasts converge to the mean quickly. ARMA is more useful for filtering structure out of a signal or for modeling a spread than for predicting daily returns.
+  </Accordion>
+
+  <Accordion title="Q2. A spread follows an AR(1) with coefficient 0.95 per day. What is its half-life and how do you use it?">
+    The deviation from the mean shrinks by a factor equal to the AR coefficient each day, so the half-life is the natural log of 0.5 divided by the natural log of 0.95, which is about **13.5 days**.
+
+    **Uses:**
+
+    - Set the holding period and lookback. A half-life of 13 days does not suit a one-day trading horizon, and a very long one suggests the spread barely reverts.
+    - Compare candidate pairs or baskets on a common scale.
+    - Monitor stability. If the estimated half-life drifts upward, the relationship may be breaking.
+
+    **Caveats:** the coefficient is estimated with error, and a coefficient close to 1 is hard to distinguish from a unit root in a short sample. The continuous-time version is the Ornstein-Uhlenbeck process, where the half-life is the natural log of 2 divided by the speed of mean reversion.
+  </Accordion>
+
+  <Accordion title="Q3. What do the parameters of a GARCH(1,1) tell you? If alpha plus beta is 0.98, how long do shocks last?">
+    - The **constant** sets the long-run variance level, which equals the constant divided by one minus alpha minus beta.
+    - **Alpha** (the ARCH term) is the reaction to yesterday's squared shock.
+    - **Beta** (the GARCH term) is the memory of yesterday's variance.
+    - **Alpha plus beta** is the persistence. Deviations of variance from the long-run level shrink by that factor each day.
+
+    With persistence 0.98, the half-life is the natural log of 0.5 divided by the natural log of 0.98, about **34 trading days**. This is volatility clustering, quantified. Variance forecasts converge toward the long-run level as the horizon grows.
+
+    **Follow-ups:**
+
+    - Persistence at or above 1 means the variance does not revert, which is a warning sign for the fit or a structural break in the sample.
+    - Equity volatility rises more after a fall than after a rise of the same size (the leverage effect). Models such as EGARCH or GJR-GARCH add that asymmetry.
+    - Using a Student-t distribution for the shocks handles fat tails better than the normal.
+  </Accordion>
+</AccordionGroup>
+
+## State-space and regime models
+
+<AccordionGroup>
+  <Accordion title="Q4. How would you use a Kalman filter to estimate a time-varying hedge ratio?">
+    A state-space model has an **observation equation** (what you see) and a **state equation** (a hidden variable that evolves). For a time-varying beta, the hidden state is the beta, assumed to move as a random walk, and the observation is the asset return explained by the other return times the beta plus noise.
+
+    The Kalman filter updates the beta estimate each period by combining the previous estimate with the new observation. The weight on the new observation (the Kalman gain) depends on the **ratio of state noise to observation noise**.
+
+    - A high state-noise ratio gives a fast-moving beta that follows changes but is noisy.
+    - A low ratio gives a smooth beta that reacts slowly.
+
+    The filter is the optimal linear estimator under Gaussian assumptions. In practice you estimate or tune the noise parameters, check the standardized forecast errors for autocorrelation and compare against a simple rolling regression. Other uses are signal extraction from noisy data and tracking parameters in pairs or ETF hedging.
+  </Accordion>
+
+  <Accordion title="Q5. Two stocks have a return correlation of 0.9. Are they a good pair for a mean-reversion trade?">
+    Not necessarily. **Correlation describes co-movement of returns, and cointegration describes whether the price spread is stationary.** Two series can have highly correlated returns and still drift apart in price, and two series can be cointegrated with modest return correlation.
+
+    **What to check:**
+
+    - Test the spread for stationarity (Engle-Granger for a pair, Johansen for several series), and look at the half-life from Q2.
+    - Check that the hedge ratio is stable over time, or use a filter to track it.
+    - Look for an economic reason for the link (same sector, same cash flows, a creation and redemption mechanism for an ETF and its basket).
+    - Allow for costs, borrow and the risk that the relationship breaks.
+
+    An error-correction model links the two: when the spread is above its long-run level, the next move of at least one of the series pulls it back.
+  </Accordion>
+
+  <Accordion title="Q6. How would you model volatility regimes with a hidden Markov model, and what can go wrong?">
+    Assume the market is in one of a few hidden states (for example low and high volatility), each with its own return distribution, and the state moves according to a transition matrix. The **Hamilton filter** gives the probability of being in each state given the data so far. The model is fitted by maximum likelihood or the EM algorithm.
+
+    **Uses:** scale risk down in the high-volatility state, switch between strategies, or condition forecasts on the state.
+
+    **What can go wrong:**
+
+    - The filter detects a regime change with a lag, so it often confirms the move after much of it has happened.
+    - The number of states is a modeling choice, and more states fit the sample better but generalize worse.
+    - The state labels are arbitrary, so the same model can come out with the labels swapped between estimations.
+    - Estimated regimes can be an artifact of fat tails or outliers.
+
+    Compare with a simpler volatility-scaling rule before concluding that the extra complexity helps.
+  </Accordion>
+</AccordionGroup>
+
+## Factor and covariance models
+
+<AccordionGroup>
+  <Accordion title="Q7. How do time-series and cross-sectional factor regressions differ, and what is Fama-MacBeth?">
+    - **Time-series regression:** for each asset, regress its returns on factor returns over time to estimate factor exposures (betas) and the intercept (alpha).
+    - **Cross-sectional regression:** at each date, regress asset returns on their characteristics or betas across assets to estimate the factor premium for that date.
+    - **Fama-MacBeth:** run the cross-sectional regression every period, then average the estimated premiums over time and take the standard error from the time series of those estimates. This handles cross-sectional correlation of errors but not all time-series dependence, so adjust for autocorrelation if needed.
+
+    **Uses on a desk:** measure the factor exposure of a basket or an ETF, hedge unwanted factors, and separate alpha from factor premium.
+  </Accordion>
+
+  <Accordion title="Q8. You estimate a covariance matrix for 500 stocks from 250 daily observations. What goes wrong and how do you fix it?">
+    With more assets than observations, the sample covariance matrix is **singular**, and even with more observations the extreme eigenvalues are biased: the largest are too large and the smallest too small. An optimizer then puts large weights on the directions where the matrix is understating risk, which is why mean-variance optimization is sometimes called an error maximizer.
+
+    **Fixes:**
+
+    - **Shrinkage** (for example Ledoit-Wolf): blend the sample matrix with a structured target such as a constant-correlation matrix, with the weight estimated from the data.
+    - **Factor model covariance:** a few common factors plus asset-specific variance. It has far fewer parameters and is positive definite by construction.
+    - **Eigenvalue cleaning** from random matrix theory: replace the eigenvalues that look like noise.
+    - **Longer history or higher-frequency data** for the same assets, if the structure is stable enough.
+
+    Name the requirement that the matrix stays positive semi-definite and well conditioned, since the optimizer inverts it.
+  </Accordion>
+</AccordionGroup>
+
+## Tails, inference and volatility models
+
+<AccordionGroup>
+  <Accordion title="Q9. Returns have fat tails. How does that affect your estimates, and how do you model the tail?">
+    - **Effect on estimates:** the sample variance and correlations are noisy and driven by a few extreme observations, and tests that rely on normality (and on large-sample approximations) can be unreliable even with thousands of observations when the tails are heavy.
+    - **Diagnostics:** QQ plots, excess kurtosis, and the behavior of extreme returns relative to the normal distribution.
+    - **Modeling:** use a Student-t or another heavy-tailed distribution for the body, and **extreme value theory** for the tail, fitting a generalized Pareto distribution to exceedances above a high threshold (peaks over threshold).
+
+    The choice of threshold trades bias against variance: a low threshold includes non-tail data, and a high one leaves too few points. State that tail estimates, such as a 99.9% loss, are extrapolations and are uncertain.
+  </Accordion>
+
+  <Accordion title="Q10. How do you build a confidence interval for a strategy's Sharpe ratio when returns are autocorrelated?">
+    The textbook standard error assumes independent, identically distributed returns. With autocorrelation, fat tails or volatility clustering it is too optimistic.
+
+    **Options:**
+
+    - A **block bootstrap** or **stationary bootstrap**: resample blocks of consecutive returns so the dependence structure is preserved, recompute the Sharpe ratio on each resample and take percentiles.
+    - Heteroskedasticity and autocorrelation robust standard errors (Newey-West) for related statistics.
+    - Adjust for skewness and kurtosis in the analytical variance of the Sharpe estimate.
+
+    Pick the block length to cover the dependence (too short breaks it, too long leaves few blocks), and say that the interval does not remove the multiple-testing problem if the strategy was selected from many candidates.
+  </Accordion>
+
+  <Accordion title="Q11. What is the difference between a local volatility model and a stochastic volatility model, and why does it matter for hedging?">
+    - **Local volatility:** volatility is a deterministic function of the stock price and time. It can be calibrated to match today's whole implied volatility surface exactly (the Dupire approach), and the stock is the only random driver, so the model is complete.
+    - **Stochastic volatility** (for example Heston): volatility is itself random and correlated with the stock, and the correlation produces the skew. It has more realistic dynamics but is harder to calibrate, and volatility is an extra risk that you cannot hedge with the stock alone.
+
+    **Why it matters:** two models that match today's vanilla prices can give different prices and hedge ratios for products that depend on how the smile evolves, such as forward-start options or barrier and cliquet-style payoffs. Local volatility tends to flatten the forward smile, while stochastic volatility keeps more of it. Many desks therefore use a mix (local-stochastic volatility) for exotic products.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Regression and backtesting](/quantitative-research/interview/statistics-backtesting)
+- [Machine learning in finance](/quantitative-research/interview/ml-in-finance)
+- [Derivatives and Greeks](/quantitative-research/interview/derivatives-greeks)
+- [Probability and statistics](/quantitative-research/interview/probability-statistics)
+- [Mock Interview (Quantitative Research)](/quantitative-research/mock-interview)
+
+## Sources
+
+- [Time series interview questions](https://quantvault.org/time-series-interview-questions.html), QuantVault
+- [Time-series analysis for quant interviews](https://www.techinterview.org/post/3233474580/time-series-analysis-quant-interviews/), techinterview.org
+- [Time series interview questions: 15 real examples](https://www.quantt.co.uk/resources/time-series-interview-questions), Quantt
+- [Quant research interview questions: 25 real examples](https://www.quantt.co.uk/resources/quant-research-interview-questions), Quantt
+- [Renaissance Technologies interview questions](https://quantvault.org/renaissance-interview-questions.html), QuantVault
+- [Qube Research and Technologies interview questions](https://quantvault.org/qube-research-technologies-interview-questions.html), QuantVault
+- [Quant interview questions and answers](https://wecreateproblems.com/interview-questions/quant-interview-questions), WeCP
+- [Time series interview questions](https://forum.wilmott.com/viewtopic.php?p=486096), Wilmott forum
