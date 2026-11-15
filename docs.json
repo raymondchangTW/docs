@@ -78,7 +78,8 @@
               {
                 "group": "China Connect",
                 "pages": [
-                  "equities-derivatives/hk/china-connect/northbound-trading"
+                  "equities-derivatives/hk/china-connect/northbound-trading",
+                  "equities-derivatives/hk/china-connect/southbound-trading"
                 ]
               },
               {
