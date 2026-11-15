@@ -1,30 +1,61 @@
 ---
 title: "Tick-level simulation and fills"
-description: "Tick 級模擬與 fill 模型：被動/主動成交、latency 與 queue 假設。"
-keywords:
-  - "tick simulation"
-  - "fill model"
-  - "latency"
-  - "queue"
 sidebarTitle: "Tick simulation and fills"
+description: "Fill models, latency, and market-data requirements for tick-level backtests of passive and aggressive orders."
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Design guidance. Any claim that a specific fill rule is conservative should be tested against live fills.</Info>
 
-## 大綱
+## 1. Data requirements
 
-1. 資料需求：tick、L2/L3 與時間戳精度
-2. 主動單的成交假設：穿價、滾價與 impact
-3. 被動單的成交假設：queue 位置、保守/樂觀上下界
-4. Latency 建模與行情快照的延遲
-5. 模擬與實盤的校準：用實際成交記錄檢驗模擬假設
+- **Level of detail:** trades and top-of-book quotes support aggressive-order simulation. Passive-order simulation needs depth and, ideally, order-level events.
+- **Timestamps:** keep exchange timestamp and local receive timestamp separately; the difference is your latency to the feed.
+- **Sequencing:** ensure the sequence number is monotone and gaps are detected.
+- **Phases:** include opening and closing auction phases and their rules ([auction mechanisms](/quantitative-research/microstructure/auction-mechanisms)).
 
-## 面試常問
+## 2. Aggressive (marketable) orders
 
-- 回測的被動單成交率高於實盤，可能原因是什麼？
-- 如何用實盤資料校準 fill 模型？
+- Fill against displayed depth at the simulated arrival time (event time plus latency), walking the book.
+- Use the book as of arrival, not as of decision; the book may have changed in the latency window.
+- Add impact for orders above displayed depth, using a fitted impact curve ([market impact and TCA](/quantitative-research/microstructure/market-impact-tca)).
 
-## Related pages
+## 3. Passive orders
 
-- [Queue position and fills](/quantitative-research/microstructure/queue-position-fill)
-- [Event-driven vs vectorized](/quantitative-research/backtesting/event-driven-vs-vectorized)
+Three rule families, in increasing realism:
+
+| Rule | Fill when | Bias |
+| --- | --- | --- |
+| Touch | Price reaches the limit | Strongly optimistic: ignores queue |
+| Trade-through | A trade prints strictly through the limit price | Pessimistic: misses fills at the limit |
+| Queue-aware | Cumulative volume at the price exceeds the shares ahead | Realistic if queue position is well estimated |
+
+For queue-aware simulation, set the initial position from displayed depth at arrival, and decide a cancellation assumption (none ahead cancels, or a proportional share). Report results under at least a conservative and an optimistic assumption. See [queue position and fills](/quantitative-research/microstructure/queue-position-fill).
+
+## 3.1 Adverse selection in simulation
+
+A simulator that fills by random arrival will not reproduce adverse selection. Use real historical trades so that fills coincide with actual price moves, and measure P&L using the mid some interval after the fill.
+
+## 4. Latency
+
+Model three components: market data latency, strategy compute time, and order entry latency. Apply them as delays on events. Run the same strategy under several latency settings; the P&L-versus-latency curve shows how latency-sensitive the strategy is.
+
+## 5. Own-order impact
+
+Historical data does not contain your orders. Common approximations: reduce displayed depth by your own size after a fill, apply a decay impact model for aggressive orders, and cap participation as a fraction of the observed volume.
+
+## 6. Validation against live
+
+1. Run the simulator over a period with live fills.
+2. Compare simulated and actual fill rates, fill times, and realised spread.
+3. Adjust only the fill-model parameters (queue assumption, cancellation share), not the strategy.
+4. Keep the live-versus-sim gap as a standing diagnostic.
+
+## Points to verify
+
+- Which HKEX data products carry order-level queue information and the conventions for broker queue data.
+- Latency figures for the specific co-location or access setup used.
+
+## Sources
+
+- Moallemi and Yuan (2016), A Model for Queue Position Valuation in a Limit Order Book. [PDF](https://drupalgsb-test.paas.cc.columbia.edu/sites/default/files-efs/pubfiles/25461/queue-value-2016.pdf)
+- Methodological synthesis for the remaining points.

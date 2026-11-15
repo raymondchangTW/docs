@@ -1,30 +1,53 @@
 ---
 title: "Vol surface methodology"
-description: "Vol surface 的建構、參數化與無套利檢查的方法論，商品細節見 Equities & Derivatives 分頁。"
-keywords:
-  - "vol surface"
-  - "SVI"
-  - "calibration"
-  - "no-arbitrage"
+description: "Total variance, SVI/SSVI parameterisation, static-arbitrage conditions, and calibration practice."
 sidebarTitle: "Vol surface methodology"
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。實務與商品細節已在 Equities & Derivatives 分頁撰寫，本頁只補方法論，避免重複。</Info>
+<Info>**Status of this page:** P0 draft. Complements the desk-level pages [Volatility surface](/equities-derivatives/global/volatility-surface) and [mock interview](/equities-derivatives/mock/volatility-surface). Formulas are plain text; verify parameter constraints against the cited papers before implementing.</Info>
 
-## 大綱
+## 1. Objects
 
-1. 校準目標函數：價格誤差 vs IV 誤差、權重選擇
-2. 參數化比較：SVI、SSVI、spline 的穩定性與外推行為
-3. 時間維度：total variance 插值與 calendar 套利
-4. 校準的穩定性：初值、正則化、逐日平滑
-5. 模型風險：不同校準方法對 Greeks 與 exotic 定價的影響
+- Total implied variance w(k, T) = sigma_imp(k, T)^2 x T, with log-moneyness k = ln(K / F_T).
+- Working in (k, w) removes the explicit time scaling and makes arbitrage conditions easier to state.
+- Forward F_T must be consistent with the dividend and borrow assumptions; an error in F shifts the whole smile in k.
 
-## 面試常問
+## 2. Static no-arbitrage conditions
 
-- 為什麼在 total variance 上插值而非 IV 上
-- 校準結果逐日跳動，如何處理
+1. **Calendar spread:** w must be non-decreasing in T at fixed k (the partial derivative of w in T is non-negative).
+2. **Butterfly:** the implied risk-neutral density must be non-negative at each maturity. This is a condition on the first and second derivatives of w in k for every slice.
+3. **Wing growth:** Roger Lee's moment formula bounds the large-|k| slope of w by 2 (so total variance grows at most linearly in |k|).
 
-## Related pages
+A fitted surface that passes slice-by-slice fits can still fail the calendar condition; check both.
 
-- [Volatility surface（概念與實務）](/equities-derivatives/global/volatility-surface)
-- [Local and stochastic vol](/quantitative-research/derivatives/local-stochastic-vol)
+## 3. SVI and SSVI
+
+**Raw SVI** for one maturity: w(k) = a + b (rho (k - m) + sqrt((k - m)^2 + s^2)), five parameters (a, b, rho, m, s). It is linear in the wings, consistent with Lee's bound when b(1 + |rho|) is at most 2 (check the exact form in the source).
+
+**SSVI** (Gatheral and Jacquier) parameterises the whole surface through ATM total variance theta_t and a function phi(theta), with a correlation parameter rho. It comes with explicit sufficient conditions for no calendar-spread and no butterfly arbitrage, which is why it is popular as a starting point.
+
+## 4. Calibration workflow
+
+1. Clean quotes: drop crossed or stale quotes, use mid or a bid/ask-aware loss, remove deep ITM.
+2. Build the forward and discount curve per expiry.
+3. Fit slice by slice (SVI) or globally (SSVI) with weights by vega or by bid-ask width.
+4. Enforce arbitrage constraints in the optimiser or project afterwards.
+5. Check stability day over day: parameter jumps indicate overfitting or data issues.
+6. Output: a smooth surface, a local-vol or Greeks-ready representation, and diagnostics (RMSE in vol points, number of constraint violations).
+
+## 5. Applications and pitfalls
+
+- **Pricing and hedging:** use the surface to interpolate quotes for market making; sticky-strike vs sticky-delta assumptions change the hedge ratio. See [Greeks and hedging error](/quantitative-research/derivatives/greeks-hedging-error).
+- **Warrants and structured products:** quote grid is sparse; extrapolation beyond the quoted range is model-dependent, so use wing constraints.
+- **Dividend-driven distortions** appear as apparent smile noise around ex-dates.
+
+## Points to verify
+
+- Exact SVI constraint on b(1 + |rho|) and the SSVI conditions as stated in Gatheral and Jacquier (2014).
+- HK single-stock option and warrant quote conventions (strike grids, bid/ask requirements).
+
+## Sources
+
+- Gatheral and Jacquier (2014), Arbitrage-free SVI volatility surfaces, Quantitative Finance.
+- Gatheral (2004), A parsimonious arbitrage-free implied volatility parameterization.
+- Lee (2004), The moment formula for implied volatility at extreme strikes, Mathematical Finance.

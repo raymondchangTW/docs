@@ -1,30 +1,59 @@
 ---
 title: "Stat arb and pairs"
-description: "Pairs 與 stat arb：cointegration、spread 建模、進出場與停損。"
-keywords:
-  - "statistical arbitrage"
-  - "pairs trading"
-  - "cointegration"
-  - "spread"
+description: "Pairs selection, hedge ratios, OU residual models, and the s-score framework."
 sidebarTitle: "Stat arb and pairs"
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Methods are standard; empirical performance claims are limited to what the cited papers report. Validation of any pairs strategy should follow [Backtest bias taxonomy](/quantitative-research/backtesting/bias-taxonomy).</Info>
 
-## 大綱
+## 1. Two ways to form pairs
 
-1. 配對選擇：經濟連結 vs 純統計篩選的風險
-2. Spread 建模：OU 過程、half-life 估計
-3. 動態 hedge ratio：rolling OLS 與 Kalman filter
-4. 進出場規則與停損：structural break 的處理
-5. 組合層級：多對分散、因子中性化
+**Distance method (Gatev, Goetzmann and Rouwenhorst, 2006).** Normalise price series, pick the pair with the smallest sum of squared deviations over a formation period, and trade divergences beyond a threshold during a trading period. The paper reports average annualised excess returns of up to about 11% on self-financing portfolios over 1962-2002, with profits typically above conservative cost estimates, and links profitability to a common factor. Later decay in profitability is documented in the literature; treat the 1962-2002 figure as historical.
 
-## 面試常問
+**Cointegration method.** Test whether a linear combination of two non-stationary prices is stationary (Engle and Granger, 1987). The residual is the spread.
 
-- Spread 的 half-life 怎麼估？它決定了什麼？
-- Cointegration 關係破裂時如何偵測？
+## 2. Hedge ratio estimation
 
-## Related pages
+| Method | Idea | Weakness |
+| --- | --- | --- |
+| OLS on log prices (Engle-Granger step 1) | Static beta | Not symmetric in the two legs; unstable beta |
+| Total least squares | Symmetric treatment | Scale sensitivity |
+| Johansen | Multi-asset cointegrating vectors | Needs long samples; sensitive to lag choice |
+| Kalman filter | Time-varying beta | State noise parameters are another degree of freedom |
 
-- [Time series](/quantitative-research/foundations/time-series)
-- [Position sizing](/quantitative-research/portfolio-risk/position-sizing)
+Estimate beta only on the formation window and freeze it in the test window, otherwise the test is contaminated.
+
+## 3. Ornstein-Uhlenbeck residual model
+
+Model the spread X as dX = kappa (m - X) dt + sigma dW. Discretely, X\_{t+1} = a + b X_t + e, with b = exp(-kappa dt). Key outputs:
+
+- Half-life = -ln 2 / ln b (in sampling units). Verified examples: b = 0.90 gives 6.6 periods, b = 0.95 gives 13.5, b = 0.99 gives 69.0.
+- Equilibrium std = sigma / sqrt(2 kappa).
+- **s-score** = (X - m) / sigma_eq, used as the entry/exit variable.
+
+Avellaneda and Lee (2010) use residuals from factor regressions (sector ETFs or PCA factors) rather than pairs, trade on s-scores, and filter on fast mean reversion (kappa above roughly 252/30, i.e. a reversion time under about 30 trading days; check the paper for the exact rule). Their reported results show weaker performance after 2002 relative to the earlier period.
+
+## 4. Practical filters
+
+- Cointegration p-value is not a stability guarantee; re-test on rolling windows and require economic linkage (same industry, ETF vs constituents, ADR vs local line, share classes).
+- Remove pairs with event risk: M&A, index inclusion, suspension.
+- Size by spread volatility, cap by liquidity of the thinner leg.
+- Cost model must include short-borrow fee and the crossing cost on both legs.
+
+## 5. Failure modes
+
+- **Regime break:** the pair stops being related; mean reversion becomes trend. Use a stop on the s-score and on time-in-trade.
+- **Crowding:** many participants unwind together.
+- **Multiple testing:** scanning thousands of pairs guarantees spurious cointegration. Apply a multiple-testing correction; Harvey, Liu and Zhu (2016) argue for a t-ratio hurdle above 3.0 for new factor claims, and the same logic applies to pair scanning.
+
+## Points to verify
+
+- Exact filter threshold and sample used in Avellaneda and Lee (2010) before citing it numerically.
+- Short-sale availability and uptick/designated-security rules for the HK names used.
+
+## Sources
+
+- Gatev, Goetzmann and Rouwenhorst (2006), Pairs Trading: Performance of a Relative-Value Arbitrage Rule, Review of Financial Studies 19(3).
+- Engle and Granger (1987), Co-integration and Error Correction, Econometrica 55(2). [Link](https://econometricsociety.org/publications/econometrica/1987/03/01/co-integration-and-error-correction-representation-estimation)
+- Avellaneda and Lee (2010), Statistical arbitrage in the US equities market, Quantitative Finance.
+- Harvey, Liu and Zhu (2016), and the Cross-Section of Expected Returns, RFS 29(1). [NBER](https://nber.org/papers/w20592)

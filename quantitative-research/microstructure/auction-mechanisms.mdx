@@ -1,30 +1,50 @@
 ---
 title: "Auction mechanisms"
-description: "開盤與收盤拍賣的撮合機制、HK 午休與 closing auction 對策略的影響。"
-keywords:
-  - "opening auction"
-  - "closing auction"
-  - "HKEX"
-  - "lunch break"
+description: "Call auction price determination and the HKEX closing auction session."
 sidebarTitle: "Auction mechanisms"
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。HK 時段與規則細節需對照 HKEX 官方文件逐項查證後再寫。</Info>
+<Info>**Status of this page:** P0 draft. HKEX timings and price limits come from HKEX material; secondary sources conflicted on some points, and the securities list changes, so check the current HKEX documents before relying on this page operationally.</Info>
 
-## 大綱
+## 1. Call auction price determination
 
-1. 集合競價的撮合原則：最大成交量、最小不平衡
-2. 拍賣期間的資訊揭露與策略性報價
-3. 收盤價形成機制對 ETF NAV、指數結算與基差的影響
-4. 午休與隔夜缺口對波動率估計與避險的影響
-5. 拍賣期間的風險控制：價格限制與取消規則
+A single-price auction collects orders and selects the **equilibrium price** (IEP) that maximises executable volume. Standard tie-breakers: minimise the order imbalance, then choose the price closest to a reference. Orders at better prices than the IEP execute in full; orders at the IEP execute pro rata or by time priority depending on the exchange.
 
-## 面試常問
+Why auctions matter: concentrated liquidity, a single reference price used for index, ETF NAV, and derivative settlement, and information aggregation at the open and close.
 
-- 為什麼很多產品用收盤價結算？這對流動性有什麼影響？
-- 午休期間期貨與現貨不同步，如何處理 fair value？
+## 2. HKEX Closing Auction Session (CAS)
 
-## Related pages
+HKEX describes the CAS as applying to selected securities and consisting of four periods. For a full trading day:
 
-- [Tick size and exchange rules](/quantitative-research/microstructure/tick-size-rules)
-- [Index arbitrage and combo trades](/equities-derivatives/global/index-arbitrage)
+| Period | Time | Rules |
+| --- | --- | --- |
+| Reference price fixing | 16:00-16:01 | Reference price (the continuous-session close) is set; no order input, amendment, or cancellation |
+| Order input | 16:01-16:06 | At-auction and at-auction limit orders within +/-5% of the reference price; amendment and cancellation allowed |
+| No cancellation | 16:06-16:08 | Input allowed; amendment and cancellation not allowed; price limit narrows to between the lowest ask and highest bid at the end of the order input period |
+| Random closing | 16:08-16:10 | Same order rules as the no-cancellation period; the session closes at a random time within the two minutes |
+
+On half days the same sequence starts at 12:00. After the random close, orders for CAS securities are matched at the final IEP. If no final IEP can be established, the reference price becomes the matching price and the closing price. Outstanding continuous-session orders within the price limit are carried into the CAS.
+
+## 3. Implications for trading
+
+- **Information:** IEP, indicative volume, and imbalance are disseminated during the CAS, so imbalance-driven strategies can react until the no-cancellation period.
+- **Random close** limits last-second gaming and makes the exact close time unpredictable.
+- **Benchmark flows** (index funds, ETF creation/redemption, futures settlement) concentrate in the auction. Basis and ETF trades that need the official close should plan CAS participation explicitly ([index and basis arbitrage](/quantitative-research/strategies/index-basis-arbitrage), [ETF arbitrage](/quantitative-research/strategies/etf-arbitrage-premium-discount)).
+- **Cost modelling:** auction impact is not the same as continuous-session impact ([market impact and TCA](/quantitative-research/microstructure/market-impact-tca)).
+
+## 4. Research questions
+
+1. How well does the IEP at the end of the order input period predict the final close?
+2. How much of the CAS imbalance is spoof-like (cancelled before the no-cancellation period)?
+3. What is the close-to-open reversal conditional on a large closing imbalance?
+
+## Points to verify
+
+- Which securities are currently CAS securities (HKEX publishes a list; it has changed over time).
+- Treatment of the pre-opening session and the lunch break in any longer-hours proposal. A longer-hours review was mentioned in secondary sources but not confirmed from HKEX primary documents here.
+- Whether the CAS timetable has changed after any trading hours reform.
+
+## Sources
+
+- HKEX, Trading Mechanism of the CAS in the Securities Market (PDF). [Link](https://www.HKEX.com.hk/-/media/HKEX-Market/Services/Trading/Securities/Overview/Trading-Mechanism/Trading-Mechanism-of-CAS-in-the-Securities-Market.pdf)
+- HKEX, Closing Auction Session overview. [Link](https://www.hkex.com.hk/cas)

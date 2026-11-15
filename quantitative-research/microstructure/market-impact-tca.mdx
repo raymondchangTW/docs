@@ -1,30 +1,57 @@
 ---
 title: "Market impact and TCA"
-description: "Market impact 模型、implementation shortfall 與交易成本分析的方法。"
-keywords:
-  - "market impact"
-  - "TCA"
-  - "implementation shortfall"
-  - "slippage"
+description: "Impact models, execution benchmarks, optimal execution, and transaction cost analysis."
 sidebarTitle: "Market impact and TCA"
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Impact coefficients are market- and period-specific; the numerical example is illustrative with an assumed prefactor.</Info>
 
-## 大綱
+## 1. Impact models
 
-1. 暫時性與永久性 impact 的區分
-2. Impact 模型：線性、square-root 型的經驗規律與其適用範圍
-3. Implementation shortfall 的分解：延遲、impact、機會成本
-4. 執行演算法：TWAP、VWAP、POV 的取捨
-5. TCA 流程：基準價選擇、事前預估與事後檢討
+- **Kyle (1985) linear model:** price change = lambda x signed net order flow. lambda falls as noise trading rises. It is an equilibrium coefficient of an information model, not automatically the causal impact of one trade.
+- **Square-root law:** metaorder impact is roughly Y x sigma x sqrt(Q / V), where sigma is daily volatility, Q is the order size, V is daily volume, and Y is a constant of order one. The shape is widely reported across markets; Y must be calibrated.
+- **Temporary vs permanent:** temporary impact decays after execution; permanent impact is the information content. Almgren and Chriss (2001) use linear permanent and temporary components.
 
-## 面試常問
+**Illustration.** sigma = 2% daily, participation Q / V = 1%, Y = 1 (assumed): impact = 0.02 x sqrt(0.01) = 0.002 = 20 bps. Halving the order size reduces impact by a factor of sqrt(0.5), i.e. about 29%, not 50%.
 
-- 為什麼 VWAP 基準會鼓勵某些壞行為？
-- 如何估計自己的下單對價格的影響？
+## 2. Execution schedules
 
-## Related pages
+| Schedule | Rule | Trade-off |
+| --- | --- | --- |
+| TWAP | Equal slices over time | Ignores volume pattern |
+| VWAP | Slices proportional to expected volume | Depends on volume forecast |
+| POV | Fixed share of market volume | Duration is random |
+| Implementation shortfall / arrival price | Front-loaded to limit timing risk | Higher impact |
 
-- [Cost-aware optimization](/quantitative-research/portfolio-risk/cost-aware-optimization)
-- [Index arbitrage（執行與成本）](/equities-derivatives/global/index-arbitrage)
+**Almgren-Chriss.** Minimise expected cost plus lambda x variance. In the linear model the efficient frontier of strategies (lowest expected cost for a given risk) can be constructed explicitly, and the risk-neutral solution is a uniform (TWAP-like) schedule; more risk aversion front-loads. The same framework leads to liquidity-adjusted VaR.
+
+## 3. TCA metrics
+
+- **Implementation shortfall** = (execution price - decision price) x side, plus fees, and an opportunity cost term for unfilled shares.
+- **Arrival slippage** vs mid at order arrival.
+- **VWAP slippage** vs interval VWAP (can be gamed by trading with the benchmark).
+- **Reversion**: mid move after completion; high reversion indicates temporary impact, low indicates information.
+- **Spread capture** for passive fills, measured with post-fill mid ([queue position and fills](/quantitative-research/microstructure/queue-position-fill)).
+
+## 4. Building a cost model
+
+1. Collect parent order data: size, start/end, participation, symbol, venue, side.
+2. Fit cost = a x spread/2 + b x sigma x (Q/V)^c on parent orders; test c near 0.5.
+3. Check out of sample and by volatility regime.
+4. Use the fitted function as the cost term in optimisers and as the fee in [backtests](/quantitative-research/backtesting/tick-simulation-fills).
+
+## 5. Caveats
+
+- Own-flow impact is confounded with signal: orders placed when alpha is strong move with the market regardless of impact.
+- HK-specific: closing auction participation and the tick table both change the cost curve ([auction mechanisms](/quantitative-research/microstructure/auction-mechanisms), [tick size rules](/quantitative-research/microstructure/tick-size-rules)).
+
+## Points to verify
+
+- Calibrated value of Y for HK cash equities and ETFs; the example uses an assumed 1.
+- Exact statement of the Almgren-Chriss solution for the risk-averse case (hyperbolic functions in the original).
+
+## Sources
+
+- Almgren and Chriss (2001), Optimal execution of portfolio transactions, Journal of Risk 3(2). [Abstract](https://www.risk.net/journal-risk/2161150/optimal-execution-portfolio-transactions)
+- Kyle (1985), Continuous Auctions and Insider Trading. [Link](https://econometricsociety.org/publications/econometrica/1985/11/01/continuous-auctions-and-insider-trading)
+- Maglaras, Moallemi and Zheng (2015) for a microstructure impact model. [PDF](https://www0.gsb.columbia.edu/faculty/cmaglaras/papers/Micro-MI-052015.pdf)

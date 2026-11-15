@@ -1,31 +1,71 @@
 ---
 title: "ETF arbitrage and premium/discount models"
-description: "iNAV 估算、NAV 預測與 premium/discount 的統計建模，以及創贖成本對套利區間的影響。"
-keywords:
-  - "ETF arbitrage"
-  - "iNAV"
-  - "premium discount"
-  - "creation redemption"
 sidebarTitle: "ETF arbitrage and premium/discount"
+description: "How to model ETF premium/discount, iNAV staleness, and the cost band that bounds arbitrage."
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。商品機制見 Equities & Derivatives 分頁，本頁只補統計建模方法。</Info>
+<Info>**Status of this page:** P0 draft. Mechanics are standard; HK-specific parameters are flagged under "Points to verify". For the operational side see [ETF creation and redemption](/equities-derivatives/global/etf-creation-redemption) and [HK market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules).</Info>
 
-## 大綱
+## 1. Definitions
 
-1. Premium/discount 的定義與基準選擇：即時 iNAV vs 收盤 NAV
-2. iNAV 估算：成分股報價、FX 與非同步交易時間的調整
-3. 折溢價的統計性質：均值回歸速度、橫切面差異
-4. 套利區間：創贖成本、借券、市場衝擊與庫存成本
-5. 跨時區與跨市場 ETF 的 fair value 估計
+- **Premium/discount (bps)** = (P / NAV - 1) x 10,000, where P is the ETF price and NAV is the reference value at the same timestamp.
+- **iNAV** (intraday indicative NAV) is the basket value computed from live or last-known constituent prices, converted to ETF currency. It is an estimate, not a tradable price.
+- Example: P = 20.04, NAV = 20.00 gives a premium of 20.0 bps.
 
-## 面試常問
+## 2. Why a premium or discount can persist
 
-- 折價出現但無法套利，可能原因有哪些？
-- 成分股部分停牌時，iNAV 怎麼估？
+The arbitrage band is set by the cost of the creation/redemption (C/R) loop, not by zero:
 
-## Related pages
+- Upper bound: premium cannot exceed the cost of buying the basket, creating, and selling the ETF (basket spread + C/R fee + financing/hedge cost + risk premium).
+- Lower bound: symmetric for redemption, usually wider if constituents are hard to short or borrow.
+- Inside the band, the premium is a noisy state variable, not an opportunity.
 
-- [ETF creation and redemption](/equities-derivatives/global/etf-creation-redemption)
-- [Creation/redemption（HK）](/equities-derivatives/hk/cash-etf/creation-redemption)
-- [Interview：ETF market making](/quantitative-research/interview/etf-market-making)
+Band width drivers: constituent liquidity and spread, borrow availability, creation unit size, settlement cycle mismatch, FX hedge cost, and the cutoff time for C/R requests.
+
+## 3. Stale pricing and non-synchronous markets
+
+When the ETF trades while constituents are closed or illiquid (cross-time-zone ETFs, A-share and bond ETFs), measured premium reflects information arriving at the ETF first, not mispricing. Petajisto (2017) documents that premiums for international and fixed-income ETFs are larger and more persistent than for domestic equity ETFs, and that part of the gap is stale NAV.
+
+Practical consequences:
+
+- Measure premium against a **fair-value NAV** built from futures, ADRs, or factor models, not the last official close.
+- Treat the iNAV update interval and its FX source as model inputs.
+- Separate the **informational** premium (ETF leads) from the **liquidity** premium (ETF absorbs flow).
+
+## 4. A simple model
+
+Let x_t = log(P_t / FV_t) where FV is fair-value NAV. A common reduced form is a mean-reverting process with a no-trade band:
+
+- Inside the band: dx = -kappa x dt + sigma dW.
+- Outside the band: reversion is accelerated by the arbitrageur flow (regime-switching or threshold AR).
+
+Estimate kappa and the band edges from tick data, using the same timestamp alignment for ETF quotes and basket prices. Report half-life = ln 2 / kappa. The result is only meaningful if the NAV timestamp is aligned with the quote timestamp.
+
+## 5. Signals and filters used in practice
+
+| Signal | Use | Main failure mode |
+| --- | --- | --- |
+| Premium z-score vs fair-value NAV | Entry | Stale NAV makes z-score look large |
+| Premium vs C/R cost band | Execution decision | Band estimated with wrong borrow cost |
+| Flow (creations/redemptions, AUM change) | Persistence | Reported with a lag |
+| Constituent spread and depth | Capacity | Depth at top of book overstates size |
+
+## 6. Hedging and P&L decomposition
+
+A premium trade (sell ETF, buy basket) earns the premium minus: basket crossing cost, ETF crossing cost, financing, tracking error until C/R settles, and residual delta from non-hedged constituents. Decompose realized P&L into (a) premium capture, (b) hedge slippage, (c) financing and fees, (d) basis between futures hedge and basket. Link: [Delta-1 hedging](/equities-derivatives/global/delta-1-hedging).
+
+## 7. Mock interview links
+
+- [ETF market making](/equities-derivatives/mock/etf-market-making)
+- [Quant mock interview](/quantitative-research/mock-interview)
+
+## Points to verify
+
+- HK ETP C/R cutoff times, minimum creation unit sizes, and cash-component rules per product.
+- Whether a given product's market-maker obligations (spread, size, uptime) are expressed in premium terms.
+- Petajisto's magnitudes are from US data; do not apply them to HK without local estimation.
+
+## Sources
+
+- Petajisto, A. (2017). Inefficiencies in the Pricing of Exchange-Traded Funds. Financial Analysts Journal.
+- Internal pages linked above.

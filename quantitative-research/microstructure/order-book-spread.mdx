@@ -1,29 +1,57 @@
 ---
 title: "Order book and spread components"
-description: "Limit order book 結構與價差的組成：adverse selection、inventory、order processing。"
-keywords:
-  - "order book"
-  - "bid-ask spread"
-  - "adverse selection"
 sidebarTitle: "Order book and spread"
+description: "Limit order book mechanics, imbalance signals, and the three components of the bid-ask spread."
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Theory-level; empirical magnitudes depend on market and period and are not stated here unless cited.</Info>
 
-## 大綱
+## 1. Limit order book basics
 
-1. Limit order book 的結構：價位、深度、優先順序
-2. 價差的三個成分：order processing、inventory、adverse selection
-3. 有效價差、實現價差與 price impact 的衡量
-4. Order flow 的資訊含量：toxicity 的概念
-5. Lit / dark 與交易所間的流動性分布
+- Orders rest at discrete price levels under **price-time priority**. Best bid and ask define the touch; depth is the size at each level.
+- Quoted spread = ask - bid. Effective spread = 2 x |trade price - mid| for a trade. Realised spread = effective spread minus the price move over a later horizon, which isolates what the liquidity provider keeps after adverse selection.
+- Mid and microprice: mid = (bid + ask) / 2. A common microprice weights by opposite-side size: (bid x ask_size + ask x bid_size) / (bid_size + ask_size).
 
-## 面試常問
+## 2. Order flow signals
 
-- 價差為什麼不會被壓縮到零？
-- 如何從成交資料估計 adverse selection 成分？
+- **Queue imbalance** I = (bid_size - ask_size) / (bid_size + ask_size) at the touch. Positive imbalance tends to precede upward mid moves at short horizons; the relation is strongest in large-tick stocks and decays quickly.
+- **Signed trade flow** (trade sign by tick rule or Lee-Ready) and its autocorrelation, which is long-memory in many markets.
+- **Depth beyond the touch** matters for the cost of larger orders; top-of-book depth alone overstates liquidity.
 
-## Related pages
+## 3. Spread components
 
-- [Market-making models](/quantitative-research/microstructure/market-making-models)
-- [ETF market making（Mock）](/equities-derivatives/mock/etf-market-making)
+In a competitive market the spread compensates for three costs (Madhavan 2000; Biais, Glosten and Spatt 2005):
+
+1. **Order processing** (fixed costs of providing quotes, fees).
+2. **Inventory** (compensation for holding unbalanced positions; Stoll 1978).
+3. **Adverse selection** (trading against better-informed counterparties; Glosten and Milgrom 1985, Kyle 1985).
+
+Huang and Stoll (1997) construct a time-series model that identifies all three. Their empirical results point to a large order-processing component and smaller, but significant, adverse-selection and inventory components, and the components differ by trade size.
+
+## 4. Estimation approaches
+
+| Approach | Needs | Caveat |
+| --- | --- | --- |
+| Roll (1984) serial covariance | Trade prices only | Assumes no information effect; gives only an effective-spread estimate |
+| Glosten-Harris (1988) | Signed trades | Trade classification error biases the split |
+| Huang-Stoll (1997) | Signed trades, quotes | Sensitive to assumed order/trade relation |
+| Realised-spread decomposition | Quotes, trades, horizon choice | Horizon is arbitrary; results depend on it |
+
+## 5. Large tick vs small tick
+
+When the minimum tick is large relative to the efficient spread, the spread is pinned at one tick, queues are long, and queue position carries value (see [queue position and fills](/quantitative-research/microstructure/queue-position-fill)). In small-tick stocks the spread is a free variable and quote competition occurs through price. See [tick size and exchange rules](/quantitative-research/microstructure/tick-size-rules).
+
+## 6. Use in market making
+
+The spread decomposition indicates how much of a quoted spread is capturable. Adverse-selection share, estimated per instrument and per time of day, feeds directly into the quote-skew parameters of [market-making models](/quantitative-research/microstructure/market-making-models).
+
+## Points to verify
+
+- Which trade-sign algorithm the data vendor uses, and its accuracy at the HKEX tick data granularity.
+- Whether the HKEX order book feed provides full-depth or limited-depth snapshots for the product being studied.
+
+## Sources
+
+- Huang and Stoll (1997), The Components of the Bid-Ask Spread: A General Approach, Review of Financial Studies 10(4). [IDEAS](https://ideas.repec.org/a/oup/rfinst/v10y1997i4p995-1034.html)
+- Biais, Glosten and Spatt (2005), Market microstructure: A survey of microfoundations, empirical results, and policy implications, Journal of Financial Markets.
+- Kyle (1985), Continuous Auctions and Insider Trading, Econometrica 53(6). [Link](https://econometricsociety.org/publications/econometrica/1985/11/01/continuous-auctions-and-insider-trading)

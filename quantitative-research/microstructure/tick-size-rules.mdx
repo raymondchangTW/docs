@@ -1,30 +1,49 @@
 ---
 title: "Tick size and exchange rules"
-description: "報價單位與交易所規則（價差表、報價義務）對策略設計的量化影響。"
-keywords:
-  - "tick size"
-  - "spread table"
-  - "exchange rules"
-  - "quoting obligations"
+description: "Tick-to-price ratio, large-tick versus small-tick behaviour, and the HKEX minimum spread reduction."
 sidebarTitle: "Tick size and exchange rules"
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。交易所規則細節需逐項查證。</Info>
+<Info>**Status of this page:** P0 draft. HKEX figures come from the December 2024 consultation conclusions and later circulars; the Phase 2 rollout was described as a two-step approach in a circular, so check the current HKEX page for effective dates.</Info>
 
-## 大綱
+## 1. Why tick size matters
 
-1. 最小報價單位與價差的關係：tick 約束下的價差
-2. Tick 變動對 queue 價值與做市收益的影響
-3. 報價義務與做市商規則如何改變最適報價
-4. 跨交易所、跨商品的 tick 不一致與套利
-5. 研究中處理 tick 約束的方法（離散價格模型）
+- The **tick-to-price ratio** (minimum spread / price, in bps) sets how binding the tick is. A large ratio means the quoted spread is pinned at one tick, queues are long, and priority is valuable ([queue position and fills](/quantitative-research/microstructure/queue-position-fill)).
+- A smaller tick lowers the minimum cost of crossing, allows price competition, and typically reduces displayed depth at each level.
+- Spread, depth, and the value of the queue all shift when the tick table changes; models calibrated before a change need re-estimation ([order book and spread](/quantitative-research/microstructure/order-book-spread)).
 
-## 面試常問
+## 2. HKEX minimum spread reduction
 
-- 價差已被 tick 約束在 1 tick 時，做市商的主要競爭維度是什麼？
-- Tick size 縮小對流動性的可能影響？
+Scope per the consultation conclusions: equities, REITs, equity warrants and other applicable securities; ETPs, debt securities, exchange-traded options, and structured products are excluded and keep their spreads. Prices below HKD 0.50 and above HKD 50 were out of scope.
 
-## Related pages
+**Phase 1** (launched 4 August 2025):
 
-- [Auction mechanisms](/quantitative-research/microstructure/auction-mechanisms)
-- [Market-maker rules（HK）](/equities-derivatives/hk/cash-etf/market-maker-rules)
+| Price band (HKD) | Old tick | New tick | Tick-to-price (bps), old to new |
+| --- | --- | --- | --- |
+| 10.00 to 20.00 | 0.020 | 0.010 | 10-20 to 5-10 |
+| 20.00 to 50.00 | 0.050 | 0.020 | 10-25 to 4-10 |
+
+**Phase 2** (planned 2026): the 0.50 to 10.00 band moves from 0.010 to 0.005 (a 50% cut). HKEX stated Phase 2 would proceed if the Phase 1 review showed no undesirable impact; a January 2026 circular said the interim review found none. The HKEX page lists a Phase 2 launch date of 3 August 2026, and a later circular describes a 2-step rollout with confirmed dates to follow.
+
+Spot check: HKD 15 at 0.02 is 13.3 bps; at 0.01 it is 6.7 bps. HKD 5 at 0.01 is 20 bps; at 0.005 it is 10 bps.
+
+The conclusions also set the order price limit for non-ETP securities at 24 spreads or 5% from the reference price, whichever is wider.
+
+## 3. Research designs around a tick change
+
+1. **Event study:** compare quoted and effective spread, depth, volume, and queue length before and after, for stocks in the changed band versus a control band (below 10 for Phase 1).
+2. **Difference-in-differences** with stock fixed effects; watch for concurrent events (the stock settlement fee restructuring was under consideration).
+3. **Market-maker impact:** quoting obligations, inventory turnover, and realised spread.
+4. **Strategy impact:** changes in fill probability and adverse selection for passive strategies.
+
+## Points to verify
+
+- Phase 2 effective date(s) and the 2-step arrangement as finally implemented.
+- Spread table applicable to ETPs and to structured products at the time of use; the excluded categories were unchanged in the conclusions.
+- Whether the 24-spread or 5% price limit is in force as stated.
+
+## Sources
+
+- HKEX, Consultation Conclusions on Proposed Reduction of Minimum Spreads (December 2024). [Link](https://www.hkex.com.hk/News/Market-Consultations/2016-to-Present/June-2024-Review-of-Minimum-Spreads/Conclusions_Dec_2024?sc_lang=en)
+- HKEX, Reduction of Minimum Spreads (implementation page). [Link](https://www.hkex.com.hk/Services/Trading/Securities/Overview/Trading-Mechanism/Reduction-of-Minimum-Spreads?sc_lang=en)
+- HKEX circular CT/003/26 (Phase 2 implementation). [Link](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Circulars-and-Notices/Participant-and-Members-Circulars/SEHK/2026/CT00326E.pdf)

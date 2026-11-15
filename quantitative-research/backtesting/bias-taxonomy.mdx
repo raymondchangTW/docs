@@ -1,30 +1,66 @@
 ---
 title: "Backtest bias taxonomy"
-description: "Look-ahead、survivorship、data snooping 與 point-in-time 等回測偏誤的分類與檢查。"
-keywords:
-  - "backtest bias"
-  - "look-ahead bias"
-  - "survivorship bias"
-  - "data snooping"
 sidebarTitle: "Bias taxonomy"
+description: "Look-ahead, survivorship, data snooping and other biases, with deflated Sharpe, PBO and purged cross-validation."
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Statistical formulas are stated in plain text; numerical examples were checked by calculation but depend on assumptions listed in each example.</Info>
 
-## 大綱
+## 1. Taxonomy
 
-1. Look-ahead bias：時間戳、財報公布時點、收盤價與下單時點
-2. Survivorship bias：下市、合併與指數成分變動
-3. Data snooping 與多重檢定
-4. 執行假設偏誤：無成本、無 impact、無限流動性
-5. 檢查清單：每種偏誤的偵測與防範方式
+| Bias | Mechanism | Typical control |
+| --- | --- | --- |
+| Look-ahead | Using information not available at decision time (restated data, close prices for intraday decisions, index membership known later) | Point-in-time data; explicit availability timestamps |
+| Survivorship | Universe contains only names that survived | Include delisted and suspended securities |
+| Data snooping / multiple testing | Many trials, best one reported | Deflated Sharpe, PBO, higher t-hurdle |
+| Overfitting | Parameters tuned to noise | Out-of-sample, simplicity, regularisation |
+| Selection of sample period | Start and end chosen after seeing results | Pre-registered windows; regime breakdown |
+| Execution unrealism | Fills at mid, no impact, no queue | Realistic fill model ([tick simulation](/quantitative-research/backtesting/tick-simulation-fills)) |
+| Label leakage | Overlapping labels across train/test folds | Purging and embargo |
+| Corporate-action errors | Unadjusted splits, rights issues, dividends | Adjusted series, verified against a second source |
 
-## 面試常問
+## 2. Multiple testing
 
-- 列出你遇過最隱蔽的 look-ahead 來源
-- 用當前指數成分股回測歷史，會有什麼問題？
+Harvey, Liu and Zhu (2016) argue that, given the extent of data mining in factor research, the usual t-ratio of 2.0 is not an adequate criterion and a newly proposed factor should clear a hurdle above 3.0. The principle carries over to strategy research inside a firm: the more variants tried, the higher the bar.
 
-## Related pages
+## 3. Deflated Sharpe ratio (DSR)
 
-- [Overfitting controls](/quantitative-research/alpha/overfitting-controls)
-- [Corporate actions and point-in-time data](/quantitative-research/data-infra/corporate-actions-pit)
+The standard error of an estimated Sharpe ratio widens with skewness and fat tails and shrinks with sample length. DSR compares the observed Sharpe to the **expected maximum Sharpe of N unskilled trials**, then asks how likely the observed value is to exceed it given the non-normality-adjusted standard error.
+
+**Illustration (verified numerically; assumptions stated).**
+
+- Daily returns, T = 756 days, annualised Sharpe 1.5, normal returns: the standard error of the annualised Sharpe is about 0.58.
+- If the standard deviation of annualised Sharpe across trials is 0.5, the expected best Sharpe from pure noise is about 0.79 for 10 trials, 1.27 for 100 trials, and 1.63 for 1,000 trials.
+
+So a Sharpe of 1.5 found among 1,000 tries is not distinguishable from the best of noise under these assumptions. The trial count and cross-trial dispersion are inputs the researcher must record; if they are not logged, DSR cannot be computed honestly.
+
+## 4. Probability of backtest overfitting (PBO)
+
+Using combinatorial symmetric cross-validation (CSCV), split the performance matrix (time by strategy-variant) into blocks, choose the best variant in-sample on half the blocks, and check its rank out-of-sample on the rest across all combinations. PBO is the fraction of splits where the in-sample best ranks below the out-of-sample median. A PBO well above 0 means selection is mostly choosing noise.
+
+## 5. Purged and embargoed cross-validation
+
+If labels span a window (for example, forward 5-day return), ordinary k-fold leaks. **Purging** removes training observations whose label window overlaps a test observation's label window. **Embargo** also drops a buffer of observations after the test block to cover serial correlation beyond the label horizon. Combinatorial purged cross-validation extends this to produce many backtest paths and hence a distribution of performance instead of one number. Reference: Lopez de Prado, Advances in Financial Machine Learning (2018).
+
+## 6. Research hygiene checklist
+
+1. Log every variant tried (count and parameters).
+2. Fix universe, data cut, and cost model before looking at results.
+3. Use point-in-time data and record the availability lag.
+4. Report DSR or an equivalent haircut, and PBO if a selection step exists.
+5. Hold out a final period that is touched once.
+6. Compare to a naive baseline under the same costs.
+
+See also [performance and attribution](/quantitative-research/backtesting/performance-attribution) and [event-driven vs vectorized backtests](/quantitative-research/backtesting/event-driven-vs-vectorized).
+
+## Points to verify
+
+- Exact formulas for DSR (Bailey and Lopez de Prado, 2014) and PBO (Bailey, Borwein, Lopez de Prado and Zhu, 2017) before implementing.
+- Embargo percentage conventions vary by implementation; there is no universal value.
+
+## Sources
+
+- Harvey, Liu and Zhu (2016), and the Cross-Section of Expected Returns, RFS 29(1). [NBER](https://nber.org/papers/w20592)
+- Lopez de Prado (2018), Advances in Financial Machine Learning, Wiley; description of purging and embargo summarised from public references such as the Purged cross-validation article. [Link](https://en.wikipedia.org/wiki/Purged_cross-validation)
+- Bailey and Lopez de Prado (2014), The Deflated Sharpe Ratio, Journal of Portfolio Management.
+- Bailey, Borwein, Lopez de Prado and Zhu (2017), The Probability of Backtest Overfitting, Journal of Computational Finance.

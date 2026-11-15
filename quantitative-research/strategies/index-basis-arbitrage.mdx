@@ -1,31 +1,66 @@
 ---
 title: "Index and basis arbitrage models"
-description: "Basis 均值回歸的統計建模、隱含融資利率的估計與信號設計。"
-keywords:
-  - "basis arbitrage"
-  - "implied financing"
-  - "mean reversion"
-  - "index futures"
 sidebarTitle: "Index and basis arbitrage"
+description: "Fair value, implied financing, and cost bands for index futures basis trades."
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。實務操作與 HK 成本規則已在 Equities & Derivatives 分頁撰寫，本頁只補統計建模。</Info>
+<Info>**Status of this page:** P0 draft. Desk-level mechanics are on [Index arbitrage](/equities-derivatives/global/index-arbitrage) and the [mock interview](/equities-derivatives/mock/index-arbitrage); this page covers the modelling layer.</Info>
 
-## 大綱
+## 1. Fair value
 
-1. Basis 與隱含融資利率的時間序列性質
-2. 股息預測誤差對 basis 的影響與估計方法
-3. 交易信號：basis 偏離、成本區間與進出時機
-4. 到期日、結算與 roll 的季節性效應
-5. 策略風險：融資利率衝擊、股息變動與分腳執行
+With discrete dividends, cost-of-carry fair value of an index future is
 
-## 面試常問
+`F* = (S - PV(D)) x (1 + r x d / 365)`
 
-- 如何從期貨價格反推隱含融資利率，哪些輸入最容易出錯？
-- Basis 的均值回歸存在嗎？如何驗證？
+where S is spot, D is the dividends expected before expiry, r is the funding rate, and d is days to expiry. Use the continuously compounded form if the desk convention requires it.
 
-## Related pages
+**Worked example (verified numerically).** S = 20,000, dividends = 60 points, r = 4%, d = 30 days, F = 20,040.
 
-- [Index arbitrage and combo trades](/equities-derivatives/global/index-arbitrage)
-- [Index arbitrage（Mock）](/equities-derivatives/mock/index-arbitrage)
-- [Time series](/quantitative-research/foundations/time-series)
+- Fair value = (20,000 - 60) x (1 + 0.04 x 30/365) = 20,005.56.
+- Mispricing = 20,040 - 20,005.56 = 34.4 points.
+- Implied financing rate = (F / (S - D) - 1) x 365 / d = 6.10%.
+
+The implied financing rate is the cleaner quantity to monitor: it can be compared directly with the desk's funding curve and with other expiries.
+
+## 2. Cost band
+
+A trade is only attractive when |F - F\*| exceeds the all-in round-trip cost:
+
+- Futures spread and fees, basket crossing cost, stamp duty or transaction levies where applicable.
+- Borrow cost if the cash leg is short.
+- Funding spread over the risk-free rate.
+- Dividend uncertainty (ex-date and amount) and index-weight rebalancing risk.
+- Tracking error of the replicating basket (full replication vs sampled).
+
+Band asymmetry is normal: short-stock legs are costlier than long-stock legs.
+
+## 3. Modelling the basis
+
+1. Convert futures prices into implied financing (or implied dividend) so that different expiries are comparable.
+2. Fit a term structure of implied financing. Deviations of a single expiry from the curve are calendar-spread signals.
+3. Model the residual as mean-reverting with a half-life estimated out of sample. See [stat arb](/quantitative-research/strategies/stat-arb-pairs) for the estimator.
+4. Treat dividend forecasts as a separate model: the implied dividend is the main source of apparent mispricing around the dividend season.
+
+## 4. Execution structure
+
+- **Basket vs futures** requires simultaneous execution; leg risk is the dominant risk.
+- **Closing-auction execution** lets the cash leg trade at the official close, which matters for index-tracking flows. See [auction mechanisms](/quantitative-research/microstructure/auction-mechanisms).
+- **Roll trades** (expiry to expiry) carry less cash-leg risk but depend on the calendar spread.
+
+## 5. Risks
+
+- Dividend surprise or ex-date shift.
+- Index rebalancing and constituent changes.
+- Borrow recall.
+- Margin and funding changes on the futures leg.
+- Settlement price definition (average of final-day quotes vs closing price).
+
+## Points to verify
+
+- HKEX settlement-price definition for HSI and HSCEI futures and the current margin rules.
+- Stamp duty treatment per leg for the specific instruments used.
+- Day-count convention used by the desk funding curve (365 vs 360).
+
+## Sources
+
+- Internal pages linked above. The fair-value formula is the standard cost-of-carry relationship; the numbers were checked by calculation.

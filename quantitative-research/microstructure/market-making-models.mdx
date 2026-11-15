@@ -1,31 +1,53 @@
 ---
 title: "Market-making models"
-description: "Avellaneda-Stoikov 類模型、報價偏移與庫存風險的取捨。"
-keywords:
-  - "market making"
-  - "Avellaneda-Stoikov"
-  - "inventory risk"
-  - "quote skew"
+description: "Avellaneda-Stoikov reservation price and spread, assumptions, and practical extensions."
 sidebarTitle: "Market-making models"
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Formulas follow Avellaneda and Stoikov (2008) as commonly stated; verify against the paper before implementing. Numerical example checked by calculation. Product-level obligations are on [HK market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules) and [mock ETF market making](/equities-derivatives/mock/etf-market-making).</Info>
 
-## 大綱
+## 1. The Avellaneda-Stoikov (A-S) model
 
-1. 做市的最佳化問題：價差收益 vs 庫存風險 vs adverse selection
-2. Avellaneda-Stoikov：reservation price 與最適價差的直覺
-3. 報價偏移（skew）：庫存、fair value 不確定性與對沖成本
-4. ETF 做市的特殊性：iNAV、對沖工具與創贖作為庫存出口
-5. 模型假設與現實落差：跳躍、延遲、queue 位置
+Setup: mid price follows arithmetic Brownian motion with volatility sigma; the market maker has CARA utility with risk aversion gamma, holds inventory q, and trades until T. Fill intensity at distance delta from the mid is lambda(delta) = A x exp(-k x delta).
 
-## 面試常問
+Two outputs:
 
-- 庫存增加時，reservation price 往哪個方向移？為什麼？
-- 波動率上升，最適價差如何變化？
+- **Reservation price** r = s - q x gamma x sigma^2 x (T - t). Positive inventory lowers r, so the maker quotes lower to sell and discourages further buying.
+- **Optimal total spread** = gamma x sigma^2 x (T - t) + (2 / gamma) x ln(1 + gamma / k). Quotes are placed symmetrically around r.
 
-## Related pages
+**Worked example (verified).** s = 100, gamma = 0.1, sigma = 2, T - t = 1, k = 1.5.
 
-- [Order book and spread](/quantitative-research/microstructure/order-book-spread)
-- [Queue position and fills](/quantitative-research/microstructure/queue-position-fill)
-- [ETF creation and redemption](/equities-derivatives/global/etf-creation-redemption)
+- Spread = 0.4 + 1.291 = 1.691.
+- Inventory 0: reservation 100.0, bid 99.15, ask 100.85.
+- Inventory +5: reservation 98.0, bid 97.15, ask 98.85. The whole quote shifts down by 2.0, i.e. by q x gamma x sigma^2 x tau.
+
+## 2. What the model leaves out
+
+- **Adverse selection:** the mid is exogenous and no trade is informative. In practice this is the dominant cost; add a flow-toxicity term or widen the spread where order-flow imbalance is high.
+- **Fill intensity form:** the exponential form is an assumption. Estimate lambda(delta) from own fills, including queue position effects ([queue position and fills](/quantitative-research/microstructure/queue-position-fill)).
+- **Discreteness:** continuous quotes ignore the tick size. Quotes must be rounded to the tick grid, which can dominate the optimal spread in large-tick stocks.
+- **Constant sigma:** use a short-horizon vol estimate and a floor.
+- **Terminal horizon:** the finite T produces a spread that shrinks toward the end; many implementations use an infinite-horizon variant or a rolling horizon.
+
+## 3. Practical extensions
+
+1. **Inventory limits and skew caps:** hard position bounds, with quote withdrawal on the side that would breach.
+2. **Signal skew:** shift the reservation price by a short-horizon alpha (imbalance, hedge-instrument move).
+3. **Hedging inventory:** for ETFs or options the inventory can be hedged with futures or baskets, so the relevant risk is the residual after hedge, not q itself.
+4. **Obligation-aware quoting:** exchange requirements on spread, size, and uptime constrain the optimum; model them as constraints.
+5. **Multi-asset:** inventory risk becomes a covariance term; skews depend on the whole portfolio.
+
+## 4. Evaluating a quoting model
+
+- Compare realised spread, fill rate, inventory distribution, and P&L variance against a baseline of fixed-width quotes.
+- Run in a simulator that models queue position and adverse selection, otherwise A-S looks better than it is ([tick simulation and fills](/quantitative-research/backtesting/tick-simulation-fills)).
+
+## Points to verify
+
+- Exact form of the optimal spread when the horizon term is dropped (infinite-horizon variants).
+- Calibration of k and A on HKEX data for the products of interest.
+
+## Sources
+
+- Avellaneda and Stoikov (2008), High-frequency trading in a limit order book, Quantitative Finance 8(3).
+- Biais, Glosten and Spatt (2005), for the economic components that A-S omits.

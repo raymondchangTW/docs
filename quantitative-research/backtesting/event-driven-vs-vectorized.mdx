@@ -1,29 +1,63 @@
 ---
 title: "Event-driven vs vectorized backtests"
-description: "事件驅動與向量化回測的取捨與適用情境。"
-keywords:
-  - "event-driven backtest"
-  - "vectorized backtest"
-  - "simulation architecture"
 sidebarTitle: "Event-driven vs vectorized"
+description: "When to use each backtest architecture and what each can and cannot represent."
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Design guidance, not a benchmark of specific libraries.</Info>
 
-## 大綱
+## 1. Definitions
 
-1. 向量化回測：速度優勢、適用於低頻與節奏固定的策略
-2. 事件驅動：貼近實盤邏輯、特別適合訂單與狀態相依的策略
-3. 兩者結果不一致時的對照與除錯
-4. 研究與生產共用同一份策略邏輯的架構
-5. 效能考量：資料量、並行化與記憶體
+- **Vectorized:** compute signals, positions, and returns as array operations over the whole sample. Positions are a function of lagged signals; P&L = position(t-1) x return(t) minus costs.
+- **Event-driven:** replay a time-ordered stream of events (quotes, trades, order acks, timers). Strategy code reacts to each event and issues orders; a simulated exchange handles matching and fills.
 
-## 面試常問
+## 2. Comparison
 
-- 什麼情況必須用事件驅動回測？
-- 如何證明一個回測引擎沒有 look-ahead？
+| Dimension | Vectorized | Event-driven |
+| --- | --- | --- |
+| Speed | Very fast; suited to wide parameter scans | Slower; per-event logic |
+| Look-ahead protection | Manual (lag discipline); easy to get wrong with shifts | Structural: strategy only sees events up to now |
+| Path dependence (stops, inventory limits, order state) | Awkward | Natural |
+| Execution realism (queue, latency, partial fills) | Approximated by cost terms | Representable |
+| Code parity with production | Low | High if the same strategy class runs live |
+| Typical horizon | Daily to minutes | Seconds to ticks |
 
-## Related pages
+## 3. Choosing
 
-- [Tick-level simulation and fills](/quantitative-research/backtesting/tick-simulation-fills)
-- [Python data stack](/quantitative-research/data-infra/python-data-stack)
+Use vectorized for: cross-sectional alpha research, factor tests, daily rebalanced portfolios, and first-pass signal screening where costs are a function of turnover and spread.
+
+Use event-driven for: market making, execution algorithms, auction strategies, anything where order state, queue position, or latency affects P&L ([queue position and fills](/quantitative-research/microstructure/queue-position-fill)).
+
+A common workflow: screen vectorized, then validate the survivors in an event-driven simulator with a realistic fill model, and compare the two P&L streams. A large gap indicates the vectorized cost model was too optimistic.
+
+## 4. Common vectorized errors
+
+1. Signal uses same-bar data as the return it is traded against (off-by-one lag).
+2. Rebalance on close with a signal computed from the close.
+3. Costs as a constant bps rather than a function of size, spread, and volatility ([market impact and TCA](/quantitative-research/microstructure/market-impact-tca)).
+4. Full-sample normalisation (mean, std, rank) leaks future information.
+5. Missing-data forward fill that carries stale prices into signals.
+
+## 5. Common event-driven errors
+
+1. Timestamp semantics: exchange time vs receive time; using exchange time for decisions removes latency.
+2. Order-book reconstruction gaps lead to a wrong state that persists.
+3. Fill model too generous ([tick simulation and fills](/quantitative-research/backtesting/tick-simulation-fills)).
+4. No feedback of own orders into the book, so impact is ignored.
+5. Time-zone, auction-phase, and holiday handling.
+
+## 6. Testing the backtester itself
+
+- Replay a strategy with known P&L (for example a buy-and-hold) and check it matches.
+- Shuffle the time index of signals; the P&L should collapse. If not, there is leakage.
+- Delay the signal by one bar or by N milliseconds and measure the P&L decay curve.
+
+For bias controls see [Backtest bias taxonomy](/quantitative-research/backtesting/bias-taxonomy).
+
+## Points to verify
+
+- Specific library behaviours (bar timestamp conventions, default fill rules) should be checked in the version used.
+
+## Sources
+
+- Methodological synthesis; no single source. Bias controls referenced from the pages linked above.

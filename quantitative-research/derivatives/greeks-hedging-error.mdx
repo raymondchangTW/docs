@@ -1,30 +1,61 @@
 ---
 title: "Greeks and hedging error"
-description: "Greeks 的定義、離散避險誤差與 gamma/theta 取捨。"
-keywords:
-  - "Greeks"
-  - "discrete hedging"
-  - "gamma theta tradeoff"
+description: "Gamma-theta P&L, discrete-hedging error, and transaction-cost-aware hedging bands."
 sidebarTitle: "Greeks and hedging error"
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Worked numbers were checked by calculation; model results (Leland, Whalley-Wilmott) are asymptotic and should be tested on the desk's own data.</Info>
 
-## 大綱
+## 1. P&L of a delta-hedged option
 
-1. Delta、gamma、vega、theta、vanna、volga 的定義與關係
-2. Gamma 與 theta 的取捨：realized vol 與 implied vol 的損益
-3. 離散避險誤差：避險頻率、交易成本與 Leland 類調整
-4. 避險帶（no-trade band）與事件風險
-5. 損益歸因：delta、gamma、vega、theta、residual
+Over a short interval, the delta-hedged P&L is approximately
 
-## 面試常問
+`P&L = 0.5 x Gamma_$ x (r^2 - sigma_imp^2 x dt) + vega x d(sigma_imp) + theta residual`
 
-- 持有 long gamma 部位，何時賺錢何時虧錢？
-- 每日避險與連續避險的損益差異來源
-- 如何拆解一天的期權損益？
+where Gamma\_\$ = Gamma x S^2 is dollar gamma, r is the realised return in the interval, and dt is the interval in years. The first term is the realised-versus-implied variance bet.
 
-## Related pages
+**Worked example (verified).** Gamma\_\$ = 5,000,000, implied vol 25%, daily interval.
 
-- [Ito and Black-Scholes](/quantitative-research/derivatives/ito-black-scholes)
-- [Delta-1 hedging](/equities-derivatives/global/delta-1-hedging)
+- Breakeven daily move = 25% / sqrt(252) = 1.575%.
+- A 2% move: 0.5 x 5,000,000 x (0.02^2 - 0.01575^2) = about +380.
+- A 1% move: about -370.
+
+Hedge frequency changes the realised path of this P&L but not its expectation under the model.
+
+## 2. Discrete hedging error
+
+If the true process is Black-Scholes and the hedge is rebalanced N times to expiry, the hedging error has standard deviation of order 1/sqrt(N) times a term proportional to vega-like exposure (Boyle and Emanuel, 1980). Practical drivers beyond N:
+
+- Gamma near the strike close to expiry.
+- Jumps and gaps, which a continuous model cannot hedge.
+- Misspecified vol: the hedge delta uses sigma_hedge, and the P&L depends on realised minus hedge-vol, not implied.
+
+## 3. Hedging with transaction costs
+
+**Leland (1985)** proposes pricing with an adjusted vol: sigma_adj^2 = sigma^2 x (1 + Le), where Le = sqrt(2/pi) x k / (sigma x sqrt(dt)) and k is the proportional cost per trade.
+
+Verified examples with k = 0.1% and sigma = 25%: daily rebalancing gives Le = 0.051 and sigma_adj of about 25.6%; hourly rebalancing (8 per day) gives Le = 0.143 and sigma_adj of about 26.7%.
+
+Caveat: Zhao and Ziemba (2003) argue that Leland's main convergence theorem is flawed, and that exact replication is not achieved in the limit. Treat the formula as a heuristic for cost-adjusted vol, not a replication proof.
+
+**No-trade band (Whalley and Wilmott).** The optimal policy under proportional costs is to hedge only when delta leaves a band around the Black-Scholes delta. The half-width scales with lambda^(1/3), where lambda is the proportional cost, and also depends on gamma and risk aversion. Doubling the cost widens the band by about 26%, not 100%.
+
+## 4. Desk-level implications
+
+- Hedge on delta bands tied to gamma and spread, not only to a clock.
+- Aggregate across the book: netting reduces cost more than per-option bands do.
+- Hedge instrument choice (futures vs cash vs ETF) changes both cost and basis risk. See [Delta-1 hedging](/equities-derivatives/global/delta-1-hedging).
+- Separate the P&L explain into gamma-theta, vega, hedge slippage, and carry.
+
+## Points to verify
+
+- Exact band formula and constants in Whalley and Wilmott (1997) before implementing.
+- HK stamp duty and fee exemptions for market-maker hedges, which materially change k.
+
+## Sources
+
+- Leland (1985), Option pricing and replication with transactions costs, Journal of Finance.
+- Zhao and Ziemba (2003), On Leland's Option Hedging Strategy with Transaction Costs.
+- Toft (1996), On the Mean-Variance Tradeoff in Option Replication with Transactions Costs, JFQA 31(2).
+- Whalley and Wilmott (1997), An asymptotic analysis of an optimal hedging model for option pricing with transaction costs, Mathematical Finance.
+- Boyle and Emanuel (1980), Discretely adjusted option hedges, Journal of Financial Economics.

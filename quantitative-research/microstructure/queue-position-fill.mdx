@@ -1,29 +1,55 @@
 ---
 title: "Queue position and fill probability"
-description: "Queue 位置、成交機率與被動單的預期收益估計。"
-keywords:
-  - "queue position"
-  - "fill probability"
-  - "passive order"
 sidebarTitle: "Queue position and fills"
+description: "Value of queue position, fill probability models, and why backtests overstate passive fills."
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+<Info>**Status of this page:** P0 draft. Model-level; empirical magnitudes are quoted only where cited.</Info>
 
-## 大綱
+## 1. Why queue position matters
 
-1. 價格-時間優先下的 queue 位置與其價值
-2. 成交機率的估計：queue 前方數量、到達率、取消率
-3. 被動單的預期收益：成交收益減 adverse selection
-4. 掛單 vs 吃單的決策框架
-5. 回測中模擬 queue 位置的常見偏誤
+Under price-time priority, an order at the back of a long queue at the touch fills only after the orders ahead are executed or cancelled. Moallemi and Yuan model the value of a limit order as a function of its queue position, incorporating adverse selection and queueing dynamics, and find that queue value can be of the same order of magnitude as the bid-ask spread. Huang et al. (2019) reach a similar conclusion in an agent-based order book model. Consequence: in large-tick products, queue priority is an asset that has to be priced.
 
-## 面試常問
+## 2. Components of a fill model
 
-- 排在 queue 前面為什麼價值較高，但成交後未必賺錢？
-- 如何在回測中保守地估計被動單的成交？
+For a passive order at the touch, the fill depends on:
 
-## Related pages
+1. **Orders ahead** (position in queue at submission).
+2. **Cancellations ahead** (reduce the queue without trading).
+3. **Market orders arriving** at that side before the price moves away.
+4. **Price move** (if the touch moves away, the order is no longer at the touch).
 
-- [Market-making models](/quantitative-research/microstructure/market-making-models)
-- [Tick-level simulation and fills](/quantitative-research/backtesting/tick-simulation-fills)
+Simple benchmark: if volume at the touch trades at rate mu (shares per unit time) and cancellations ahead are ignored, expected time to fill is roughly (shares ahead) / mu. Including cancellations shortens the wait; including price moves lowers the probability of ever filling.
+
+## 3. Adverse selection of a passive fill
+
+Fills are not random: a bid fills more often when the price is about to fall. The conditional expected mid move after a fill is therefore negative for a buy order. Any estimate of passive-order profit must use the **post-fill** mid move, not the unconditional one. This is why a realised-spread calculation is a better backtest metric than quoted spread ([order book and spread](/quantitative-research/microstructure/order-book-spread)).
+
+## 4. Modelling approaches
+
+| Approach | Idea | Limitation |
+| --- | --- | --- |
+| Poisson arrival of market orders | Fill time is exponential | Ignores clustering and cancellations |
+| Queueing model with cancellations (fluid or diffusion limit) | Explicit queue dynamics | Needs calibrated arrival and cancel rates per level |
+| Empirical hazard model | Fit time-to-fill on own order data | Needs enough own fills; regime dependent |
+| Queue-reactive simulation | Rates depend on queue sizes | Calibration complexity |
+
+## 5. Estimating queue position
+
+- With a full order-by-order feed, reconstruct position exactly from order IDs.
+- With only level-aggregated data, position is uncertain: assume a conservative rule (placed at the back) and an optimistic rule (pro-rata) and report both. A strategy that only works under the optimistic rule is not validated.
+
+## 6. Backtesting implication
+
+A naive backtest that fills a passive order when the price touches the limit price overstates fills and understates adverse selection. Use a fill model with an explicit queue assumption and a latency assumption. Detail on [tick simulation and fills](/quantitative-research/backtesting/tick-simulation-fills).
+
+## Points to verify
+
+- Whether the HKEX data feed in use carries order-level (broker queue) information or only aggregated depth.
+- Priority rules for special order types (at-auction, enhanced limit) at HKEX.
+
+## Sources
+
+- Moallemi and Yuan (2016), A Model for Queue Position Valuation in a Limit Order Book. [PDF](https://drupalgsb-test.paas.cc.columbia.edu/sites/default/files-efs/pubfiles/25461/queue-value-2016.pdf)
+- Huang, Pulido, Rosenbaum, Saliba and Sfendourakis (2019), From Glosten-Milgrom to the whole limit order book and applications to financial regulation. [arXiv](https://arxiv.org/abs/1902.10743v2)
+- Maglaras, Moallemi and Zheng (2015), Optimal execution in a limit order book and an associated microstructure market impact model. [PDF](https://www0.gsb.columbia.edu/faculty/cmaglaras/papers/Micro-MI-052015.pdf)
