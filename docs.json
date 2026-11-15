@@ -86,6 +86,9 @@
               {
                 "group": "Warrants & CBBC",
                 "pages": [
+                  "equities-derivatives/hk/warrants/issuance",
+                  "equities-derivatives/hk/warrants/liquidity-provider-rules",
+                  "equities-derivatives/hk/warrants/trading-rules",
                   "equity-derivatives/hk/warrants/issuance",
                   "equity-derivatives/hk/warrants/liquidity-provider-rules",
                   "equity-derivatives/hk/warrants/trading-rules",
