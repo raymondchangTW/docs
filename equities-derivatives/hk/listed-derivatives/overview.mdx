@@ -1,27 +1,187 @@
 ---
 title: "Hong Kong listed derivatives"
 sidebarTitle: "Listed derivatives"
-description: "Exchange-traded futures and options on HKEX used in Delta-1 trading and hedging. Draft placeholder."
+description: "HKEX equity index futures and options, stock futures and stock options: contract terms, trading hours, market maker programmes, position limits and margining."
 keywords:
   - "Hong Kong"
   - "HKEX"
-  - "futures"
-  - "options"
-  - "listed derivatives"
+  - "HSI futures"
+  - "Hang Seng TECH"
+  - "stock options"
+  - "stock futures"
+  - "market maker"
+  - "position limits"
+  - "margin"
 icon: "chart-line"
 ---
 
-<Warning>
-  **Draft placeholder.** This page has no verified content yet. The scope below is a proposal to confirm or change before it is written.
-</Warning>
+<Info>
+  **Status of this page.** Last checked on 15 November 2026 against HKEX product pages, circulars and factsheets. Contract terms, fees and lists of underlying stocks change often. Confirm against the current HKEX contract specifications before trading. Unverified or conflicting items are listed under [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
 
-This page is intended to cover exchange-traded derivatives on HKEX that a Delta-1 desk uses for trading and hedging.
+## Overview
 
-## Proposed scope
+Listed derivatives on HKEX are split across two exchange and clearing structures:
 
-- Index futures and stock futures: contract specifications, trading hours, margining and position limits.
-- Stock options and index options.
-- Market making programmes for listed derivatives.
-- Short selling exceptions for hedging, which are covered for warrants on the [liquidity provider rules](/equities-derivatives/hk/warrants/liquidity-provider-rules) page.
+| Product group | Exchange rules | Clearing house |
+| --- | --- | --- |
+| Equity index futures and options, stock futures | Hong Kong Futures Exchange (HKFE) | HKFE Clearing Corporation (HKCC) |
+| Stock options | The Stock Exchange of Hong Kong (SEHK) options market | The SEHK Options Clearing House (SEOCH) |
 
-See also: [hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging) and the [Hong Kong market overview](/equities-derivatives/hk/overview).
+HKCC acts as the counterparty to open HKFE contracts. Its guarantee does not extend to a clearing participant's obligations to its own clients.
+
+HKEX lists the following equity-related products:
+
+| Category | Products |
+| --- | --- |
+| Hang Seng Index (HSI) | Futures, options, futures options, weekly options, Mini-HSI futures and options, Gross and Net Total Return futures, dividend futures, volatility index futures |
+| Hang Seng China Enterprises Index (HSCEI, code HHI) | Futures, options, futures options, weekly options, Mini-HSCEI futures and options, Gross and Net Total Return futures |
+| Hang Seng TECH Index (HSTECH, code HTI) | Futures, options, futures options, weekly options |
+| Other indices | Hang Seng Biotech futures, MSCI index futures and options, sector index futures, CES China 120 futures |
+| Single stock | Stock futures; stock options (monthly and weekly expiries) |
+
+HKEX also lists FX, interest rate and commodity products (USD/CNH futures, China Government Bond futures, USD gold). These are outside the scope of this page.
+
+## Equity index futures and options
+
+The core HSI, HSCEI and HSTECH contracts share most terms.
+
+| Item | HSI | HSCEI (HHI) | HSTECH (HTI) |
+| --- | --- | --- | --- |
+| Multiplier | HK\$50 per index point | HK\$50 | HK\$50 |
+| Minimum fluctuation | 1 index point | 1 index point | 1 index point |
+| Mini contract multiplier | HK\$10 (code MHI) | HK\$10 (code MCH) | Not stated |
+| Exchange fee per contract | HK\$10.00 | HK\$3.50 | HK\$2.50 (a 50% market-wide discount applies to a HK\$5 fee) |
+| Position limit (delta, futures and options combined) | 15,000 | 25,000 | 30,000 |
+
+Exchange fee for Mini-HSI options is stated as HK\$2.00 and for Mini-HSCEI options as HK\$1.00.
+
+### Contract months and expiry
+
+| Item | Specification |
+| --- | --- |
+| Short-dated futures and options months | Spot month, the next three calendar months and the next three quarter months (March, June, September, December) |
+| Long-dated months (HSI, HSCEI) | June and December, plus the next three December months |
+| Futures and monthly options last trading day | The second last trading day of the contract month |
+| Futures options expiry | The third Friday of the contract month, or the preceding trading day if that is not a trading day |
+| Weekly options expiry | The last trading day of the contract week |
+| Final settlement | Cash, in HKD. Average of index quotations taken at five-minute intervals on the last trading day, plus the closing level |
+
+Options strike intervals for short-dated series are 50 points below 5,000, 100 points from 5,000 to below 20,000, and 200 points at 20,000 and above. Long-dated series use 100, 200 and 400 points respectively.
+
+### Trading hours (Hong Kong time)
+
+| Session | Hours |
+| --- | --- |
+| Pre-market opening | 8:45 a.m. to 9:15 a.m. and 12:30 p.m. to 1:00 p.m. |
+| Day session | 9:15 a.m. to 12:00 noon and 1:00 p.m. to 4:30 p.m. |
+| After-hours (T+1) session | 5:00 p.m. to 3:00 a.m. |
+| Expiring contract on last trading day | 9:15 a.m. to 12:00 noon and 1:00 p.m. to 4:00 p.m. |
+
+<Note>
+  A third-party source quotes the after-hours session as starting at 5:15 p.m. The HKEX factsheet and product page state 5:00 p.m. Verify the current start time.
+</Note>
+
+## Stock futures
+
+| Item | Specification |
+| --- | --- |
+| Underlying | Selected stocks listed on SEHK |
+| Contract multiplier | Board lot size of the underlying shares (varies by stock) |
+| Contract months | Spot month, the next two calendar months and the next two quarter months |
+| Last trading day | The second last trading day of the contract month |
+| Final settlement | Cash settled. The official closing price of the underlying on the last trading day, settled on the first trading day after it |
+| Minimum fluctuation | HK\$0.01 |
+| Trading hours | 9:30 a.m. to 12:00 noon and 1:00 p.m. to 4:00 p.m. |
+| Exchange fee | Tier 1 HK\$3.0, Tier 2 HK\$1.0, Tier 3 HK\$0.5 per contract. Commission levy HK\$0.10 |
+| Position limit | Five tiers: 25,000, 20,000, 15,000, 10,000 and 5,000 contracts net, all months combined. A single-month limit of two times the net limit also applies. Reviewed annually, effective the first trading day of April |
+
+Most listed stock futures have market makers. Some have none and trade order-driven, which carries liquidity risk. At the time of the page snapshot, the Tracker Fund of Hong Kong (2800) future had no market maker.
+
+**Upcoming change.** On 3 November 2026 HKEX announced 12 new stock futures to start on 18 January 2027, with a multiplier of one board lot of the underlying stock. The same circular discontinues 20 existing stock futures. No new contract months for those 20 will be listed from 31 December 2026.
+
+## Stock options
+
+| Item | Specification |
+| --- | --- |
+| Option type and style | Puts and calls. American style, with an exercise fee of HK\$2.00 per the weekly options factsheet |
+| Contract size | Usually one board lot of the underlying. Some classes use more than one board lot, listed per class by HKEX |
+| Contracted value | Option premium multiplied by contract size |
+| Monthly expiry | The business day immediately preceding the last business day of the contract month |
+| Weekly expiry | The last business day of the contract week. Expiring weekly contracts close at 12:00 noon on expiry day |
+| Tiers | Each class has a tier level (1 to 3) that drives the trading tariff, and a position limit effective from 1 April 2026 |
+| Position limit | Per class, per market direction, all expiry months combined. Long calls and short puts are one direction. Short calls and long puts are the other |
+
+**Weekly options.** HKEX describes its weekly stock options as the first weekly single stock options in Asia. They use the same HKATS code, contract size and tier as the monthly class. According to the HKEX release of 12 October 2026, weekly stock options will cover 66 companies or ETFs after the latest additions. HKEX states that single stock options averaged 899,056 contracts per day in the first nine months of 2026.
+
+New classes are added frequently, some with both weekly and monthly expiries from the first day of trading. Use the HKEX stock options list for current classes, contract sizes and tiers.
+
+## Market maker and liquidity provider programmes
+
+HKEX operates a Market Maker (MM) programme and a Liquidity Provider (LP) programme.
+
+| Programme | Basis | Products |
+| --- | --- | --- |
+| MM, futures | HKFE rules | HSI volatility futures, dividend point futures, sector index futures, HSI and HSCEI total return futures, stock futures, selected FX and HIBOR futures |
+| MM, index options | HKFE rules | HSI, HSCEI and HSTECH options, futures options, weekly options and Mini-HSI/Mini-HSCEI options |
+| MM, stock options | SEHK options trading rules | Single stock options |
+| LP | Commercial arrangement, not set in exchange rules | MSCI index futures and selected FX products, among others |
+
+Market maker types for options are the Primary Market Maker (PMM), the continuous quote market maker (CQMM) and the quote request market maker (QRMM). The PMM programme applies to HSI, HSCEI and HSTECH options and selected stock options classes.
+
+Selected obligations from the HKEX obligations table:
+
+| Product | Selected obligations |
+| --- | --- |
+| Stock index futures (general) | At least two assigned contract months. Continuous quotes for at least 70% of trading hours each month. Quote request responses for at least 70% of requests, within 20 seconds. Maximum spread 15 minimum fluctuations. Minimum quote size 5 contracts |
+| Stock index options, day session | At least 50 assigned series (25 for Mini-HSI and Mini-HSCEI). 70% quote and response thresholds. Minimum display time 20 seconds. Spread limits depend on contract month and price level, for example 30 points or 10% of bid for the first to fourth calendar months up to the 750-point price level. Minimum quote size 5 contracts for calendar months and 3 for quarter months |
+| Stock index options, T+1 session | Same series count. 35% quote and response thresholds. Wider spread limits. Minimum quote size 3 contracts for calendar months and 2 for quarter months |
+
+The extracted page did not include stock options obligations or the fee incentives. Refer to the HKEX obligations and incentives page for those.
+
+## Position limits and large open position reporting
+
+Position limits and Large Open Position (LOP) reporting apply to most futures and options traded on HKFE and SEHK. Limits come from three layers: the Securities and Futures (Contracts Limits and Reportable Positions) Rules, the SFC Guidance Note, and exchange rules and circulars.
+
+- Index products: limits are expressed in position delta, with futures and options combined. Delta weights are published daily by HKEX. See the table above for limits stated in the 2026 factsheet.
+- Single stock futures: net limits by tier, plus a single-month limit.
+- Single stock options: per-class limits that are reviewed annually.
+- LOP reporting is measured on a gross basis, by number of open contracts. Asset managers aggregate across funds and show a breakdown by sub-fund.
+
+## Clearing and margin
+
+HKCC and SEOCH calculate margin at the end of each trading day using PRiME, a SPAN-compatible portfolio margining system within the Derivatives Clearing and Settlement System (DCASS). Participants can calculate clearing house margin from the Risk Parameter File distributed by HKEX.
+
+Client margin is the clearing house margin multiplied by a Client Margin Multiplier. Before the June 2026 review, the minimum client initial margin for stock options was 1.33 times the clearing house margin. On 22 June 2026 HKEX announced enhancements to the client margin framework, including a revised multiplier and maintenance margin for stock options and other derivatives. The extracted text did not give the full set of new multipliers.
+
+## Points to verify before relying on this page
+
+- **HKEX stock options contract summary page** could not be fetched. Stock option terms above come from the weekly options factsheet, HKEX circulars and news releases. Contract months, minimum fluctuation, trading hours and the tariff by tier should be confirmed on the HKEX page.
+- **Stock futures trading hours and fees** come from a contract summary page updated 3 November 2025. Confirm they remain current.
+- **After-hours session start time** (5:00 p.m. versus 5:15 p.m.) differs between sources.
+- **Index position limits.** The 2026 factsheet states 15,000 (HSI), 25,000 (HSCEI) and 30,000 (HSTECH) delta. Older HKEX documents show different figures (for example 20,000 for HSI products in a 2021 FAQ, and a 12,000 illustrative example in a 2023 FAQ). The limits were revised more than once, so check the current Large Open Positions and Position Limits table.
+- **LOP reporting level and any 60% rule** for stock index products appear in a 2017 FAQ but not in the December 2023 FAQ. Confirm the current rule.
+- **Client Margin Multiplier values** after the 22 June 2026 enhancement are not extracted. Use the HKEX circular for exact figures.
+- **Market maker incentives and stock options obligations** were not extracted.
+- **HSTECH exchange fee.** It is stated as a 50% discount on a HK\$5 fee, "until further notice".
+- **Column mapping of the options table** in the 2026 factsheet was ambiguous in extraction. Check the exchange fee and multiplier by product against the factsheet.
+
+## Related pages
+
+- [Hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
+- [Hong Kong market overview](/equities-derivatives/hk/overview)
+- [Warrant liquidity provider rules](/equities-derivatives/hk/warrants/liquidity-provider-rules)
+
+## Sources
+
+- [HKEX Listed Derivatives](https://www.hkex.com.hk/Products/Listed-Derivatives) (updated 20 Jul 2026)
+- [HKEX Hang Seng derivatives factsheet 2026](https://www.hkex.com.hk/-/media/HKEX-Market/Products/Listed-Derivatives/Equity-Index/Hang-Seng-Derivatives/HKEX_factsheet_HSDerivatives_2026_EN.pdf)
+- [HKEX Stock Futures contract summary](https://www.hkex.com.hk/Products/Listed-Derivatives/Single-Stock/Stock-Futures?sc_lang=en)
+- [HKEX circular EQD/18/26, new stock futures](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Circulars-and-Notices/Participant-and-Members-Circulars/HKFE/2026/EQD_18_26_e.pdf) (3 November 2026)
+- [HKEX weekly stock options factsheet](https://www.hkex.com.hk/-/media/HKEX_Common/Market/Products/Listed-Derivatives/Single-Stock/Weekly-Stock-Options/HKEX_infosheet_Weekly-Stock-Options_EN_202608_0728.pdf) (August 2026)
+- [HKEX news release, new stock option classes](https://www.hkex.com.hk/News/News-Release/2026/261012news) (12 October 2026)
+- [HKEX market maker obligations and incentives](https://www.hkex.com.hk/Products/Listed-Derivatives/Market-Maker-Program/Market-Maker-Obligations-and-Incentives?sc_lang=en)
+- [HKEX Primary Market Maker Program](https://www.hkex.com.hk/Products/Listed-Derivatives/Market-Maker-Program/Primary-Market-Maker-Program)
+- [HKEX FAQ on position limits and LOP reporting](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Circulars-and-Notices/Participant-and-Members-Circulars/SEHK/2023/Changes-on-Position-Limits-and-LOP-Reporting-Requirements_e.pdf) (20 December 2023)
+- [HKEX margin framework](https://www.hkex.com.hk/Services/Clearing/Listed-Derivatives/Risk-Management/Margin?sc_lang=en)
+- [HKEX news release, client margin framework](https://www.hkex.com.hk/News/Market-Communications/2026/260622news?sc_lang=en) (22 June 2026)
