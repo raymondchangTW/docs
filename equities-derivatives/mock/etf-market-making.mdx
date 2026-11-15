@@ -116,9 +116,52 @@ This page covers ETF market making and arbitrage questions for Delta-1 and ETF d
   </Accordion>
 
   <Accordion title="Q8. How does an ex-dividend date affect an ETF and its futures hedge?">
-    When constituents go ex-dividend, the index level falls by roughly the weighted dividend amount, and the ETF's NAV reflects that change. The futures price already includes the expected dividend, so futures and spot do not move in sync around the ex-date.
+    When constituents go ex-dividend, a **price-return** index falls by roughly the weighted dividend amount, and the ETF's NAV reflects that change. A total-return index does not drop, because it reinvests the dividend, so check which version the futures and the ETF track. The futures price already includes the expected dividend, so futures and spot do not move in sync around the ex-date.
 
     The key point is that the difference between expected and actual dividends becomes basis risk. When ETF holders receive dividends and whether they are reinvested depends on the ETF's own documents, so say in the interview that you would check the product documentation.
+  </Accordion>
+</AccordionGroup>
+
+## Quick pricing and product variations
+
+<AccordionGroup>
+  <Accordion title="Q9. An ETF trades at 50.00. One stock is 7% of the basket and rises 2% while everything else is unchanged. Where is the new fair value?">
+    The ETF's fair value moves by the weight times the stock's return: 7% times 2% is **0.14%**, so the new fair value is about 50 times 1.0014, or **50.07**.
+
+    Candidate reports from ETF market makers describe this kind of quick repricing question in the technical round, often with awkward numbers so that you have to estimate under time pressure.
+
+    **Follow-up:** In practice the other stocks rarely stay unchanged. How would you update fair value if only one stock has printed?
+
+    → Use the stocks that have traded plus a proxy (index futures or a correlated ETF) for the rest, and weight your confidence in each input. A single print in a large constituent moves the fair value, but the rest of the basket usually moves with it through correlation.
+  </Accordion>
+
+  <Accordion title="Q10. How does a 2x leveraged or an inverse ETF rebalance, and why does a market maker care?">
+    A daily leveraged fund must reset its exposure at each close to the target multiple of its new NAV. The rebalance trade is approximately the **leverage factor times (leverage factor minus 1) times the day's return times NAV**.
+
+    - **2x long:** 2 times 1 is 2. A 3% up day on a fund with 1 billion NAV needs about 60 million of extra exposure.
+    - **Inverse (minus 1x):** minus 1 times minus 2 is also 2, so the same 3% up day needs about 60 million of buying to cover part of the short.
+    - **Minus 2x:** minus 2 times minus 3 is 6, so it needs about 180 million.
+
+    Because the factor is positive for both leveraged and inverse funds, **the rebalance always trades in the direction of the day's move**, usually near the close. That is short-gamma behavior: it adds to momentum into the close.
+
+    **Why it matters:** the flow is predictable, so the desk anticipates it in the closing auction and in its hedges. It also explains why leveraged funds drift from the multiple of the index over periods longer than a day (volatility decay), which comes up as a follow-up.
+
+    **Follow-up:** Why can't the fund just hold a fixed amount of futures?
+
+    → Then its exposure would no longer be the target multiple of NAV after the first move. The daily objective forces the reset.
+  </Accordion>
+
+  <Accordion title="Q11. You make markets in a Hong Kong-listed ETF on mainland A-shares. What is different from a Hong Kong equity ETF?">
+    The mechanism is the same, but the constraints are tighter. Points to name, and to say you would check against the current rules and the fund's documents:
+
+    - **Access and creation:** the manager usually reaches A-shares through Stock Connect or a qualified foreign investor channel, and creations and redemptions are commonly in cash rather than in kind. You do not deliver the basket yourself, so you carry execution risk on the manager's trades through the creation fee and the dealing terms.
+    - **Hedging:** single A-shares are hard to short for offshore investors, so hedges are usually index futures traded offshore (for example A50 futures) or a correlated ETF, with basis risk to the actual basket.
+    - **Market rules:** daily price limits on A-shares, a rule that shares bought cannot be sold on the same day, and Stock Connect trading days that differ from both markets' calendars around holidays. When the underlying is limit up or limit down, the NAV is not a tradable price.
+    - **Currency:** the basket is in onshore renminbi (CNY), while hedges and quotes may be in offshore renminbi (CNH) or Hong Kong dollars, so there is a CNY versus CNH basis.
+
+    **Follow-up:** The A-share market hits limit down and the ETF keeps trading in Hong Kong at a deep discount to NAV. Is the discount real?
+
+    → Largely yes. The NAV uses prices you cannot trade at, so the ETF is acting as the price discovery venue. Quote from your best estimate of where the basket would clear, with a wide spread.
   </Accordion>
 </AccordionGroup>
 
@@ -136,3 +179,8 @@ This page covers ETF market making and arbitrage questions for Delta-1 and ETF d
 - [ETF 102: How ETF creations and redemptions work](https://www.vaneck.com/us/en/blogs/thematic-investing/etf-102-the-inner-workings-of-etf-creations-and-redemptions/), VanEck
 - [ETF trading and liquidity](https://schwabassetmanagement.com/content/etf-trading-and-liquidity), Schwab Asset Management
 - [ETF creation and redemption mechanism](https://www.tradermath.org/courses/asset-classes-and-trading-products/etf-creation-and-redemption-mechanism), TraderMath
+- [Flow Traders ETF and market making interview](https://quantvault.org/flow-traders-etf-market-making-interview.html), QuantVault
+- [Flow Traders graduate trader interview reports](https://www.glassdoor.ie/Interview/Flow-Traders-Interview-E258344-RVW69967238.htm), Glassdoor candidate reports
+- [Daily rebalancing in leveraged ETPs explained](https://leverageshares.com/en/insights/daily-rebalancing-in-leveraged-etps-explained/), Leverage Shares
+- [The gamma of levered ETFs](https://moontowermeta.com/the-gamma-of-levered-etfs/), Moontower
+- [Leveraged ETFs and market close rebalancing (FEDS working paper)](https://www.federalreserve.gov/Pubs/feds/2013/201348/201348pap.pdf), Federal Reserve Board

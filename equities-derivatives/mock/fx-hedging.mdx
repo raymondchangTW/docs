@@ -97,7 +97,7 @@ This page covers FX hedging questions for equity derivatives, Delta-1 and ETF de
     Hong Kong operates a Linked Exchange Rate System under currency board principles. The HKMA stands ready to buy HKD and sell USD at the **weak-side convertibility undertaking of 7.85**, and to sell HKD and buy USD at the **strong-side level of 7.75**. The Hong Kong dollar can trade anywhere inside that band.
 
     - **Mechanics:** when a convertibility undertaking is triggered, the aggregate balance of the banking system contracts (weak side) or expands (strong side), which pushes HKD interest rates up or down and helps return the exchange rate to the band.
-    - **Carry trades:** when HKD interest rates are below USD rates, investors sell HKD for USD to earn the difference, which pushes the spot toward the weak side. The weak-side undertaking was triggered a number of times in 2022 in this way.
+    - **Carry trades:** when HKD interest rates are below USD rates, investors sell HKD for USD to earn the difference, which pushes the spot toward the weak side. The weak-side undertaking was triggered a number of times in 2022 in this way. In 2025 both sides were hit: the strong side four times in early May on equity-related inflows, which pushed HIBOR close to zero, and then the weak side 12 times between late June and mid-August as the wide negative HKD-USD rate spread fed carry trades.
     - **Hedging cost:** USD/HKD forward points mainly reflect the difference between HKD and USD interest rates, so the carry is usually small compared with the cost of hedging a floating currency.
 
     **Follow-up:** What is the tail risk?
@@ -110,10 +110,12 @@ This page covers FX hedging questions for equity derivatives, Delta-1 and ETF de
 
 <AccordionGroup>
   <Accordion title="Q8. A client wants a swap on a US stock paid in Hong Kong dollars. Explain the difference between a compo swap and a quanto swap.">
-    - **Compo (no currency protection):** the client receives the stock's return in US dollars converted at the final exchange rate, so the client bears the FX risk. The dealer holds the US stock, funds it in US dollars and must hedge the currency exposure on the notional, and also on the gains and losses as the stock moves, which means resizing the FX hedge as the stock moves.
-    - **Quanto (fixed exchange rate):** the stock's return is paid in Hong Kong dollars at a fixed rate agreed at the start. The client has no FX risk. The dealer has a **correlation exposure** between the stock and the currency, because the size of the FX hedge needed depends on the stock's move.
+    - **Compo (no currency protection):** the value is the US dollar stock price converted to Hong Kong dollars at the **prevailing** exchange rate, so the client bears the FX risk. The dealer converts the client's Hong Kong dollars at spot, buys the stock and converts back at the end, so the stock and FX exposure largely pass through to the client. The dealer's residual FX risk sits mainly in the funding and cash flows, not in a hedge that must be resized with the stock.
+    - **Quanto (fixed exchange rate):** the stock's return is paid in Hong Kong dollars at a rate fixed at the start. The client has no FX risk. The dealer still holds a US dollar stock, so the size of its US dollar exposure changes with the stock and it must **resize the FX hedge as the stock moves**. That creates a correlation exposure between the stock and the currency.
 
-    **Pricing:** a quanto adjusts the forward of the stock by roughly the negative of the correlation times the stock volatility times the FX volatility, so the quanto forward is above or below the plain forward depending on the sign of the correlation. The dealer also charges for the cost of the correlation and FX volatility risk.
+    **Pricing:** a quanto adjusts the forward of the stock by roughly the negative of the correlation times the stock volatility times the FX volatility. The sign of the correlation depends on how the FX rate is quoted, so define it (for example, correlation between the stock and the value of the US dollar in Hong Kong dollars). The dealer also charges for correlation and FX volatility risk.
+
+    **The Hong Kong twist:** for USD/HKD the FX volatility is very small because of the peg, so the quanto adjustment on a US stock paid in Hong Kong dollars is close to zero. Ask the same question for a Japanese stock paid in Hong Kong dollars and the adjustment matters.
   </Accordion>
 
   <Accordion title="Q9. When would you hedge a foreign currency exposure with an option instead of a forward?">
@@ -125,6 +127,39 @@ This page covers FX hedging questions for equity derivatives, Delta-1 and ETF de
     **Follow-up:** What new risks does a derivative hedge add?
 
     → Basis risk if the hedge does not match the exposure, counterparty and margin risk, and the funding of margin calls on a forward that moves against you while the underlying exposure has not yet settled.
+  </Accordion>
+
+  <Accordion title="Q10. USD/HKD spot is 7.80, the 1-year HKD rate is 3% and the USD rate is 4%. Where is the 1-year forward? Does a forward below 7.75 mean the peg is breaking?">
+    Under covered interest parity the forward is 7.80 times 1.03 divided by 1.04, or about **7.725**, so the forward points are about minus 750 pips.
+
+    **No, it does not mean the peg is breaking.** The convertibility undertakings apply to spot. The forward is spot adjusted for the interest rate difference, so when HKD rates are well below USD rates, long-dated forwards can trade below 7.75 without any arbitrage. The rate gap that drives this widened sharply in May 2025, when overnight HIBOR fell close to zero while US rates stayed above 4%.
+
+    **Follow-up:** So is buying HKD forward below 7.75 a free trade?
+
+    → No. Locking 7.725 with a forward is equivalent to holding HKD deposits that earn less than USD deposits. You give up the rate difference, which is exactly what the forward points pay for.
+  </Accordion>
+
+  <Accordion title="Q11. How do you hedge an ETF holding Taiwan or Korean stocks when the currency is not freely deliverable offshore?">
+    Use **non-deliverable forwards (NDFs)**. An NDF settles in US dollars on the difference between the agreed rate and an official fixing, so no local currency changes hands.
+
+    **Points to name:**
+
+    - **Fixing risk:** the hedge settles on a published fixing, while the fund values its assets at its own valuation rate, so there is a basis between the two.
+    - **Onshore versus offshore:** NDF-implied rates can differ from onshore rates when capital controls or local demand bite, so the hedge cost is not simply the policy rate difference.
+    - **Liquidity and hours:** NDF liquidity is concentrated in certain hours and tenors, which affects how often you can resize.
+
+    For China, contrast this with **CNH**, the offshore deliverable renminbi, which trades separately from onshore CNY and can diverge from it.
+  </Accordion>
+
+  <Accordion title="Q12. A currency-hedged fund rolls its 1-month forward and the foreign currency has fallen 3% during the month. What happens to the fund's cash?">
+    The expiring forward has gained, because the fund sold the foreign currency forward. That gain **settles in cash** at the roll, while the loss on the foreign assets is unrealized in the asset prices.
+
+    - The cash gain is reinvested in the basket or held, depending on the fund's rules.
+    - In the opposite case, when the foreign currency has risen, the forward loss must be **paid in cash** at the roll. The fund may have to sell assets or hold a cash buffer to pay it, which is a source of cash drag and tracking difference.
+
+    **Follow-up:** How do you reduce this?
+
+    → Stagger the forwards across several roll dates, or use a shorter reset frequency, at the cost of more transactions.
   </Accordion>
 </AccordionGroup>
 
@@ -148,3 +183,6 @@ This page covers FX hedging questions for equity derivatives, Delta-1 and ETF de
 - [Derivatives and hedging interview questions](https://www.preplounge.com/de/finance-interview-questions/derivatives-hedging-interview-questions-for-finance-390?lang=en), PrepLounge
 - [Monetary stability, Annual Report 2022](https://www.hkma.gov.hk/media/eng/publication-and-research/annual-report/2022/14_Monetary_Stability.pdf), Hong Kong Monetary Authority
 - [Linked Exchange Rate System operations: mechanism and theory](https://www.hkma.gov.hk/media/eng/publication-and-research/research/research-memorandums/2018/RM11-2018.pdf), Hong Kong Monetary Authority
+- [Monetary stability, Annual Report 2025](https://www.hkma.gov.hk/media/eng/publication-and-research/annual-report/2025/14_Monetary_Stability.pdf), Hong Kong Monetary Authority
+- [Recent dynamics in the Hong Kong dollar market (May 2025)](https://www.hkma.gov.hk/eng/news-and-media/insight/2025/05/20250520/), Hong Kong Monetary Authority
+- [A few observations on the recent developments in the Hong Kong dollar market (July 2025)](https://www.hkma.gov.hk/eng/news-and-media/insight/2025/07/20250711/), Hong Kong Monetary Authority

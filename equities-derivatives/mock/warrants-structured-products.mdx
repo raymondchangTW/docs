@@ -36,7 +36,11 @@ This page covers warrant and structured product questions. Interviewers use them
   </Accordion>
 
   <Accordion title="Q2. How is the hedge size for a warrant calculated?">
-    The hedge in shares equals the option delta, times the number of warrants outstanding, times the entitlement ratio (how many warrants are needed for one share). For a call you hold that many shares, and for a put you short them.
+    In Hong Kong the entitlement ratio is the **number of warrants needed for one share** (for example 10 to 1). So the hedge in shares equals the option delta, times the number of warrants held by investors, **divided by** the entitlement ratio. For a call you hold that many shares, and for a put you short them.
+
+    **Example:** 50 million call warrants held by investors, entitlement ratio 10, delta 0.4. The hedge is 0.4 times 50 million divided by 10, or **2 million shares**.
+
+    Use the warrants held by investors, not the total issued: warrants still in the issuer's own inventory (from issuance or bought back as liquidity provider) are not a liability to hedge.
 
     The hedge is adjusted as delta changes with the stock price, time and volatility. Say that the desk also manages gamma and vega across all its warrants on the same underlying, not warrant by warrant.
   </Accordion>
@@ -56,6 +60,10 @@ This page covers warrant and structured product questions. Interviewers use them
     - Near the call level, the risk is the **gap through the barrier** and the unwind of the hedge at a worse price than the call level. Some categories also carry a residual value after a call, which the issuer must handle.
 
     Details of categories and settlement are on the [CBBC page](/equities-derivatives/hk/warrants/cbbc).
+
+    **Follow-up:** A Category R bull CBBC is called. How is the residual value set, and what does the issuer do with its hedge?
+
+    → After a mandatory call event, the valuation period runs from the call until the end of the following trading session. For a bull contract, the residual value is the lowest spot price in that period minus the strike, divided by the entitlement ratio, and zero if that is negative. Category N contracts, where the call price equals the strike, pay nothing. The issuer unwinds its long hedge during the valuation period. If it sells above the lowest price, it keeps the difference, and if the stock gaps below the strike, it bears the loss. That is why the gap between call price and strike is part of the issuer's pricing.
   </Accordion>
 </AccordionGroup>
 
@@ -94,6 +102,44 @@ This page covers warrant and structured product questions. Interviewers use them
 
     → Start from the client's view and risk appetite, show the payoff in best, middle and worst cases, explain what they give up in return (here, the downside from the put), state the risks and costs plainly, and confirm suitability.
   </Accordion>
+
+  <Accordion title="Q8. What is an accumulator, which side is the client on, and what went wrong in 2008?">
+    The client agrees to **buy a fixed number of shares at each fixing at a strike below the current price**. If the stock rises above a knock-out level, the contract ends. If the stock falls below the strike, the client usually has to buy a multiple (often twice) the normal quantity at the strike.
+
+    **Building blocks per fixing:** a long call and a short put at the strike, with the put quantity geared up (often twice), all with an up-and-out barrier. The client is long the capped upside and **short geared puts**. The dealer holds the opposite: long the puts and short the knocked-out calls.
+
+    **Risks to name:**
+
+    - **Client:** small, capped gains in rising markets and large, geared losses in falling markets. In the 2008 sell-off losses were large enough that the product picked up the nickname "I kill you later" in Hong Kong.
+    - **Dealer:** client credit and margin risk when the stock falls (the client may not pay), gap and barrier risk near the knock-out, and concentration if many clients hold the same name.
+
+    **Follow-up:** Why is the strike set below spot at inception?
+
+    → Because the client is selling geared puts. Their premium pays for the discount, so the product costs nothing up front.
+  </Accordion>
+</AccordionGroup>
+
+## Warrant market making
+
+<AccordionGroup>
+  <Accordion title="Q9. A stock is at 100. A call warrant costs 0.20, the entitlement ratio is 10 and delta is 0.5. What are the gearing and the effective gearing?">
+    - **Gearing** is the stock price divided by the cost of controlling one share through warrants: 100 divided by (0.20 times 10), or **50 times**.
+    - **Effective gearing** is gearing times delta: 50 times 0.5, or **25 times**. A 1% move in the stock moves the warrant by about 25%.
+
+    Effective gearing is the better measure of sensitivity, but it changes with the stock price, time and implied volatility, so treat it as a snapshot. The entitlement ratio changes the price per warrant but not the effective gearing.
+  </Accordion>
+
+  <Accordion title="Q10. Why can the implied volatility of a warrant differ from that of the listed option on the same stock, and how does the issuer manage it?">
+    A warrant is a retail product sold by a single issuer acting as liquidity provider, while the listed option trades in a competitive market. Differences come from:
+
+    - **Issuer margin:** the issuer prices in its hedging costs and profit.
+    - **Supply and demand:** retail investors mostly buy calls and puts, so issuers are structurally short options and need a margin for short gamma and short vega.
+    - **Competition between issuers** on the same underlying, which compresses the margin.
+
+    **Follow-up:** Why do issuers try to keep warrant implied volatility stable?
+
+    → Investors watch it. If the issuer lowers implied volatility after investors buy, warrant prices fall even when the stock does not move, which damages the issuer's reputation and future flow. Issuers therefore manage the book's vega with listed options or other issuance rather than by moving the warrant price.
+  </Accordion>
 </AccordionGroup>
 
 ## Related pages
@@ -110,3 +156,7 @@ This page covers warrant and structured product questions. Interviewers use them
 - [How to structure an exotic derivatives product](https://hkcareers.blogspot.com/2022/06/essential-sales-trading-interview-prep.html), HK Careers
 - [Sales and trading interview questions: the full guide](https://mergersandinquisitions.com/sales-and-trading-interview-questions/), Mergers and Inquisitions
 - [50 derivatives trader interview questions](https://digitaldefynd.com/IQ/derivatives-trader-interview-questions/), DigitalDefynd
+- [CBBC mandatory call events (FAQ)](https://www.hkex.com.hk/Global/Exchange/FAQ/Products/Securities/CBBC/Mandatory-Call-Events), HKEX
+- [CBBC product sheet](https://www.hkex.com.hk/-/media/HKEX-Market/Products/Securities/Structured-Products/Product-Sheet/ProductSheet_CBBC.pdf), HKEX
+- [Derivative warrant pricing parameters and ratios (FAQ)](https://www.hkex.com.hk/Global/Exchange/FAQ/Products/Securities/DW/Product-Pricing/Pricing-Parameters-and-Ratios?sc_lang=en), HKEX
+- [Warrant entitlement ratio tutorial](https://warrants-hk.credit-suisse.com/en/tutorial/warrant/beginner/page/5), warrants-hk tutorial

@@ -57,7 +57,7 @@ This page covers Delta-1 questions: swaps, financing, borrow, dividends and coun
   </Accordion>
 
   <Accordion title="Q4. A client wants to go short a hard-to-borrow stock via a total return swap. How do you price it?">
-    When the client is short, the dealer's hedge is the corresponding long or borrowed position. The price needs to reflect:
+    When the client is short through the swap, the dealer is long the stock through the same swap, so it hedges by **borrowing the stock and selling it short**. The price needs to reflect:
 
     - The funding spread on the hedge and the capital usage
     - **Borrow cost**, which is typically high for hard-to-borrow names and can change
@@ -87,6 +87,10 @@ This page covers Delta-1 questions: swaps, financing, borrow, dividends and coun
     The swap usually passes the dividend to the client, sometimes at a rate that reflects withholding tax. The dealer's hedge receives the actual dividend after the tax that applies to the dealer. If those two amounts differ, the difference is a **P&L item for the dealer**.
 
     Pricing therefore includes an expected dividend and a tax assumption. Say that tax treatment depends on the underlying market, the client's status and the documents, and that you would confirm it with the tax and legal teams.
+
+    **Follow-up:** A non-US client wants a swap on a US stock. What changes?
+
+    → Under US section 871(m), dividend equivalents on delta-one swaps referencing US equities are treated as US-source dividends and subject to withholding. The rules for non-delta-one transactions have been repeatedly phased in later: the latest IRS notice (Notice 2026-61, September 2026) keeps non-delta-one transactions issued through 2028 outside the rules. So the dividend the swap passes through is net of US withholding, and the dealer's systems must identify which trades are in scope.
   </Accordion>
 </AccordionGroup>
 
@@ -104,7 +108,49 @@ This page covers Delta-1 questions: swaps, financing, borrow, dividends and coun
     - **Gap risk:** A fall in the stock can exceed the margin before it is called.
     - **Hidden aggregate exposure:** Each dealer sees only its own swaps, so the client's total leverage may be much higher than any single dealer sees.
 
-    **Controls:** initial and variation margin sized for the liquidity and concentration of the position, concentration limits, haircuts for illiquid names, daily margining, and a plan for how the hedge would be unwound. The 2021 default of a single family office with swaps at several banks is the case interviewers most often cite.
+    **Controls:** initial and variation margin sized for the liquidity and concentration of the position, concentration limits, haircuts for illiquid names, daily margining, and a plan for how the hedge would be unwound. The 2021 default of a single family office (Archegos) with swaps at several banks is the case interviewers most often cite.
+  </Accordion>
+</AccordionGroup>
+
+## Futures, dividends and index events
+
+<AccordionGroup>
+  <Accordion title="Q9. A stock index trades at 100, its 3-month future at 101, and the present value of dividends to expiry is 0.5. What financing rate does the future imply, and what do you do with it?">
+    The future is approximately the spot minus the dividends, grown at the financing rate: future equals (spot minus PV of dividends) times (1 plus rate times time). So the implied rate is (101 divided by 99.5, minus 1) divided by 0.25, or about **6.0% annualized**.
+
+    **Use it:** compare the implied rate with your own funding cost.
+
+    - If the implied rate is above your funding cost, the future is rich: buy the basket, fund it, and sell the future (cash and carry).
+    - If it is below, the future is cheap, and a client who wants long exposure is better served by futures than a swap, or a desk long the basket can sell it and buy futures to release balance sheet.
+
+    **Follow-up:** Why does the implied rate jump around quarter-end and year-end?
+
+    → Banks' balance sheet costs rise at reporting dates, so the cost of holding the basket rises and the futures roll prices it in. Roll periods, when positions move from the front contract to the next, show the market's view of financing for the next quarter.
+  </Accordion>
+
+  <Accordion title="Q10. Why do dividend futures and dividend swaps exist, and who is on each side?">
+    They let you trade the **dividends paid over a period** separately from the price of the index.
+
+    - **Natural sellers:** dealers who issue structured products such as autocallables are left long dividend exposure through their hedges (Q7 on the structured products page), and they sell dividend futures or swaps to reduce it.
+    - **Natural buyers:** investors who want income exposure or a view that payouts will be higher than priced.
+    - **Delta-1 link:** the expected dividend is an input into every futures and swap price, so the desk marks its dividend assumption against the dividend futures curve.
+
+    **Follow-up:** What is the main risk of a long dividend position?
+
+    → Payout cuts in a crisis, which happened widely in 2020, and regulatory pressure on banks to suspend dividends. Dividend futures fall sharply in these episodes, more than the index in percentage terms for the near years.
+  </Accordion>
+
+  <Accordion title="Q11. A stock will be added to a major index at the close next week. A client asks you to guarantee the closing price for a large buy. How do you think about it?">
+    You are being asked to take the risk that the closing auction prints away from where you can execute.
+
+    - **Flows:** index funds must buy at the close on the effective date, so demand is predictable and other participants position ahead of it. The stock often rises before the event and the close can be crowded.
+    - **Execution:** you can pre-hedge by buying before the close, which is a risk position that loses if the price falls back, or execute in the auction alongside the index demand, which risks a large imbalance.
+    - **Pricing:** charge for the expected impact and the variance of the close versus your execution, and set a size limit.
+    - **Conduct:** pre-hedging must follow the firm's rules and the client's agreement, and you must not trade ahead of the client in a way that harms them.
+
+    **Follow-up:** What happens on the stock being removed from the index?
+
+    → The reverse: forced selling at the close. Short sellers and swap desks can face borrow recalls, because index funds that lent the stock sell it.
   </Accordion>
 </AccordionGroup>
 
@@ -122,3 +168,6 @@ This page covers Delta-1 questions: swaps, financing, borrow, dividends and coun
 - [Equity derivatives interview questions](https://clear.glassdoor.nl/Interview/equity-derivatives-interview-questions-SRCH_KO0,18_IP5.htm), Glassdoor candidate reports
 - [Structured products interview questions](https://static.glassdoor.es/Interview/structured-products-interview-questions-SRCH_KO0,19_IP4.htm), Glassdoor candidate reports
 - [Sales and trading interview questions: the full guide](https://mergersandinquisitions.com/sales-and-trading-interview-questions/), Mergers and Inquisitions
+- [Delta one products in sales and trading](https://hkcareers.blogspot.com/2022/02/delta-one-products-in-sales-and-trading.html), HK Careers
+- [Notice 2026-61: extension of the phase-in period for section 871(m)](https://www.irs.gov/pub/irs-drop/n-26-61.pdf), IRS
+- [IRS extends transitional relief for dividend equivalents under section 871(m) through 2028](https://taxnews.ey.com/news/2026-2025-irs-extends-transitional-relief-for-dividend-equivalents-under-irc-section-871m-through-2028), EY Tax News

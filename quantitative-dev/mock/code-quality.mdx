@@ -14,7 +14,7 @@ keywords:
 icon: "code"
 ---
 
-In trading and pricing code, a small numerical or logic error can turn into real losses, so interviewers probe how you test, review and structure code. This page has seven questions with follow-ups and answer points. The answers are principles and contain no code.
+In trading and pricing code, a small numerical or logic error can turn into real losses, so interviewers probe how you test, review and structure code. This page has nine questions with follow-ups and answer points. The answers are principles and contain no code.
 
 <Info>
   **Status of this page.** Last checked on 15 November 2026. These are general engineering practices, not any firm's standards.
@@ -25,7 +25,7 @@ In trading and pricing code, a small numerical or logic error can turn into real
 <AccordionGroup>
   <Accordion title="Q1. How do you test numerical and pricing code?">
     - **Analytical benchmarks:** Compare against cases with closed-form solutions, such as Black-Scholes for European options.
-    - **Property tests:** Check relationships that must always hold, such as put-call parity, prices monotonic in strike, and delta between 0 and 1.
+    - **Property tests:** Check relationships that must always hold, such as put-call parity, call prices falling and convex in strike, and a call delta between 0 and 1.
     - **Numeric tolerance:** Never compare floats for equality. Use absolute or relative tolerances.
     - **Golden tests:** Save verified outputs and confirm results do not change during refactoring.
     - **Randomness:** Fix the seed for Monte Carlo and verify convergence statistically.
@@ -65,7 +65,7 @@ In trading and pricing code, a small numerical or logic error can turn into real
 
 <AccordionGroup>
   <Accordion title="Q4. Float or Decimal for prices and money? How do you handle tick sizes?">
-    Floating point cannot represent many decimal fractions exactly (for example 0.1), so errors accumulate. Floats are usually fine for research and analytics, but accounting, settlement and order prices should use decimal fixed-point or integers.
+    Floating point cannot represent many decimal fractions exactly (for example 0.1), so errors accumulate. Floats are usually fine for research and analytics, but accounting, settlement and order prices should use decimal fixed-point or integers. In Python, build a Decimal from a string rather than from a float, or the float's binary error is carried into the Decimal.
 
     **Tick size:** Store prices as an integer number of ticks, and align order prices to a valid tick before sending. Different price bands may have different tick sizes. The specific rules depend on the exchange, see [Trading rules](/equities-derivatives/hk/cash-etf/trading-rules). Define the rounding rule explicitly and apply it in one place, so different modules do not handle it separately.
   </Accordion>
@@ -77,12 +77,36 @@ In trading and pricing code, a small numerical or logic error can turn into real
     - **Precision:** Millisecond, microsecond and nanosecond sources must not be mixed silently.
     - **Day boundaries:** Define what "the same day" means for markets in different time zones.
   </Accordion>
+
+  <Accordion title="Q6. Your rolling variance of returns sometimes comes out negative. What is wrong?">
+    The code probably uses the one-pass formula: the mean of squares minus the square of the mean. When the mean is large relative to the spread (for example prices instead of returns, or a long window), the two terms are almost equal and subtracting them loses most of the significant digits. This is **catastrophic cancellation**, and rounding can push the result below zero.
+
+    **Fixes:**
+
+    - Use a numerically stable update such as Welford's algorithm, which tracks the running mean and the sum of squared deviations from it.
+    - Center the data first (subtract a reference value) when using a one-pass formula.
+    - For rolling windows, recompute from scratch periodically or use a stable add-and-remove update, and clamp tiny negative values only after fixing the method.
+
+    **Follow-up:** Where else does cancellation bite in pricing code?
+
+    → Differences of nearly equal numbers, such as finite-difference Greeks with a step that is too small, or a spread computed from two large prices. Choose the step size deliberately and compare against an analytical value where one exists.
+  </Accordion>
+
+  <Accordion title="Q7. How do you make an implied volatility solver robust?">
+    Newton's method converges fast but divides by vega, which is close to zero for deep in- or out-of-the-money and very short-dated options, so it can jump to nonsense or diverge.
+
+    - **Check arbitrage bounds first:** a price below intrinsic value or above the upper bound has no implied volatility. Return an explicit error rather than a number.
+    - **Bracket the root:** use a bracketing method (bisection or Brent) between a low and a high volatility, or fall back to it when a Newton step leaves the bracket.
+    - **Good starting point:** use an approximation for the initial guess to cut iterations.
+    - **Tolerance on price, not only volatility:** stop when the price error is within a tick-sized tolerance.
+    - **Test the edges:** near expiry, zero rates, very high volatility, and prices exactly at the bounds.
+  </Accordion>
 </AccordionGroup>
 
 ## Review and maintainability
 
 <AccordionGroup>
-  <Accordion title="Q6. How would you review a pull request that changes a pricing function?">
+  <Accordion title="Q8. How would you review a pull request that changes a pricing function?">
     - Start with the purpose of the change and its blast radius: who calls this function.
     - Check formulas, units, signs, boundary conditions, time zones and input validation.
     - Check that tests cover the new behavior and compare outputs against the old version.
@@ -92,7 +116,7 @@ In trading and pricing code, a small numerical or logic error can turn into real
     Leave style issues to automated tools, and focus human review on correctness and risk.
   </Accordion>
 
-  <Accordion title="Q7. What logging and metrics would you add to a live trading component?">
+  <Accordion title="Q9. What logging and metrics would you add to a live trading component?">
     - **Structured logs** with a correlation ID that follows an order or quote through every component, so one decision can be reconstructed end to end.
     - **Metrics:** Latency percentiles, message rates, queue depths, rejection rates, stale-data counters and position breaks.
     - **Audit trail:** An append-only record of orders, fills, parameter changes and operator actions.
@@ -111,3 +135,5 @@ In trading and pricing code, a small numerical or logic error can turn into real
 
 - [Algorithmic Trading System Architecture (techinterview.org)](https://www.techinterview.org/post/3233474598/algorithmic-trading-architecture/)
 - [Quant Developer Interview Questions and Prep (Exponent)](https://www.tryexponent.com/blog/quant-developer-interview-guide)
+- [Quant developer interview questions: 25 real examples (Quantt)](https://www.quantt.co.uk/resources/quant-developer-interview-questions)
+- [Options pricing interview questions (QuantVault)](https://quantvault.org/options-pricing-interview-questions.html)

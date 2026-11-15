@@ -53,6 +53,20 @@ Mock questions closer to trading desk practice (ETF market making, Delta-1, warr
     → Not directly. Recommend a small-size forward test with explicit stop losses and monitoring, and define in advance when you will conclude the signal has failed.
   </Accordion>
 
+  <Accordion title="Scenario 2b. Two signals each have an information coefficient of 0.03 and are correlated 0.6 with each other. What does an equal-weight combination achieve?">
+    Treat each standardized signal as having correlation 0.03 with future returns. The equal-weight sum has covariance 0.03 plus 0.03 with returns and a standard deviation of the square root of (2 plus 2 times 0.6), which is about 1.79. So the combined IC is 0.06 divided by 1.79, or about **0.034**: only a small gain, because the signals overlap heavily.
+
+    **Fundamental law link:** the information ratio is roughly the IC times the square root of breadth (the number of independent bets per year). With an IC of 0.034 and 1,000 independent bets a year, that is about 0.034 times 31.6, or roughly 1.1, before costs.
+
+    **Follow-up 1:** When would you drop one of them?
+
+    → Regress one signal on the other. If the residual has no predictive power, the second signal adds nothing but cost and complexity. Also drop the weaker one if it has higher turnover, so its net contribution after costs is negative.
+
+    **Follow-up 2:** The IC of a signal halved over the last year. Is it decaying or just in a bad regime?
+
+    → Look at the IC over a longer history to see if similar dips recovered, split it by sector, size and volatility regime, check whether similar public signals weakened at the same time (crowding), and check capacity: if your own trading grew, you may be eating the edge. Decide in advance what evidence would make you retire it.
+  </Accordion>
+
   <Accordion title="Scenario 3. How would you estimate the fair value of an ETF when its underlying market is closed?">
     Approach: use related assets that are still trading to estimate where the underlying market would price at the open.
 
@@ -93,6 +107,18 @@ Mock questions closer to trading desk practice (ETF market making, Delta-1, warr
     **Follow-up:** What if the game ends on HT instead?
 
     → The expected number of flips is 4, so the fair price is 4. They differ because after a failed HH attempt you start over, while after a failed HT attempt you still hold a head.
+  </Accordion>
+
+  <Accordion title="Scenario 5b. You can bet repeatedly on a game you win 60% of the time at even money. What fraction of your capital do you bet each time?">
+    The Kelly fraction for an even-money bet is the win probability minus the loss probability: 0.6 minus 0.4, or **20%** of capital per bet. It maximizes the long-run growth rate of capital.
+
+    **Follow-up 1:** Why do traders often bet half-Kelly?
+
+    → The edge is estimated, not known. Betting more than Kelly lowers growth and raises the chance of deep drawdowns, while betting half-Kelly keeps about three quarters of the growth rate with much lower volatility. Errors in the estimated edge are therefore much cheaper on the low side.
+
+    **Follow-up 2:** How does this relate to position sizing on a desk?
+
+    → Size scales with edge divided by variance, and is capped by risk limits and liquidity. A strategy with a high Sharpe ratio but fat tails gets less size than its Kelly fraction suggests.
   </Accordion>
 </AccordionGroup>
 
@@ -136,3 +162,10 @@ Mock questions closer to trading desk practice (ETF market making, Delta-1, warr
 - [Mock Interview (Equities & Derivatives)](/equities-derivatives/interview/mock-interview)
 - [Probability and statistics](/quantitative-research/interview/probability-statistics)
 - [Regression, time series and backtesting](/quantitative-research/interview/statistics-backtesting)
+
+## Sources
+
+- [From alpha signal to portfolio: reliability, regime dependence and entropy](https://prachub.com/interview-questions/from-alpha-signal-to-portfolio-reliability-regime-dependence-and-entropy), PracHub
+- [Combining forecasts and stacking](https://www.tradermath.org/courses/machine-learning-for-quantitative-research/combining-forecasts-and-stacking), TraderMath
+- [WorldQuant interview questions (fundamental law, Kelly sizing)](https://quantvault.org/worldquant-interview-questions.html), QuantVault
+- [Quant 4.0: fundamental law of active management](https://arxiv.org/pdf/2301.04020), arXiv

@@ -57,18 +57,35 @@ This page covers the parts of an equity derivatives interview that are not produ
 
     Good practice is to have the rule decided before the trade: a maximum time or price slippage for the second leg, and a stop. In the interview, say that you would calculate the expected loss of each choice and pick the smallest, instead of waiting for the leg to come back.
   </Accordion>
+
+  <Accordion title="Q5. What is VaR, what are its limits, and why do regulators use expected shortfall?">
+    **Value at risk (VaR)** is the loss that is not exceeded with a given confidence over a given horizon, for example a one-day 99% VaR of 2 million means losses should exceed 2 million on about 1 day in 100.
+
+    **Limits to name:**
+
+    - It says nothing about **how large** the loss is beyond the threshold.
+    - It depends on the history or model used, and tends to be low just before a volatility regime change.
+    - It is not always sub-additive, so the VaR of two books together can exceed the sum of their separate VaRs, which works against diversification.
+    - It assumes positions can be held or closed over the horizon, which fails for illiquid or concentrated positions.
+
+    **Expected shortfall** is the average loss in the tail beyond the VaR threshold, so it captures tail size and is sub-additive. The Basel market risk framework (FRTB) moved bank capital from 99% VaR to 97.5% expected shortfall for this reason.
+
+    **Follow-up:** What do you add on top of VaR on a derivatives desk?
+
+    → Stress tests (historical and hypothetical scenarios), Greek limits (delta, gamma, vega by bucket), concentration limits and liquidity-adjusted measures.
+  </Accordion>
 </AccordionGroup>
 
 ## Quick-thinking questions
 
 <AccordionGroup>
-  <Accordion title="Q5. Compute 134 squared without paper.">
+  <Accordion title="Q6. Compute 134 squared without paper.">
     Split the number: 134 is 130 plus 4. The square is 130 squared (16,900) plus 2 times 130 times 4 (1,040) plus 4 squared (16), which gives **17,956**.
 
     Say each step out loud. Interviewers care about a fast, clear method and about catching your own mistakes.
   </Accordion>
 
-  <Accordion title="Q6. I will roll two dice and add them. Make me a two-way market on the total.">
+  <Accordion title="Q7. I will roll two dice and add them. Make me a two-way market on the total.">
     The expected total is **7**, so center the market there. The width should reflect your uncertainty and the risk that the other side knows more than you.
 
     **How to play it:**
@@ -79,31 +96,53 @@ This page covers the parts of an equity derivatives interview that are not produ
 
     The point is to show that you quote around fair value, manage inventory and treat trades as information.
   </Accordion>
+
+  <Accordion title="Q8. Saturday has a 60% chance of rain and Sunday 70%. What is the chance it rains on at least one day?">
+    If the two days are independent, the chance of no rain on either is 0.4 times 0.3, or 0.12, so the chance of rain on at least one day is **88%**.
+
+    **Follow-up:** What if you do not know they are independent?
+
+    → Give the range. The minimum is 70% (whenever it rains on Saturday it also rains on Sunday), and the maximum is 100% (the dry days never overlap, since 40% plus 30% is less than 100%). Weather on consecutive days is usually positively correlated, so the true answer is likely below 88%. Interviewers use this to see whether you state your assumptions.
+  </Accordion>
+
+  <Accordion title="Q9. Rapid mental math: 7% of 380, 17 times 23, and the square root of 50 with a confidence range.">
+    - **7% of 380:** 380 times 0.07 is 26.6.
+    - **17 times 23:** use (20 minus 3) times (20 plus 3), which is 400 minus 9, or **391**.
+    - **Square root of 50:** 7 squared is 49, so the root is slightly above 7. Each extra unit adds about 1 divided by (2 times 7), so the answer is about 7 plus 1/14, or **7.07**. Say you are confident it is between 7.0 and 7.1.
+
+    Online assessments at market makers are often timed at a few seconds per question, so practice speed and know when to estimate and move on. Candidate reports also mention square roots of large non-perfect squares with a requested confidence interval.
+  </Accordion>
 </AccordionGroup>
 
 ## Fit and behavioral
 
 <AccordionGroup>
-  <Accordion title="Q7. Why trading, and why this desk?">
+  <Accordion title="Q10. Why trading, and why this desk?">
     Give a specific reason for the **work** (taking risk with a quantifiable edge, quick feedback, working with clients and flow), and a specific reason for **this firm and desk** (the product, the market position, the type of flow). Avoid answers that could apply to any bank.
 
     Keep the answer under two minutes and make sure it connects to your real experience.
   </Accordion>
 
-  <Accordion title="Q8. Tell me about a time you made a mistake that cost money or time.">
+  <Accordion title="Q11. Tell me about a time you made a mistake that cost money or time.">
     Use the STAR structure: Situation, Task, Action, Result. Choose a real mistake, say clearly what you got wrong, how you found out, what you did to limit the damage, and what process you changed afterwards.
 
     Avoid blaming others or choosing a mistake so small that it shows nothing.
   </Accordion>
 
-  <Accordion title="Q9. Tell me about a time you had to prioritize between a pricing request and a production issue.">
+  <Accordion title="Q12. Tell me about a time you had to prioritize between a pricing request and a production issue.">
     Use the STAR structure. Key points: how you assessed impact (client, risk, size), how you communicated the priority, and how you reviewed it afterwards. Fill in your own real experience, as the interviewer will probe for details.
   </Accordion>
 
-  <Accordion title="Q10. Describe a project where requirements changed midway. How did you handle scope?">
+  <Accordion title="Q13. Describe a project where requirements changed midway. How did you handle scope?">
     Suggested structure: the original goal, why the change came up, your assessment of schedule and risk, how you agreed the trade-off with stakeholders, and the result and what you learned.
 
     There is no standard answer to this type of question, and the interviewer is looking at how you think and communicate.
+  </Accordion>
+
+  <Accordion title="Q14. What is the greatest risk you have ever taken, and what makes a good trader?">
+    **Greatest risk:** choose a real decision where the outcome was uncertain and you sized it deliberately. Explain how you estimated the upside and downside, what you did to limit the loss, and what happened. The interviewer wants calculated risk-taking, not recklessness, so a story where you managed the downside is stronger than one where you simply got lucky.
+
+    **A good trader:** name two or three traits and back each with evidence from your own record, for example disciplined risk management (cutting losses by rule), quick and honest updating when new information arrives, and clear communication under pressure. Then say which trait you are still improving and how, because that follow-up is common.
   </Accordion>
 </AccordionGroup>
 
@@ -119,3 +158,6 @@ This page covers the parts of an equity derivatives interview that are not produ
 - [Top 19 sales and trading interview questions and answers](https://salesandtrading.org/pages/top-sales-and-trading-interview-questions), salesandtrading.org
 - [Derivative trader interview questions](https://static-pc.glassdoor.fr/Interview/derivative-trader-interview-questions-SRCH_KO0,17_IP4.htm), Glassdoor candidate reports
 - [All Options interview guide](https://www.tradermath.org/articles/all-options-interview-guide), TraderMath
+- [Trader interview questions](https://clear.glassdoor.nl/Interview/trader-interview-questions-SRCH_KO0,6_IP6.htm), Glassdoor candidate reports
+- [Junior trader interview questions](https://clear.glassdoor.nl/Interview/junior-trader-interview-questions-SRCH_KO0,13_IP102.htm), Glassdoor candidate reports
+- [Junior trader interview questions (Optiver reports)](https://static.glassdoor.ch/Interview/trader-interview-questions-SRCH_KO0,6_IP847.htm), Glassdoor candidate reports

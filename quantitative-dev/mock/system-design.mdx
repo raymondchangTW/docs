@@ -14,7 +14,7 @@ keywords:
 icon: "sitemap"
 ---
 
-Trading system design rounds ask you to reason about latency budgets, deterministic behavior, fault tolerance and risk controls, which generic web-scale prep does not cover. This page has eight design questions with follow-ups and answer points. The answers are principles, not code.
+Trading system design rounds ask you to reason about latency budgets, deterministic behavior, fault tolerance and risk controls, which generic web-scale prep does not cover. This page has ten design questions with follow-ups and answer points. The answers are principles, not code.
 
 <Info>
   **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or technology stack. Latency and throughput figures vary by firm tier and are deliberately left out.
@@ -165,6 +165,41 @@ Trading system design rounds ask you to reason about latency budgets, determinis
 
     Public interview guides often cite Knight Capital's 2012 trading loss as the reason these controls matter.
   </Accordion>
+
+  <Accordion title="Q9. Design a pre-trade risk check that no outbound order can bypass.">
+    **Placement:** the check sits on the only path between the order manager and the exchange gateway, so a strategy cannot route around it. Firms often add a second, simpler check at the gateway or the broker.
+
+    **Checks:** order size and notional, price bands against a reference price (fat-finger protection), position and exposure limits, credit or margin, order and message rate, restricted lists and duplicate-order detection.
+
+    **Design points:**
+
+    - **Check and reserve atomically:** an approved order reserves its exposure against the limit before it is sent, and the reservation is released on cancel, reject or fill. Otherwise two orders sent at the same time can both pass and together breach the limit.
+    - **Idempotency and reconciliation:** duplicated or reordered acknowledgements and fills must not double-count usage, so key every update by order ID and fill ID and reconcile against the venue.
+    - **Fail closed:** if the risk state is stale, the configuration cannot be loaded, or the gateway state is ambiguous, reject new orders rather than let them through.
+    - **Latency:** the check is on the critical path, so keep the limit state in memory, avoid locks shared with slow components and measure its latency percentiles.
+    - **Operations:** limit changes are audited and approved, and there is an emergency path to tighten limits during an incident.
+
+    **Follow-up:** Which way is worse to fail, false rejects or false accepts?
+
+    → A false accept can cause unbounded loss, while a false reject loses an opportunity. Design for no false accepts, then reduce false rejects with clear limit headroom and good monitoring.
+  </Accordion>
+
+  <Accordion title={"Q10. Design a real-time position and P&L service for a market-making desk."}>
+    **Inputs:** fills from every venue and broker, start-of-day positions from the books of record, live prices, and corporate actions.
+
+    **Design points:**
+
+    - **Event sourcing:** positions are the sum of start-of-day positions and fills, rebuilt from the fill log after any restart.
+    - **Price choice:** define which price marks each instrument (mid, last trade, fair value model) and flag marks that are stale.
+    - **P&L split:** separate realized from unrealized P&L, and trading P&L from start-of-day position P&L, so traders can see what today's activity did.
+    - **Consistency:** each fill updates position and P&L in one step, and late or corrected fills are applied without double-counting.
+    - **Reconciliation:** compare intraday positions with broker and clearing reports, and end-of-day P&L with the official books, and alert on breaks.
+    - **Fan-out:** many readers (traders, risk, dashboards) should read snapshots or a stream, not query the write path.
+
+    **Follow-up:** Live P&L and the official end-of-day P&L disagree. How do you investigate?
+
+    → Break the difference into position differences (missing or late fills, corporate actions) and price differences (different closing prices or FX rates), and fix the source rather than adjusting the number.
+  </Accordion>
 </AccordionGroup>
 
 ## Related pages
@@ -179,3 +214,6 @@ Trading system design rounds ask you to reason about latency budgets, determinis
 - [System Design: Electronic Trading Platform (techinterview.org)](https://www.techinterview.org/post/3233474476/system-design-design-electronic-trading-platform-order-book-matching-engine-market-data-feed-low-latency-colocation/)
 - [Design an in-memory order matching engine (PracHub)](https://prachub.com/interview-questions/design-an-in-memory-order-matching-engine)
 - [Quant Developer Interview Questions and Prep (Exponent)](https://www.tryexponent.com/blog/quant-developer-interview-guide)
+- [Design a pre-trade risk check for an electronic order path (PracHub)](https://prachub.com/interview-questions/design-a-pre-trade-risk-check-for-an-electronic-order-path)
+- [Design a low-latency trading system (PracHub)](https://prachub.com/interview-questions/design-a-low-latency-trading-system)
+- [Quant developer interview questions: 25 real examples (Quantt)](https://www.quantt.co.uk/resources/quant-developer-interview-questions)

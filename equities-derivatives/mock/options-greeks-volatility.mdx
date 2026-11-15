@@ -25,7 +25,7 @@ This page covers the options questions that equity derivatives desks ask most of
   <Accordion title="Q1. What happens to delta and gamma as the stock price rises? Why is an at-the-money call delta slightly above 0.5?">
     - **Call delta** rises from near 0 (deep out of the money) toward 1 (deep in the money) as the stock rises. Put delta moves from near minus 1 toward 0.
     - **Gamma** is highest near the money and shortest-dated, and falls toward zero deep in or out of the money. It is positive for both calls and puts when you are long the option.
-    - **At-the-money delta** is slightly above 0.5 for a call because the delta of a call is the normal distribution function of d1, and d1 is positive at the money: it contains the drift term from interest rates and the half-variance term from volatility.
+    - **At-the-money delta** is slightly above 0.5 for a call because the delta of a call is the normal distribution function of d1, and d1 is positive at the money: it contains the drift term from interest rates and the half-variance term from volatility. With a continuous dividend yield the call delta is the dividend discount factor times that value, so for a high-dividend stock the at-the-money call delta can be **below** 0.5. State the assumption you are using.
 
     **Follow-up:** What does this mean for a short-dated at-the-money option near expiry?
 
@@ -67,7 +67,7 @@ This page covers the options questions that equity derivatives desks ask most of
 
     **Why this matters for the desk:**
 
-    - Near the strike close to expiry, delta and gamma become extremely large and can change sign across hedges. This is called pin risk.
+    - Near the strike close to expiry, delta spikes and gamma becomes very large and flips from positive to negative across the strike, so the hedge can swing between buying and selling on small moves. This is called pin risk.
     - Traders often hedge with a slightly wider call spread, which behaves like a smoother payoff, and so the product is priced with a margin to cover this.
     - The digital's value is linked to the volatility skew, because the call spread depends on the slope of the smile at the strike.
   </Accordion>
@@ -106,6 +106,49 @@ This page covers the options questions that equity derivatives desks ask most of
   </Accordion>
 </AccordionGroup>
 
+## Quick estimates and advanced follow-ups
+
+<AccordionGroup>
+  <Accordion title="Q9. Without a calculator, roughly what is a 3-month at-the-money call worth on a 100 stock with 20% volatility?">
+    With low rates and no dividends, an at-the-money call is worth about **0.4 times the stock price times the volatility times the square root of time**. Here that is 0.4 times 100 times 0.2 times 0.5, or about **4.0**. The at-the-money straddle is about twice that, which is consistent with the 0.8 rule in Q7.
+
+    **Follow-up:** Is delta the probability that the option expires in the money?
+
+    → No. Call delta is the normal distribution function of d1, while the risk-neutral probability of finishing in the money is the normal distribution function of d2, which is smaller. The gap grows with volatility and time, so for long-dated or high-volatility options the two numbers can differ a lot.
+  </Accordion>
+
+  <Accordion title="Q10. When would you exercise an American call early?">
+    On a non-dividend stock, never: the call is worth more alive than its intrinsic value, because you keep the time value and delay paying the strike.
+
+    On a dividend stock, early exercise can only be optimal **just before an ex-dividend date**. Exercise when the dividend you capture is larger than what you give up: the remaining time value of the option plus the interest saved by paying the strike later. A rough first check is whether the dividend exceeds the strike times the interest rate times the time from the ex-date to expiry. If it does not, early exercise just before that ex-date is not optimal.
+
+    **Follow-up:** You are short deep in-the-money calls before an ex-date. What is your risk?
+
+    → Assignment. If holders exercise, you deliver the stock and lose the dividend your hedge would have received. Desks track this as dividend or early-exercise risk around ex-dates.
+  </Accordion>
+
+  <Accordion title="Q11. How do you replicate a variance swap, and why is the variance strike usually above at-the-money implied volatility?">
+    A variance swap pays realized variance minus a fixed strike. It is replicated by a **static strip of out-of-the-money puts and calls across all strikes, weighted by one over the strike squared**, plus a dynamic delta hedge. The fair strike comes from option prices directly, without a volatility model, which is also how the VIX is built.
+
+    - **Above at-the-money volatility:** the 1 over strike squared weighting puts large weight on low-strike puts. With a downward-sloping equity skew those puts carry high implied volatility, so the variance strike sits above at-the-money volatility.
+    - **Volatility swap versus variance swap:** because the square root is concave, the fair volatility swap strike is below the square root of the variance strike. The difference is a convexity adjustment, and it grows with the volatility of volatility.
+
+    **Follow-up:** Why do dealers cap variance swaps on single stocks?
+
+    → A crash makes realized variance explode, and the strip cannot be built in practice at very low strikes where options do not trade. Caps limit that tail.
+  </Accordion>
+
+  <Accordion title="Q12. What are sticky strike and sticky delta, and how do they change your hedge?">
+    They are assumptions about how the volatility smile moves when the stock moves.
+
+    - **Sticky strike:** each strike keeps its implied volatility. With a downward skew, at-the-money volatility rises as the stock falls, because a lower strike becomes at the money.
+    - **Sticky delta (sticky moneyness):** the smile moves with the stock, so at-the-money volatility stays the same.
+    - **Local volatility dynamics:** the implied volatility of a fixed strike moves in the direction of the skew slope, so with a downward skew it falls when the stock rises.
+
+    **Hedge impact:** the true hedge ratio is the Black-Scholes delta plus vega times the change in that option's implied volatility per unit move in the stock. Under sticky strike the adjustment is zero. With a downward skew, sticky moneyness raises a call's hedge ratio and local volatility lowers it. Say which regime the desk assumes and check it against how the smile actually moved in past sell-offs.
+  </Accordion>
+</AccordionGroup>
+
 ## Related pages
 
 - [Mock Interview overview](/equities-derivatives/interview/mock-interview)
@@ -120,3 +163,6 @@ This page covers the options questions that equity derivatives desks ask most of
 - [All Options interview guide](https://www.tradermath.org/articles/all-options-interview-guide), TraderMath
 - [Equity derivatives interview questions](https://static.glassdoor.at/Interview/equity-derivatives-interview-questions-SRCH_KO0,18_IP8.htm), Glassdoor candidate reports
 - [Explain option Greeks and futures pricing](https://prachub.com/interview-questions/explain-option-greeks-and-futures-pricing), PracHub
+- [Options pricing interview questions](https://quantvault.org/options-pricing-interview-questions.html), QuantVault
+- [Volatility versus variance swap fair strike](https://myntbit.com/training/options-vol-swap-vs-var-swap), Myntbit
+- [Variance swap replication](https://myntbit.com/training/variance-swap-replication), Myntbit

@@ -14,7 +14,7 @@ keywords:
 icon: "triangle-exclamation"
 ---
 
-Interviewers want to know whether you can keep a trading or data system healthy and respond calmly when it is not. This page has seven operations and incident questions with follow-ups and answer points. The answers are frameworks, and specific compliance and reporting duties follow each firm's and regulator's rules.
+Interviewers want to know whether you can keep a trading or data system healthy and respond calmly when it is not. This page has nine operations and incident questions with follow-ups and answer points. The answers are frameworks, and specific compliance and reporting duties follow each firm's and regulator's rules.
 
 <Info>
   **Status of this page.** Last checked on 15 November 2026. These are general practices, not any firm's incident process.
@@ -83,12 +83,35 @@ Interviewers want to know whether you can keep a trading or data system healthy 
 
     Specific compliance and reporting obligations follow the firm's and regulators' rules. In the interview, say that you would escalate according to company procedure.
   </Accordion>
+
+  <Accordion title="Q6. A strategy suddenly sends orders at ten times its normal rate. What do you do in the first five minutes?">
+    - **Stop it first:** trigger the strategy's kill switch or cancel-on-disconnect, and block new orders for that strategy. Do not wait to understand the cause.
+    - **Check the damage:** open orders, fills and positions created during the spike, and whether any limit was breached. Cancel what is still open.
+    - **Contain:** check whether other strategies share the same code, configuration or data feed, and pause them if they might be affected.
+    - **Escalate:** inform the trading desk, risk and compliance according to procedure, since venues may also contact you about message rates.
+    - **Diagnose afterwards:** typical causes are a feedback loop (reacting to its own orders), a bad price or a stale book, a configuration error, or a retry loop after rejects.
+
+    **Follow-up:** What control would have stopped it automatically?
+
+    → An order and message rate limit in the pre-trade risk layer that is independent of the strategy, with automatic disable on breach. See [System design](/quantitative-dev/mock/system-design) Q8 and Q9.
+  </Accordion>
+
+  <Accordion title="Q7. Timestamps from two servers disagree by several milliseconds. Why does it matter and how do you fix it?">
+    **Why it matters:** event ordering across machines, latency measurement, as-of joins in research, and regulatory record keeping all assume clocks agree. Some regulators, such as the EU under MiFID II, set maximum allowed divergence from UTC for trading timestamps.
+
+    **Fixes:**
+
+    - Synchronize with a proper time source. NTP is usually accurate to milliseconds, while PTP with hardware timestamping can reach microseconds or better.
+    - Monitor the offset of every host from the reference and alert when it drifts beyond a threshold.
+    - Record which clock produced each timestamp, and keep the exchange's timestamp next to your receive time.
+    - For ordering within one process, use a monotonic clock, not the wall clock, which can jump when it is corrected.
+  </Accordion>
 </AccordionGroup>
 
 ## Change management
 
 <AccordionGroup>
-  <Accordion title="Q6. How do you deploy a change to a live pricing or trading system safely?">
+  <Accordion title="Q8. How do you deploy a change to a live pricing or trading system safely?">
     - **Pre-release:** Tests including replay of recorded sessions, and review of the change and its blast radius.
     - **Shadow mode:** Run the new version on live data without sending orders, and compare its decisions with the current version.
     - **Staged rollout:** Enable for a small set of instruments or a small size first, with tight limits and close monitoring.
@@ -100,7 +123,7 @@ Interviewers want to know whether you can keep a trading or data system healthy 
     Public interview guides frequently cite Knight Capital's 2012 loss when motivating deployment controls and kill switches.
   </Accordion>
 
-  <Accordion title="Q7. How do you write a good postmortem?">
+  <Accordion title="Q9. How do you write a good postmortem?">
     - **Blameless:** Focus on how the system and process allowed the failure, not on who made the mistake.
     - **Timeline:** What happened, when it was detected, when it was mitigated and when it was resolved.
     - **Impact:** Clients, trades, positions and money affected, stated factually.
