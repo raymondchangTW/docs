@@ -35,7 +35,7 @@
         ]
       },
       {
-        "tab": "Equity Derivatives",
+        "tab": "Equities & Derivatives",
         "groups": [
           {
             "group": "Global",
@@ -44,20 +44,20 @@
               {
                 "group": "Concepts",
                 "pages": [
-                  "equity-derivatives/global/etf-creation-redemption"
+                  "equities-derivatives/global/etf-creation-redemption"
                 ]
               },
               {
                 "group": "Delta-1",
                 "pages": [
-                  "equity-derivatives/global/delta-1-otc",
-                  "equity-derivatives/global/delta-1-hedging"
+                  "equities-derivatives/global/delta-1-otc",
+                  "equities-derivatives/global/delta-1-hedging"
                 ]
               },
               {
                 "group": "Comparison",
                 "pages": [
-                  "equity-derivatives/global/market-comparison"
+                  "equities-derivatives/global/market-comparison"
                 ]
               }
             ]
@@ -66,28 +66,28 @@
             "group": "Hong Kong",
             "icon": "building-columns",
             "pages": [
-              "equity-derivatives/hk/overview",
+              "equities-derivatives/hk/overview",
               {
                 "group": "Cash equities & ETF",
                 "pages": [
-                  "equity-derivatives/hk/cash-etf/trading-rules",
-                  "equity-derivatives/hk/cash-etf/market-maker-rules",
-                  "equity-derivatives/hk/cash-etf/creation-redemption"
+                  "equities-derivatives/hk/cash-etf/trading-rules",
+                  "equities-derivatives/hk/cash-etf/market-maker-rules",
+                  "equities-derivatives/hk/cash-etf/creation-redemption"
                 ]
               },
               {
                 "group": "Warrants & CBBC",
                 "pages": [
-                  "equity-derivatives/hk/warrants/issuance",
-                  "equity-derivatives/hk/warrants/liquidity-provider-rules",
-                  "equity-derivatives/hk/warrants/trading-rules",
-                  "equity-derivatives/hk/warrants/cbbc"
+                  "equities-derivatives/hk/warrants/issuance",
+                  "equities-derivatives/hk/warrants/liquidity-provider-rules",
+                  "equities-derivatives/hk/warrants/trading-rules",
+                  "equities-derivatives/hk/warrants/cbbc"
                 ]
               },
               {
                 "group": "Listed derivatives",
                 "pages": [
-                  "equity-derivatives/hk/listed-derivatives/overview"
+                  "equities-derivatives/hk/listed-derivatives/overview"
                 ]
               }
             ]
@@ -154,5 +154,12 @@
   },
   "styling": {
     "codeblocks": "dark"
-  }
+  },
+  "redirects": [
+    {
+      "source": "/equity-derivatives/:slug*",
+      "destination": "/equities-derivatives/:slug*",
+      "permanent": true
+    }
+  ]
 }
