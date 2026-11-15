@@ -1,0 +1,121 @@
+---
+title: "Markets, risk and behavioral mock interview"
+sidebarTitle: "Markets, risk, behavioral"
+description: "Mock interview questions on market views, risk and limits, market-making games, mental math and behavioral questions for equity derivatives and Delta-1 desks."
+icon: "comments"
+keywords:
+  - "mock interview"
+  - "market view"
+  - "risk limits"
+  - "market making game"
+  - "mental math"
+  - "behavioral"
+  - "STAR"
+---
+
+This page covers the parts of an equity derivatives interview that are not product theory: market views, risk judgment, quick-thinking games and behavioral questions. Sales and trading interviews usually combine all of these, and the mix depends on the desk, so ask the recruiter what to expect.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content. Fill in your own real experience and current market views, as the interviewer will probe for details.
+</Info>
+
+## Market and risk scenarios
+
+<AccordionGroup>
+  <Accordion title="Q1. What is your view on the market right now, and how would you express it?">
+    Use a fixed structure so the answer stays short:
+
+    - **Driver:** what is moving the market now (rates, earnings, flows, policy).
+    - **Positioning and catalysts:** what is already priced in, and what events could change it.
+    - **Expression:** the trade you would put on and why that instrument (stock, option, spread, swap).
+    - **Risk:** what would prove you wrong, and your exit.
+
+    Read the latest news before the interview, because the question is almost always about current events and you should not give a stale view.
+  </Accordion>
+
+  <Accordion title="Q2. You are short gamma into a major event such as a central bank decision. What do you do?">
+    **Options:**
+
+    - Reduce the position, or buy back options to close part of the gamma.
+    - Buy options (a straddle or wing options) to cap the loss from a large move, accepting the premium.
+    - Pre-hedge delta and accept that a gap can still cause a loss.
+
+    The choice depends on the size of the position against limits, the price of the options before the event (implied volatility is often high), and how much the desk is willing to lose on a gap. State your limit and say that you would speak to your supervisor before the event, not after.
+  </Accordion>
+
+  <Accordion title="Q3. Your position breaches a risk limit because the market gapped. What do you do?">
+    1. **Report it immediately** to your supervisor and risk, with the size and the cause.
+    2. **Bring the position within the limit** or get an explicit temporary approval, depending on the desk's rules.
+    3. **Do not hide or net it away** by trading in a way that only looks better on the report.
+    4. **Review afterwards:** was the limit sized correctly, and was there a warning sign you could have acted on?
+
+    The interviewer is testing honesty and escalation habits more than the technical answer.
+  </Accordion>
+
+  <Accordion title="Q4. In an arbitrage trade, one leg is filled and the other is not. What do you do?">
+    You now hold an unhedged directional position. The decision is whether to **chase the second leg** at a worse price, **hedge with a proxy** (futures or a related ETF), or **close the first leg**.
+
+    Good practice is to have the rule decided before the trade: a maximum time or price slippage for the second leg, and a stop. In the interview, say that you would calculate the expected loss of each choice and pick the smallest, instead of waiting for the leg to come back.
+  </Accordion>
+</AccordionGroup>
+
+## Quick-thinking questions
+
+<AccordionGroup>
+  <Accordion title="Q5. Compute 134 squared without paper.">
+    Split the number: 134 is 130 plus 4. The square is 130 squared (16,900) plus 2 times 130 times 4 (1,040) plus 4 squared (16), which gives **17,956**.
+
+    Say each step out loud. Interviewers care about a fast, clear method and about catching your own mistakes.
+  </Accordion>
+
+  <Accordion title="Q6. I will roll two dice and add them. Make me a two-way market on the total.">
+    The expected total is **7**, so center the market there. The width should reflect your uncertainty and the risk that the other side knows more than you.
+
+    **How to play it:**
+
+    - Quote a width you can defend, for example a bid just under 7 and an offer just over 7.
+    - If the counterparty trades against you, **adjust both quotes** in the direction that protects you, since a trade is information.
+    - If the game has hidden information (the counterparty has seen one die), say that you would widen sharply and size down.
+
+    The point is to show that you quote around fair value, manage inventory and treat trades as information.
+  </Accordion>
+</AccordionGroup>
+
+## Fit and behavioral
+
+<AccordionGroup>
+  <Accordion title="Q7. Why trading, and why this desk?">
+    Give a specific reason for the **work** (taking risk with a quantifiable edge, quick feedback, working with clients and flow), and a specific reason for **this firm and desk** (the product, the market position, the type of flow). Avoid answers that could apply to any bank.
+
+    Keep the answer under two minutes and make sure it connects to your real experience.
+  </Accordion>
+
+  <Accordion title="Q8. Tell me about a time you made a mistake that cost money or time.">
+    Use the STAR structure: Situation, Task, Action, Result. Choose a real mistake, say clearly what you got wrong, how you found out, what you did to limit the damage, and what process you changed afterwards.
+
+    Avoid blaming others or choosing a mistake so small that it shows nothing.
+  </Accordion>
+
+  <Accordion title="Q9. Tell me about a time you had to prioritize between a pricing request and a production issue.">
+    Use the STAR structure. Key points: how you assessed impact (client, risk, size), how you communicated the priority, and how you reviewed it afterwards. Fill in your own real experience, as the interviewer will probe for details.
+  </Accordion>
+
+  <Accordion title="Q10. Describe a project where requirements changed midway. How did you handle scope?">
+    Suggested structure: the original goal, why the change came up, your assessment of schedule and risk, how you agreed the trade-off with stakeholders, and the result and what you learned.
+
+    There is no standard answer to this type of question, and the interviewer is looking at how you think and communicate.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+- [Behavioral questions (Quantitative Dev)](/quantitative-dev/mock/behavioral)
+- [Mock Interview (Quantitative Research)](/quantitative-research/mock-interview)
+
+## Sources
+
+- [Sales and trading interview questions: the full guide](https://mergersandinquisitions.com/sales-and-trading-interview-questions/), Mergers and Inquisitions
+- [Top 19 sales and trading interview questions and answers](https://salesandtrading.org/pages/top-sales-and-trading-interview-questions), salesandtrading.org
+- [Derivative trader interview questions](https://static-pc.glassdoor.fr/Interview/derivative-trader-interview-questions-SRCH_KO0,17_IP4.htm), Glassdoor candidate reports
+- [All Options interview guide](https://www.tradermath.org/articles/all-options-interview-guide), TraderMath

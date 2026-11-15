@@ -1,0 +1,122 @@
+---
+title: "Options, Greeks and volatility mock interview"
+sidebarTitle: "Options and Greeks"
+description: "Mock interview questions on options for equity derivatives desks: delta and gamma, theta, put-call parity, digital options, volatility skew, straddles and hedging frequency."
+icon: "chart-line"
+keywords:
+  - "mock interview"
+  - "options"
+  - "Greeks"
+  - "put-call parity"
+  - "volatility skew"
+  - "gamma"
+  - "digital option"
+---
+
+This page covers the options questions that equity derivatives desks ask most often: Greeks, parity, replication, volatility and hedging. Interviewers use them to see whether you can reason about a position, not whether you can recite a formula, so explain the intuition and the P&L consequence in each answer. Formulas are given in words where possible.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content. Worked numbers are illustrative.
+</Info>
+
+## Greeks
+
+<AccordionGroup>
+  <Accordion title="Q1. What happens to delta and gamma as the stock price rises? Why is an at-the-money call delta slightly above 0.5?">
+    - **Call delta** rises from near 0 (deep out of the money) toward 1 (deep in the money) as the stock rises. Put delta moves from near minus 1 toward 0.
+    - **Gamma** is highest near the money and shortest-dated, and falls toward zero deep in or out of the money. It is positive for both calls and puts when you are long the option.
+    - **At-the-money delta** is slightly above 0.5 for a call because the delta of a call is the normal distribution function of d1, and d1 is positive at the money: it contains the drift term from interest rates and the half-variance term from volatility.
+
+    **Follow-up:** What does this mean for a short-dated at-the-money option near expiry?
+
+    → Gamma becomes very large, so delta flips quickly between near 0 and near 1 for small stock moves. This is why near-expiry at-the-money positions are the hardest to hedge.
+  </Accordion>
+
+  <Accordion title="Q2. Explain the link between gamma and theta. When does a delta-hedged long option position make money?">
+    **Gamma and theta are two sides of the same trade.** A long option position has positive gamma and pays negative theta (time decay). A short option position has the opposite.
+
+    For a delta-hedged position, the approximate result over a short period is that you gain from gamma when the stock moves more than the market implied and lose the theta you paid. In words: you make money when the realized volatility is higher than the implied volatility you paid for, and lose when it is lower.
+
+    **Follow-up:** Why is it not exactly that simple in practice?
+
+    → Hedging is discrete and has costs, realized volatility can come in jumps rather than a smooth path, and the implied volatility itself changes, which brings in vega. The result is a P&L that depends on the path, not only the average realized volatility.
+  </Accordion>
+
+  <Accordion title="Q3. How often should you delta hedge?">
+    It is a trade-off between **hedging error** and **transaction cost**. Hedging more often reduces the error from gamma between hedges but pays the spread and market impact each time.
+
+    Practical approaches rebalance when delta moves outside a band, or at set times, rather than continuously. The band widens when costs are high or gamma is low, and narrows when gamma is large. Say that the right choice depends on the stock's liquidity, the size of gamma and the desk's risk tolerance.
+  </Accordion>
+</AccordionGroup>
+
+## Parity and replication
+
+<AccordionGroup>
+  <Accordion title="Q4. State put-call parity and use it to replicate a forward with two vanilla options.">
+    For European options with the same strike and expiry: the call price minus the put price equals the stock price minus the present value of the strike and, if there are dividends, minus the present value of the expected dividends.
+
+    **Replication:** a long call and a short put with the same strike and expiry behave like a long forward at that strike. At expiry the payoff is the stock price minus the strike in every scenario.
+
+    **Follow-up:** What do you do if parity is violated?
+
+    → Check inputs first (dividends, borrow cost, rates, American versus European exercise). If a real gap remains, sell the rich side and buy the cheap side, with the stock or a forward as the hedge, and account for borrow and financing costs.
+  </Accordion>
+
+  <Accordion title="Q5. How would you hedge a digital (binary) option?">
+    A digital option pays a fixed amount if the stock is above the strike at expiry. It is approximated by a **tight call spread**: buy a call at the strike and sell a call at a slightly higher strike, scaled so the maximum payoff equals the digital payout.
+
+    **Why this matters for the desk:**
+
+    - Near the strike close to expiry, delta and gamma become extremely large and can change sign across hedges. This is called pin risk.
+    - Traders often hedge with a slightly wider call spread, which behaves like a smoother payoff, and so the product is priced with a margin to cover this.
+    - The digital's value is linked to the volatility skew, because the call spread depends on the slope of the smile at the strike.
+  </Accordion>
+</AccordionGroup>
+
+## Volatility
+
+<AccordionGroup>
+  <Accordion title="Q6. What is volatility skew, and why do equity index puts usually trade at higher implied volatility than calls?">
+    Implied volatility differs by strike. For equity indices, **lower strikes usually have higher implied volatility**, so the curve slopes downward. The usual reasons given:
+
+    - Demand for downside protection from institutions, which pushes up put prices.
+    - Equity falls tend to come with volatility rising, and sell-offs are sharper than rallies.
+    - The Black-Scholes assumptions (constant volatility and no jumps) do not hold, and the market prices that.
+
+    **Follow-up:** What does skew mean for a risk reversal?
+
+    → A risk reversal (long call, short put, or the reverse) is priced largely off the skew. When skew is steep, selling downside puts earns a premium, but it concentrates the crash risk.
+  </Accordion>
+
+  <Accordion title="Q7. A stock reports earnings tomorrow and the at-the-money straddle costs 6% of the stock price. What does the market expect, and how do you judge whether it is cheap?">
+    A short-dated at-the-money straddle costs roughly 0.8 times the stock price times the volatility times the square root of time. So its price divided by the stock price is a rough estimate of the **expected absolute move**, here about 6%.
+
+    **To judge it:** compare 6% with the stock's typical earnings-day moves over past quarters, adjusted for the current environment. If past moves have averaged well above 6%, the straddle looks cheap, and if below, it looks rich. Remember that the straddle also contains normal non-event volatility for the days left.
+
+    **Follow-up:** After the announcement, what happens to implied volatility?
+
+    → It usually drops sharply because the uncertainty is resolved (volatility crush). A long option position can lose on vega even if the stock moves, unless the move is larger than the price implied.
+  </Accordion>
+
+  <Accordion title="Q8. Compare a calendar spread with a butterfly. What are the Greeks of a calendar spread?">
+    - **Calendar spread:** sell a near-dated option and buy a longer-dated option at the same strike. At the money it is **long vega, positive theta and slightly short gamma**, because the near-dated option decays faster and has higher gamma. It profits if the stock stays near the strike and if longer-dated implied volatility rises.
+    - **Butterfly:** buy one low strike, sell two middle strikes and buy one high strike. It has a limited loss (the premium) and a limited gain concentrated around the middle strike. It is a bet on the stock finishing near the middle, and is short volatility around that point.
+
+    State the maximum loss and maximum gain of each when you answer, because interviewers often ask for them.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+- [Derivatives and Greeks questions (Quantitative Research)](/quantitative-research/interview/derivatives-greeks)
+- [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
+
+## Sources
+
+- [Options pricing for quant interviews](https://www.techinterview.org/post/3233474555/options-pricing-quant-interviews/?format=md), techinterview.org
+- [Derivatives pricing interview questions](https://www.quantt.co.uk/resources/derivatives-pricing-interview-questions), Quantt
+- [Options Greeks interview guide](https://quantvault.org/options-greeks-interview-guide.html), QuantVault
+- [All Options interview guide](https://www.tradermath.org/articles/all-options-interview-guide), TraderMath
+- [Equity derivatives interview questions](https://static.glassdoor.at/Interview/equity-derivatives-interview-questions-SRCH_KO0,18_IP8.htm), Glassdoor candidate reports
+- [Explain option Greeks and futures pricing](https://prachub.com/interview-questions/explain-option-greeks-and-futures-pricing), PracHub

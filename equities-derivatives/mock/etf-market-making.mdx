@@ -1,0 +1,138 @@
+---
+title: "ETF market making and arbitrage mock interview"
+sidebarTitle: "ETF market making"
+description: "Mock interview questions on ETF market making and arbitrage: creation and redemption, authorized participants, quoting, premium and discount, basis and dividends."
+icon: "layer-group"
+keywords:
+  - "mock interview"
+  - "ETF market making"
+  - "authorized participant"
+  - "creation redemption"
+  - "premium discount"
+  - "basis risk"
+---
+
+This page covers ETF market making and arbitrage questions for Delta-1 and ETF desks. Each question has a main question, common follow-ups and answer points. The answers are thinking frameworks, so say out loud how you would check each assumption. For market rule details, use the matching pages on this site rather than repeating them in an interview.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or desk practice. Specific rules, numbers and terms are governed by each market's pages and the current exchange and ETF documents.
+</Info>
+
+## Mechanism and roles
+
+<AccordionGroup>
+  <Accordion title="Q1. Explain the difference between a market maker and an authorized participant.">
+    **They do different jobs, and one firm can do both.** The market maker quotes bids and offers in the secondary market (the exchange), usually under obligations for minimum size and maximum spread. The authorized participant (AP) deals with the ETF issuer in the primary market, where it creates and redeems ETF shares.
+
+    - Market making trades existing shares. AP activity changes the total share count.
+    - A market maker that is not an AP can still ask an AP to create or redeem on its behalf when it needs large size.
+    - When the firm quotes a client, it is acting as a market maker. When it delivers a basket and receives new shares, it is acting as an AP.
+
+    **Follow-up:** Why does the mechanism keep the ETF close to NAV?
+
+    → If the ETF trades above the value of its basket, an AP can buy the basket, deliver it to create shares and sell the shares at the higher price. If it trades below, the AP buys the shares, redeems them for the basket and sells the basket. Both trades push the price back toward NAV. See [ETF creation and redemption](/equities-derivatives/global/etf-creation-redemption).
+  </Accordion>
+
+  <Accordion title="Q2. A client wants to buy much more of an ETF than it normally trades in a day. How do you handle it?">
+    You do not need the exchange order book to hold that size. Because shares can be created, the supply is elastic.
+
+    **Steps:**
+
+    - Quote the client based on the fair value of the underlying basket plus a charge for hedging cost, size and risk.
+    - Hedge the market exposure as soon as the client trades, using futures, the basket or a correlated ETF.
+    - Create new ETF shares through an AP to cover the short position, then unwind the temporary hedge.
+
+    **Risks to name:** the market moves between the client trade and the creation, the basket may not be fully tradable at the quoted prices, and the creation has cut-off and settlement timing. See [ETF creation, redemption and arbitrage (Hong Kong)](/equities-derivatives/hk/cash-etf/creation-redemption).
+  </Accordion>
+</AccordionGroup>
+
+## Pricing and quoting
+
+<AccordionGroup>
+  <Accordion title="Q3. How do you decide the prices you quote on an ETF?">
+    Start from a **fair value** and then add the market maker's adjustments.
+
+    - **Fair value:** the live value of the basket, using the most reliable inputs available (constituent prices, index futures, FX, related ETFs and ADRs when the underlying market is closed).
+    - **Spread:** wide enough to cover hedging cost, adverse selection and the risk of a stale fair value, but within the exchange obligations.
+    - **Inventory skew:** if you are long, move both quotes down to encourage selling, and the reverse if you are short.
+    - **Hedge cost:** the cost and liquidity of the instrument you will hedge with.
+
+    **Follow-up:** What makes you widen or pull quotes?
+
+    → Stale or missing underlying prices, a volatility spike, a halted constituent, a data feed problem or a hedge instrument that is no longer liquid. See the [market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules) for the obligations that apply in Hong Kong.
+  </Accordion>
+
+  <Accordion title="Q4. A Hong Kong-listed ETF tracking US stocks trades at a 1% premium to its last NAV while the US market is closed. Is this an arbitrage?">
+    **Not necessarily.** First ask whether the NAV is stale. The NAV after the US close is the previous closing value, while the ETF during Hong Kong hours reflects the market's expectation of where US stocks will open.
+
+    **Steps to check:**
+
+    - Recompute a live fair value using US index futures that are still trading, ADRs or FX, and compare it with the ETF price.
+    - If the deviation disappears after recomputing, it was an information lag, not a mispricing.
+    - If a deviation remains, then consider arbitrage costs and execution feasibility.
+
+    **Follow-up:** If you go ahead, how do you lock it in?
+
+    → You can use related futures that are still trading to hedge the directional exposure first, then deal with the basket and creation or redemption once the constituent market opens. Residual risks are basis, FX, the opening gap and creation and redemption cut-off times.
+  </Accordion>
+</AccordionGroup>
+
+## Arbitrage risks
+
+<AccordionGroup>
+  <Accordion title="Q5. Why is creation and redemption arbitrage not risk free?">
+    - **Execution risk (legging):** Buying the whole constituent basket and selling the ETF do not happen at the same moment, and prices move in between.
+    - **Settlement and timing:** Creation and redemption have cut-off times and settlement cycles, and the position is exposed to the market during that gap.
+    - **Basket versus actual composition:** The actual creation list can differ from the index constituents or the cash component.
+    - **Borrow and financing:** A redemption arbitrage needs the basket shorted, and borrow availability and cost can change.
+    - **Size and liquidity:** With illiquid constituents, real fills differ from theoretical values.
+
+    **Follow-up:** Which of these risks can be hedged with futures?
+
+    → Directional market risk can, but execution, borrow and basket-difference risks cannot. See [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging).
+  </Accordion>
+
+  <Accordion title="Q6. If the arbitrage is so simple, why can a premium or discount persist?">
+    The mechanism pulls the price toward NAV, but it only works when someone has the capacity and the incentive to do the trade.
+
+    - **Costs:** The gap must be larger than fees, spreads, financing and the capital used.
+    - **Constraints:** Balance sheet limits, borrow availability, position limits and any restriction on creation or redemption in the ETF or the constituent market.
+    - **Closed or restricted constituent markets:** If the basket cannot be traded, the price gap reflects uncertainty about the true value, not an easy arbitrage.
+    - **Stress:** When underlying liquidity drops, APs and market makers may step back, and discounts can widen exactly when the NAV itself is uncertain.
+
+    **Follow-up:** How do you tell a real discount from a stale NAV?
+
+    → Compare the ETF with a live estimate built from tradable proxies. If the gap vanishes, it was stale pricing. If it remains and the proxies are reliable, it is a candidate trade, subject to the costs above.
+  </Accordion>
+
+  <Accordion title={"Q7. You are long 10 million of an ETF and short index futures as a hedge. The futures basis widens. What happens to your P&L?"}>
+    A wider basis (futures minus spot) means the futures become richer relative to spot. You are long the ETF and short the futures, so you have an **unrealized loss** on the position.
+
+    But the basis converges to zero at expiry, so if you hold to expiry the loss reverses (ignoring margin financing and roll cost). If you close out or roll while the basis is wide, you realize the loss.
+
+    **Follow-up:** Should you stop out?
+
+    → First work out why the basis widened: financing cost, dividend expectations, a temporary imbalance caused by program buying, or a structural change. Then look at margin and funding capacity and position limits. The basis tends to converge, but you must be able to carry the position until it does.
+  </Accordion>
+
+  <Accordion title="Q8. How does an ex-dividend date affect an ETF and its futures hedge?">
+    When constituents go ex-dividend, the index level falls by roughly the weighted dividend amount, and the ETF's NAV reflects that change. The futures price already includes the expected dividend, so futures and spot do not move in sync around the ex-date.
+
+    The key point is that the difference between expected and actual dividends becomes basis risk. When ETF holders receive dividends and whether they are reinvested depends on the ETF's own documents, so say in the interview that you would check the product documentation.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+- [ETF and Delta-1 questions (Quantitative Research)](/quantitative-research/interview/etf-market-making)
+- [ETF creation and redemption](/equities-derivatives/global/etf-creation-redemption)
+- [Trading rules for cash equities and ETFs (Hong Kong)](/equities-derivatives/hk/cash-etf/trading-rules)
+
+## Sources
+
+- [ETF creation, redemption and authorised participants](https://www.optiver.com/explainers/etf-creation-redemption-and-authorised-participants/), Optiver
+- [ETF 202: Primary and secondary markets](https://www.nasdaq.com/docs/ETF-202-Primary-and-Secondary-Markets), Nasdaq
+- [ETF 102: How ETF creations and redemptions work](https://www.vaneck.com/us/en/blogs/thematic-investing/etf-102-the-inner-workings-of-etf-creations-and-redemptions/), VanEck
+- [ETF trading and liquidity](https://schwabassetmanagement.com/content/etf-trading-and-liquidity), Schwab Asset Management
+- [ETF creation and redemption mechanism](https://www.tradermath.org/courses/asset-classes-and-trading-products/etf-creation-and-redemption-mechanism), TraderMath

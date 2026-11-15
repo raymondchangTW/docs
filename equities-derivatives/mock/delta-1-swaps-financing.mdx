@@ -1,0 +1,124 @@
+---
+title: "Delta-1, swaps and financing mock interview"
+sidebarTitle: "Delta-1 and swaps"
+description: "Mock interview questions on Delta-1 desks: total return swaps, CFDs versus equity swaps, funding and borrow, dividends and tax, corporate actions and counterparty risk."
+icon: "file-contract"
+keywords:
+  - "mock interview"
+  - "Delta-1"
+  - "total return swap"
+  - "equity swap"
+  - "CFD"
+  - "financing"
+  - "stock borrow"
+  - "counterparty risk"
+---
+
+This page covers Delta-1 questions: swaps, financing, borrow, dividends and counterparty risk. The interviewer wants to see that you understand who holds which exposure when a client trades, because that decides the hedge and the pricing. For the structure of these products on this site, see the linked pages.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or desk practice. Contract terms, tax treatment and margin rules depend on the jurisdiction and the documents, so say that you would check them.
+</Info>
+
+## Products
+
+<AccordionGroup>
+  <Accordion title="Q1. What is a total return swap, and how is it structured?">
+    A total return swap (TRS) lets one party receive the **total return of an underlying** (price change plus dividends or other income) without owning it, in exchange for paying a **funding leg**, usually a reference rate plus a spread. The other party receives the funding payment and pays the return.
+
+    - The client gets economic exposure, and the dealer usually hedges by holding the underlying (client long) or a borrowed short (client short).
+    - Payments are periodic, with resets, and the contract sets how dividends, corporate actions and termination are handled.
+    - It can be written on a single stock, a basket or an index.
+
+    **Follow-up:** Why do clients use swaps instead of buying the stock?
+
+    → Leverage through margin, balance sheet efficiency, access to markets or shorting that is hard to get directly, and in some cases confidentiality or tax treatment. Each reason depends on the client and the jurisdiction. See [OTC derivatives](/equities-derivatives/global/delta-1-otc).
+  </Accordion>
+
+  <Accordion title="Q2. What is the difference between a CFD and an equity swap?">
+    Both give synthetic exposure to a stock, and both are OTC. The usual distinctions:
+
+    - **Documentation and client type:** CFDs are typically offered by brokers to a wide range of clients on standard terms with margin and daily financing, while equity swaps are usually institutional contracts under master agreements with negotiated terms.
+    - **Term and reset:** An equity swap often has a fixed term and periodic resets. A CFD is usually open ended.
+    - **Tax and regulation:** Treatment of stamp duty, withholding tax and leverage limits differs by country and has changed over time.
+
+    Do not claim a fixed rule. Say that the economics are similar and that the differences come mainly from documentation, client segment and local tax and regulation.
+  </Accordion>
+</AccordionGroup>
+
+## Pricing and hedging
+
+<AccordionGroup>
+  <Accordion title="Q3. How does the hedge of a swap differ if the client is long versus short?">
+    - **Client long:** The dealer buys the stock to hedge, which needs funding, and the client pays the funding cost.
+    - **Client short:** The dealer needs a short hedge, which generates cash and requires borrowing the stock. The client pays the borrow fee and receives the interest on cash net of costs.
+
+    Both sides have dividend and tax effects. Be clear that the client's direction decides which funding and borrow exposure the dealer holds.
+  </Accordion>
+
+  <Accordion title="Q4. A client wants to go short a hard-to-borrow stock via a total return swap. How do you price it?">
+    When the client is short, the dealer's hedge is the corresponding long or borrowed position. The price needs to reflect:
+
+    - The funding spread on the hedge and the capital usage
+    - **Borrow cost**, which is typically high for hard-to-borrow names and can change
+    - Dividend handling and tax
+    - The risk that the stock loan is recalled
+
+    **Follow-up:** What if the lender recalls the stock?
+
+    → First look for another borrow source. If none is available, you need a matching clause in the contract (for example early termination or a fee adjustment), otherwise the dealer carries the gap. The specific terms depend on the contract.
+  </Accordion>
+
+  <Accordion title="Q5. A client buys a 100 million swap on a basket of stocks. How do you hedge it and what risks remain?">
+    **Hedge:** buy the basket, or buy futures or an ETF if the basket is large or illiquid, and fund the position.
+
+    **Residual risks:**
+
+    - Basis between the futures or ETF and the actual basket, if you hedge with a proxy.
+    - Dividends and withholding tax differences between what the swap pays and what the hedge receives.
+    - Funding spread changes and borrow availability.
+    - Corporate actions and index changes that the swap terms handle differently from the hedge.
+    - Execution cost when building and unwinding the hedge, especially for illiquid names.
+
+    See [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging).
+  </Accordion>
+
+  <Accordion title="Q6. How do dividends and withholding tax affect a swap?">
+    The swap usually passes the dividend to the client, sometimes at a rate that reflects withholding tax. The dealer's hedge receives the actual dividend after the tax that applies to the dealer. If those two amounts differ, the difference is a **P&L item for the dealer**.
+
+    Pricing therefore includes an expected dividend and a tax assumption. Say that tax treatment depends on the underlying market, the client's status and the documents, and that you would confirm it with the tax and legal teams.
+  </Accordion>
+</AccordionGroup>
+
+## Operations and risk
+
+<AccordionGroup>
+  <Accordion title="Q7. What happens to a swap when the underlying has a corporate action such as a rights issue, spin-off or suspension?">
+    The contract defines how the position is adjusted, usually through a calculation agent applying standard equity derivative terms or the specific confirmation. The hedge is adjusted in parallel, for example by taking part in the rights issue or receiving the spin-off shares.
+
+    **Points to name:** differences between the contract adjustment and what the hedge actually receives, a suspended stock that cannot be traded or valued, and the possible early termination terms. The details depend on the documents.
+  </Accordion>
+
+  <Accordion title="Q8. A client builds a large, concentrated leveraged position through swaps with several dealers. What are the risks for you?">
+    - **Concentration:** The dealer holds a large hedge in a few stocks, and a client default would mean selling it into the market.
+    - **Gap risk:** A fall in the stock can exceed the margin before it is called.
+    - **Hidden aggregate exposure:** Each dealer sees only its own swaps, so the client's total leverage may be much higher than any single dealer sees.
+
+    **Controls:** initial and variation margin sized for the liquidity and concentration of the position, concentration limits, haircuts for illiquid names, daily margining, and a plan for how the hedge would be unwound. The 2021 default of a single family office with swaps at several banks is the case interviewers most often cite.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+- [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
+- [OTC derivatives](/equities-derivatives/global/delta-1-otc)
+- [ETF and Delta-1 questions (Quantitative Research)](/quantitative-research/interview/etf-market-making)
+
+## Sources
+
+- [Special situations interview questions (total return swaps)](https://restructuringinterviews.com/blogs/restructuring/special-situations-interview-questions), Restructuring Interviews
+- [Interview questions: CFD vs equity swap](https://forum.wilmott.com/viewtopic.php?p=434274), Wilmott forum
+- [Equity derivatives interview questions](https://clear.glassdoor.nl/Interview/equity-derivatives-interview-questions-SRCH_KO0,18_IP5.htm), Glassdoor candidate reports
+- [Structured products interview questions](https://static.glassdoor.es/Interview/structured-products-interview-questions-SRCH_KO0,19_IP4.htm), Glassdoor candidate reports
+- [Sales and trading interview questions: the full guide](https://mergersandinquisitions.com/sales-and-trading-interview-questions/), Mergers and Inquisitions

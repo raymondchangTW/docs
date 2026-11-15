@@ -1,0 +1,112 @@
+---
+title: "Warrants and structured products mock interview"
+sidebarTitle: "Warrants and structured products"
+description: "Mock interview questions on warrants, CBBCs and structured products: issuer gamma, hedging, bonus certificates, capital-protected notes and autocallable risks."
+icon: "certificate"
+keywords:
+  - "mock interview"
+  - "warrants"
+  - "CBBC"
+  - "structured products"
+  - "autocallable"
+  - "bonus certificate"
+  - "gamma"
+  - "issuer hedging"
+---
+
+This page covers warrant and structured product questions. Interviewers use them to test whether you understand the issuer's side: what risks the desk holds after selling a product, and how the product is built from simple options. For issuance and liquidity rules in Hong Kong, use the linked pages.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content. Numbers in examples are illustrative, not market quotes.
+</Info>
+
+## Warrants and CBBCs
+
+<AccordionGroup>
+  <Accordion title={"Q1. You issued call warrants and the stock jumps 5%. What happens to your hedge and your P&L?"}>
+    Issuing call warrants is the same as being short an option, so you are **short gamma**.
+
+    - When the stock rises, the option's delta increases and your hedge is too small, so you need to **buy more stock** at the higher price.
+    - That is the cost of short gamma: buying high and selling low. The approximate loss is half the gamma times the square of the dollar move.
+    - Theta income, together with the premium collected, offsets part of this loss. Overall you lose when realized volatility is above the implied volatility used in pricing.
+
+    **Follow-up:** What other risks do you have besides delta?
+
+    → Vega (changes in implied volatility), dividends, interest rates, and jump risk across the gap. For issuance and liquidity rules, see [Warrants issuance](/equities-derivatives/hk/warrants/issuance) and [liquidity provider rules](/equities-derivatives/hk/warrants/liquidity-provider-rules).
+  </Accordion>
+
+  <Accordion title="Q2. How is the hedge size for a warrant calculated?">
+    The hedge in shares equals the option delta, times the number of warrants outstanding, times the entitlement ratio (how many warrants are needed for one share). For a call you hold that many shares, and for a put you short them.
+
+    The hedge is adjusted as delta changes with the stock price, time and volatility. Say that the desk also manages gamma and vega across all its warrants on the same underlying, not warrant by warrant.
+  </Accordion>
+
+  <Accordion title="Q3. Where does an issuer make or lose money on warrants?">
+    **Sources of profit:** the margin between the price the issuer sells at and its hedging cost (including a volatility margin), the bid-ask spread when it acts as liquidity provider, and time decay on options that expire out of the money.
+
+    **Sources of loss:** realized volatility above implied, gaps and jumps across hedge points, a stock halt where the hedge cannot be adjusted, hedging slippage, and changes in implied volatility that move the book against the position.
+
+    See [Warrants trading rules](/equities-derivatives/hk/warrants/trading-rules) for the market context.
+  </Accordion>
+
+  <Accordion title="Q4. How does the issuer's risk on a bull CBBC differ from that on a call warrant?">
+    A callable bull contract has a **call level**. If the underlying touches it, the product is called and trading stops, so it is a knock-out structure.
+
+    - Far from the call level, the CBBC behaves almost like a leveraged long position, so the hedge is close to one share per entitlement unit, with little gamma.
+    - Near the call level, the risk is the **gap through the barrier** and the unwind of the hedge at a worse price than the call level. Some categories also carry a residual value after a call, which the issuer must handle.
+
+    Details of categories and settlement are on the [CBBC page](/equities-derivatives/hk/warrants/cbbc).
+  </Accordion>
+</AccordionGroup>
+
+## Structured products
+
+<AccordionGroup>
+  <Accordion title="Q5. How is a bonus certificate constructed?">
+    A bonus certificate pays a **bonus level** at maturity if the underlying never touches a barrier below, and otherwise tracks the underlying.
+
+    **Building blocks:** the underlying (or a zero-strike call) plus a **down-and-out put** with strike at the bonus level and barrier at the protection level. If the barrier is never touched, the put pays the difference up to the bonus level. If the barrier is touched, the put disappears and the holder keeps only the underlying.
+
+    **Follow-up:** What is the main risk for the issuer?
+
+    → Behavior near the barrier: the put's value and delta change sharply around it, and the hedge is difficult to manage there.
+  </Accordion>
+
+  <Accordion title="Q6. Build a capital-protected note with participation in an index. How do you find the participation rate?">
+    A capital-protected note is a **zero-coupon bond plus a call option**. The bond pays the protected amount at maturity, and the money left over after buying the bond pays for the call.
+
+    **Illustration (not market quotes):** with a 3-year rate of 4%, a bond paying 100 at maturity costs about 88.9 today. That leaves about 11.1 per 100 invested to buy options. If an at-the-money 3-year call costs 15, the participation rate is about 11.1 divided by 15, or roughly 74%.
+
+    **What changes it:** higher rates leave more budget, higher implied volatility makes the call more expensive and reduces the participation, and the issuer's fees and funding reduce it further.
+  </Accordion>
+
+  <Accordion title="Q7. In an autocallable or reverse convertible, which option is the client short, and what does the dealer hold?">
+    The client earns a coupon in exchange for selling a **down-and-in put** on the underlying (or the worst of a basket). The coupon is funded by the premium of that put. If the barrier is breached and the final level is below the strike, the client takes the loss.
+
+    **The dealer therefore holds that put**, and the main risks to name are:
+
+    - **Skew:** the put is on a low strike, so its value depends on the volatility smile.
+    - **Barrier and observation dates:** delta and gamma can change sharply near the barrier and on autocall dates.
+    - **Correlation for worst-of products:** the dealer holds a put on the worst performer, so lower correlation makes that put more valuable. The dealer's position is sensitive to correlation, and it cannot be hedged cleanly with simple instruments.
+    - **Dividends**, which lower the forward and raise the put value.
+
+    **Follow-up:** How would you pitch a structured product to a client?
+
+    → Start from the client's view and risk appetite, show the payoff in best, middle and worst cases, explain what they give up in return (here, the downside from the put), state the risks and costs plainly, and confirm suitability.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+- [Options, Greeks and volatility](/equities-derivatives/mock/options-greeks-volatility)
+- [Warrants issuance](/equities-derivatives/hk/warrants/issuance)
+- [Liquidity provider rules](/equities-derivatives/hk/warrants/liquidity-provider-rules)
+
+## Sources
+
+- [Structured products interview questions](https://static.glassdoor.com.ar/Interview/structured-products-analyst-interview-questions-SRCH_KO0,27_IP4.htm), Glassdoor candidate reports
+- [Structured products interview questions, page 22](https://static-pc.glassdoor.fr/Interview/structured-products-interview-questions-SRCH_KO0,19_IP22.htm), Glassdoor candidate reports
+- [How to structure an exotic derivatives product](https://hkcareers.blogspot.com/2022/06/essential-sales-trading-interview-prep.html), HK Careers
+- [Sales and trading interview questions: the full guide](https://mergersandinquisitions.com/sales-and-trading-interview-questions/), Mergers and Inquisitions
+- [50 derivatives trader interview questions](https://digitaldefynd.com/IQ/derivatives-trader-interview-questions/), DigitalDefynd

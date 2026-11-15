@@ -1,131 +1,64 @@
 ---
 title: "Equities and derivatives mock interview: Delta-1 and ETF desk"
-sidebarTitle: "Mock Interview"
-description: "Mock interview for Delta-1, ETF market making and warrant desks: premium with closed markets, swap pricing, basis risk, gamma hedging and behavioral questions."
+sidebarTitle: "Overview"
+description: "Mock interview overview for Delta-1, ETF market making and warrant desks, with five topic pages: ETF market making, options and Greeks, Delta-1 and swaps, warrants and structured products, and markets, risk and behavioral."
+icon: "comments"
 keywords:
   - "mock interview"
   - "Delta-1"
   - "ETF market making"
   - "warrants"
-  - "basis risk"
-  - "total return swap"
-  - "hedging"
-icon: "comments"
+  - "equity derivatives"
+  - "structured products"
 ---
 
-This is a mock interview for equities and derivatives trading desks (Delta-1, ETF market making and arbitrage, warrants). Each question has a main question, common follow-ups and answer points, and the answers are thinking frameworks. For market rule details, see the matching pages on this site, which are not repeated here.
+This is a mock interview for equities and derivatives trading desks (Delta-1, ETF market making and arbitrage, warrants and structured products). It is split into five topic pages. Each question has a main question, common follow-ups and answer points, and the answers are thinking frameworks rather than scripts. Market rule details stay on the matching pages of this site and are linked rather than repeated.
+
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or desk practice. The supplementary material was paraphrased from public interview guides and candidate reports listed under Sources, which describe general patterns and may not match your target firm. Confirm the format with the recruiter before the interview.
+</Info>
+
+## How a desk interview usually runs
+
+Public guides describe a staged process: a short screen on motivation and basic knowledge, one or two technical rounds with traders, and often a final day with several senior interviewers. Options theory (Greeks, arbitrage, implied volatility), market questions, mental math and fit questions appear throughout. The mix depends on the desk, so a Delta-1 or ETF desk leans toward financing, basis and creation and redemption, while an options or warrant desk leans toward Greeks and volatility.
+
+## Topic pages
+
+<Columns cols={2}>
+  <Card title="ETF market making" icon="layer-group" href="/equities-derivatives/mock/etf-market-making">
+    Creation and redemption, quoting, premium and discount, arbitrage risks, basis and dividends.
+  </Card>
+
+  <Card title="Options and Greeks" icon="chart-line" href="/equities-derivatives/mock/options-greeks-volatility">
+    Delta, gamma and theta, put-call parity, digital options, skew, earnings straddles, spreads.
+  </Card>
+
+  <Card title="Delta-1 and swaps" icon="file-contract" href="/equities-derivatives/mock/delta-1-swaps-financing">
+    Total return swaps, CFDs, funding and borrow, dividends and tax, corporate actions, counterparty risk.
+  </Card>
+
+  <Card title="Warrants and structured products" icon="certificate" href="/equities-derivatives/mock/warrants-structured-products">
+    Issuer gamma, hedge sizing, CBBCs, bonus certificates, capital-protected notes, autocallables.
+  </Card>
+
+  <Card title="Markets, risk, behavioral" icon="comments" href="/equities-derivatives/mock/markets-risk-behavioral">
+    Market views, risk limits, market-making games, mental math and fit questions.
+  </Card>
+</Columns>
 
 More research-oriented mock questions are on the Quantitative Research [Mock Interview](/quantitative-research/mock-interview).
 
-<Info>
-  **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or desk practice. Specific rules, numbers and terms are governed by each market's pages and the current exchange documents.
-</Info>
-
-## ETF market making and arbitrage
-
-<AccordionGroup>
-  <Accordion title="Q1. A Hong Kong-listed ETF tracking US stocks trades at a 1% premium to its last NAV while the US market is closed. Is this an arbitrage?">
-    **Not necessarily.** First ask whether the NAV is stale. The NAV after the US close is the previous closing value, while the ETF during Hong Kong hours reflects the market's expectation of where US stocks will open.
-
-    **Steps to check:**
-
-    - Recompute a live fair value using US index futures that are still trading, ADRs or FX, and compare it with the ETF price.
-    - If the deviation disappears after recomputing, it was an information lag, not a mispricing.
-    - If a deviation remains, then consider arbitrage costs and execution feasibility.
-
-    **Follow-up:** If you go ahead, how do you lock it in?
-
-    → You can use related futures that are still trading to hedge the directional exposure first, then deal with the basket and creation or redemption once the constituent market opens. Residual risks are basis, FX, the opening gap and creation and redemption cut-off times. See [ETF creation, redemption and arbitrage (Hong Kong)](/equities-derivatives/hk/cash-etf/creation-redemption).
-  </Accordion>
-
-  <Accordion title="Q2. Why is creation and redemption arbitrage not risk free?">
-    - **Execution risk (legging):** Buying the whole constituent basket and selling the ETF do not happen at the same moment, and prices move in between.
-    - **Settlement and timing:** Creation and redemption have cut-off times and settlement cycles, and the position is exposed to the market during that gap.
-    - **Basket versus actual composition:** The actual creation list can differ from the index constituents or the cash component.
-    - **Borrow and financing:** A redemption arbitrage needs the basket shorted, and borrow availability and cost can change.
-    - **Size and liquidity:** With illiquid constituents, real fills differ from theoretical values.
-
-    **Follow-up:** Which of these risks can be hedged with futures?
-
-    → Directional market risk can, but execution, borrow and basket-difference risks cannot. See [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging).
-  </Accordion>
-
-  <Accordion title="Q3. You are long 10 million of an ETF and short index futures as a hedge. The futures basis widens. What happens to your P&L?">
-    A wider basis (futures minus spot) means the futures become richer relative to spot. You are long the ETF and short the futures, so you have an **unrealized loss** on the position.
-
-    But the basis converges to zero at expiry, so if you hold to expiry the loss reverses (ignoring margin financing and roll cost). If you close out or roll while the basis is wide, you realize the loss.
-
-    **Follow-up:** Should you stop out?
-
-    → First work out why the basis widened: financing cost, dividend expectations, a temporary imbalance caused by program buying, or a structural change. Then look at margin and funding capacity and position limits. The basis tends to converge, but you must be able to carry the position until it does.
-  </Accordion>
-
-  <Accordion title="Q4. How does an ex-dividend date affect an ETF and its futures hedge?">
-    When constituents go ex-dividend, the index level falls by roughly the weighted dividend amount, and the ETF's NAV reflects that change. The futures price already includes the expected dividend, so futures and spot do not move in sync around the ex-date.
-
-    The key point is that the difference between expected and actual dividends becomes basis risk. When ETF holders receive dividends and whether they are reinvested depends on the ETF's own documents, so say in the interview that you would check the product documentation.
-  </Accordion>
-</AccordionGroup>
-
-## Delta-1 swaps and financing
-
-<AccordionGroup>
-  <Accordion title="Q5. A client wants to go short a hard-to-borrow stock via a total return swap. How do you price it?">
-    When the client is short, the issuer's hedge is the corresponding long or borrowed position. The price needs to reflect:
-
-    - The funding spread on the hedge and the capital usage
-    - **Borrow cost**, which is typically high for hard-to-borrow names and can change
-    - Dividend handling and tax
-    - The risk that the stock loan is recalled
-
-    **Follow-up:** What if the lender recalls the stock?
-
-    → First look for another borrow source. If none is available, you need a matching clause in the contract (for example early termination or a fee adjustment), otherwise the issuer carries the gap. The specific terms depend on the contract. See [OTC derivatives](/equities-derivatives/global/delta-1-otc).
-  </Accordion>
-
-  <Accordion title="Q6. How does the hedge of a swap differ if the client is long versus short?">
-    - **Client long:** The issuer buys the stock to hedge, which needs funding, and the client pays the funding cost.
-    - **Client short:** The issuer needs a short hedge, which generates cash and requires borrowing the stock. The client pays the borrow fee and receives the interest on cash net of costs.
-
-    Both sides have dividend and tax effects. In the interview, be clear that the client's direction determines which funding and borrow exposure the issuer holds.
-  </Accordion>
-</AccordionGroup>
-
-## Warrants and gamma
-
-<AccordionGroup>
-  <Accordion title="Q7. You issued call warrants and the stock jumps 5%. What happens to your hedge and your P&L?">
-    Issuing call warrants is the same as being short an option, so you are **short gamma**.
-
-    - When the stock rises, the option's delta increases and your hedge is too small, so you need to **buy more stock** at the higher price.
-    - That is the cost of short gamma: buying high and selling low. The approximate P&L is `−(1/2) Γ S² (ΔS / S)²`.
-    - Theta income, together with the premium collected, offsets part of this loss. Overall you lose when realized volatility is above the implied volatility used in pricing.
-
-    **Follow-up:** What other risks do you have besides delta?
-
-    → Vega (changes in implied volatility), dividends, interest rates, and jump risk across the gap. See [Derivatives and Greeks](/quantitative-research/interview/derivatives-greeks) Q7 and Q8. For issuance and liquidity rules, see [Warrants issuance](/equities-derivatives/hk/warrants/issuance) and [liquidity provider rules](/equities-derivatives/hk/warrants/liquidity-provider-rules).
-  </Accordion>
-</AccordionGroup>
-
-## Behavioral and project questions
-
-<AccordionGroup>
-  <Accordion title="Q8. Tell me about a time you had to prioritize between a pricing request and a production issue.">
-    Use the STAR structure: Situation, Task, Action, Result.
-
-    Key points: how you assessed impact (client, risk, size), how you communicated the priority, and how you reviewed it afterwards. Fill in your own real experience, as the interviewer will probe for details.
-  </Accordion>
-
-  <Accordion title="Q9. Describe a project where requirements changed midway. How did you handle scope?">
-    Suggested structure: the original goal, why the change came up, your assessment of schedule and risk, how you agreed the trade-off with stakeholders, and the result and what you learned.
-
-    Fill in your own project experience. There is no standard answer to this type of question, and the interviewer is looking at how you think and communicate.
-  </Accordion>
-</AccordionGroup>
-
 ## Related pages
 
-- [Mock Interview (Quantitative Research)](/quantitative-research/mock-interview)
-- [ETF and Delta-1 questions](/quantitative-research/interview/etf-market-making)
+- [ETF and Delta-1 questions (Quantitative Research)](/quantitative-research/interview/etf-market-making)
+- [Derivatives and Greeks questions (Quantitative Research)](/quantitative-research/interview/derivatives-greeks)
 - [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
 - [OTC derivatives](/equities-derivatives/global/delta-1-otc)
+
+## Sources
+
+- [All Options interview guide](https://www.tradermath.org/articles/all-options-interview-guide), TraderMath
+- [Sales and trading interview questions: the full guide](https://mergersandinquisitions.com/sales-and-trading-interview-questions/), Mergers and Inquisitions
+- [Equity derivatives interview questions](https://static.glassdoor.at/Interview/equity-derivatives-interview-questions-SRCH_KO0,18_IP8.htm), Glassdoor candidate reports
+- [Options pricing for quant interviews](https://www.techinterview.org/post/3233474555/options-pricing-quant-interviews/?format=md), techinterview.org
+- [ETF creation, redemption and authorised participants](https://www.optiver.com/explainers/etf-creation-redemption-and-authorised-participants/), Optiver

@@ -100,9 +100,14 @@
             ]
           },
           {
-            "group": "Interview",
+            "group": "Mock Interview",
             "pages": [
-              "equities-derivatives/interview/mock-interview"
+              "equities-derivatives/interview/mock-interview",
+              "equities-derivatives/mock/etf-market-making",
+              "equities-derivatives/mock/options-greeks-volatility",
+              "equities-derivatives/mock/delta-1-swaps-financing",
+              "equities-derivatives/mock/warrants-structured-products",
+              "equities-derivatives/mock/markets-risk-behavioral"
             ]
           }
         ]
