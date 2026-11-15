@@ -38,6 +38,42 @@
         "tab": "Equity Derivatives",
         "groups": [
           {
+            "group": "Global",
+            "icon": "globe",
+            "pages": [
+              {
+                "group": "Concepts",
+                "pages": []
+              },
+              {
+                "group": "Delta-1",
+                "pages": []
+              },
+              {
+                "group": "Comparison",
+                "pages": []
+              }
+            ]
+          },
+          {
+            "group": "Hong Kong",
+            "icon": "building-columns",
+            "pages": [
+              {
+                "group": "Cash equities & ETF",
+                "pages": []
+              },
+              {
+                "group": "Warrants & CBBC",
+                "pages": []
+              },
+              {
+                "group": "Listed derivatives",
+                "pages": []
+              }
+            ]
+          },
+          {
             "group": "Listed Derivatives",
             "pages": [
               {
