@@ -1,0 +1,209 @@
+---
+title: "Volatility estimation and the implied volatility surface"
+sidebarTitle: "Volatility surface"
+description: "How to estimate realized volatility from prices, how to build an arbitrage-free implied volatility surface from listed options, how the surface moves with spot, and how desks use it for pricing, hedging, risk and relative value."
+icon: "chart-area"
+keywords:
+  - "volatility surface"
+  - "implied volatility"
+  - "realized volatility"
+  - "Yang-Zhang"
+  - "Garman-Klass"
+  - "SVI"
+  - "skew stickiness ratio"
+  - "VHSI"
+---
+
+<Info>
+  **Status of this page.** Written on 15 November 2026. It is a framework built from the papers and guides listed under Sources, not a desk's model documentation. Efficiency figures and empirical ratios come from those sources and depend on their assumptions. Items that depend on a firm's or exchange's conventions are listed under [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
+
+A desk works with three different volatility numbers, and most mistakes come from mixing them up.
+
+| Quantity | What it is | Where it comes from | Main use |
+| --- | --- | --- | --- |
+| Realized (historical) volatility | How much the underlying actually moved over a past window | Price history | Judging whether options were cheap or rich, P&L explain, risk models |
+| Implied volatility | The volatility that makes a model price equal the market price of an option | Option prices | Quoting, pricing, hedging and marking options |
+| Forecast volatility | A prediction of future realized volatility | A statistical model (EWMA, GARCH) or a view | Trading decisions: buy volatility if implied is below your forecast |
+
+The gap between implied and subsequently realized volatility is what a delta-hedged option position earns or loses. See [Derivatives and Greeks](/quantitative-research/interview/derivatives-greeks) Q8.
+
+## Estimating realized volatility
+
+### Close-to-close
+
+The standard estimator is the standard deviation of daily log returns, multiplied by the square root of the number of trading days in a year (252 is a common convention). It uses only closing prices, handles drift and includes the overnight gap, but it throws away everything that happened during the day, so it needs a long window to be precise.
+
+### Range-based estimators
+
+Range-based estimators use the open, high, low and close of each day. They extract more information per day, so a shorter window gives the same precision. The trade-off is in the assumptions each one makes.
+
+| Estimator | Data | Handles drift | Captures overnight gap | Efficiency versus close-to-close |
+| --- | --- | --- | --- | --- |
+| Close-to-close | Close | Yes | Yes | 1 |
+| Parkinson | High, low | No | No | About 5 |
+| Garman-Klass | Open, high, low, close | No | No | About 7.4 |
+| Rogers-Satchell | Open, high, low, close | Yes | No | About 6 to 8 |
+| Yang-Zhang | Previous close, open, high, low, close | Yes | Yes | Up to about 14 |
+
+Efficiency figures are the theoretical values under the estimators' assumptions, as quoted in the sources. Yang-Zhang combines the overnight (close-to-open) variance, the open-to-close variance and the Rogers-Satchell term, which is why it is both drift-independent and robust to opening gaps.
+
+**Practical consequences:**
+
+- **Overnight and lunch gaps:** Parkinson, Garman-Klass and Rogers-Satchell see only the trading session, so they understate volatility for a market with large opening gaps. Hong Kong also has a lunch break, which is a second, smaller gap.
+- **Trends:** Parkinson and Garman-Klass assume zero drift and can overstate volatility in a strongly trending market.
+- **The choice matters for trading signals:** one study of US stocks found that the choice of estimator flipped the sign of implied minus realized volatility on a large share of days. State which estimator you use whenever you compare realized with implied.
+
+### Intraday realized variance
+
+With intraday data, realized variance is the sum of squared intraday returns. Two problems appear:
+
+- **Microstructure noise:** bid-ask bounce makes very high-frequency returns look more volatile than the true price. Common fixes are sampling at a coarser interval (for example five minutes) or using noise-robust estimators.
+- **Jumps:** a single large move dominates the sum. Bipower variation (the sum of products of adjacent absolute returns) is a jump-robust alternative, and the difference between the two measures the jump component.
+
+### Forecasting
+
+EWMA and GARCH(1,1) turn past returns into a forecast that reacts to recent shocks and, for GARCH, reverts to a long-run level. See [Regression, time series and backtesting](/quantitative-research/interview/statistics-backtesting) for the formulas.
+
+### Checklist for a realized volatility number
+
+- Window length (10, 20, 60 days) and whether it overlaps a known event such as earnings.
+- Prices adjusted for dividends, splits and other corporate actions.
+- Annualization convention (trading days, and whether half days and holidays count).
+- Whether you include or exclude event days, and say which.
+
+## Building the implied volatility surface
+
+The surface is implied volatility as a function of strike (or moneyness) and expiry. It is usually stored as **total implied variance**, `w(k, T) = σ² × T`, against log-moneyness `k = ln(K / F)`, because the no-arbitrage conditions are simplest in those terms.
+
+<Steps>
+  <Step title="Clean the quotes">
+    Use out-of-the-money options (puts below the forward, calls above), because they are more liquid and less sensitive to the forward. Drop quotes with no bid, very wide spreads or stale timestamps. Decide whether you fit to mids or to the bid-ask range.
+  </Step>
+
+  <Step title="Find the forward for each expiry">
+    For an index with liquid futures, use the futures price for the matching expiry. Otherwise back out the forward from put-call parity at strikes near the money, which also gives the implied dividends and borrow cost. For American-style single stock options, such as Hong Kong stock options, early exercise premium must be removed first, for example by pricing with a binomial tree.
+  </Step>
+
+  <Step title="Solve for implied volatility">
+    Invert the pricing model strike by strike with a robust solver. See [Code quality](/quantitative-dev/mock/code-quality) Q7 for how to make the solver reliable.
+  </Step>
+
+  <Step title="Fit each expiry slice">
+    Fit a smooth smile through the points. A common choice is the SVI parameterization of total variance, which fits listed equity index smiles well and has known conditions for no arbitrage. SABR is another common smile model.
+  </Step>
+
+  <Step title="Interpolate across expiries">
+    Interpolate in total variance at fixed moneyness, not in volatility. Total variance must not fall as expiry increases, otherwise a calendar spread is an arbitrage. Surface parameterizations such as SSVI build this condition in.
+  </Step>
+
+  <Step title="Check for arbitrage and extrapolate the wings">
+    Check the calendar condition and the butterfly condition (call prices convex in strike, so the implied density is never negative). Extrapolate beyond the last liquid strike with a controlled wing slope: Roger Lee's moment formula bounds how fast total variance can grow in the wings.
+  </Step>
+</Steps>
+
+**Models behind the surface.** A parameterization such as SVI describes today's surface only. Local volatility (Dupire) reproduces today's surface exactly with a deterministic volatility function, and stochastic volatility models such as Heston give more realistic dynamics but fit less exactly. See [Statistical models](/quantitative-research/interview/statistical-models).
+
+## How the surface moves with spot
+
+When spot moves, the hedge ratio of an option depends on how its implied volatility moves too. The skew stickiness ratio (SSR) measures this. It is the regression coefficient of daily changes in at-the-money volatility on spot returns, divided by the at-the-money skew.
+
+| Regime | SSR | Meaning |
+| --- | --- | --- |
+| Sticky delta (sticky moneyness) | 0 | At-the-money volatility does not change when spot moves |
+| Sticky strike | 1 | Each strike keeps its volatility, so at-the-money volatility moves along the skew |
+| Local volatility | 2 | At-the-money volatility moves twice as fast as the skew implies |
+
+Empirically, index option markets have been reported around 1.5 for maturities from a month to a few years. The SSR matters because the smile-adjusted delta equals the Black-Scholes delta plus vega times the expected change in implied volatility per unit of spot, so a desk that assumes the wrong regime hedges the wrong amount. See [Options, Greeks and volatility](/equities-derivatives/mock/options-greeks-volatility) Q12.
+
+## Applications
+
+| Application | How the surface is used |
+| --- | --- |
+| Pricing and marking | Every vanilla option, warrant and CBBC on the underlying is priced or marked off the surface. A warrant issuer sets its quoted implied volatility from the surface plus a margin, see [Warrants](/equities-derivatives/mock/warrants-structured-products) Q10. |
+| Exotics | Digitals and barriers depend on the skew at the relevant strike. Autocallables and cliquets depend on forward skew, which needs a dynamic model (local or stochastic volatility), not just today's surface. |
+| Risk | Vega is bucketed by expiry and strike. Scenarios shift the surface in parallel, steepen or flatten the skew, and twist the term structure. |
+| Hedging | The smile-adjusted delta uses the assumed surface dynamics (the SSR above). |
+| Relative value | Implied against forecast realized volatility, term structure (calendar spreads), skew (risk reversals) and index against single-stock volatility (dispersion and implied correlation). |
+| Volatility indices and variance swaps | A variance swap strike is a weighted strip of out-of-the-money options across the smile. The VHSI uses the VIX methodology, adapted to Hong Kong, on near-term and next-term HSI options to measure expected 30-day HSI volatility. |
+| Event volatility | The term structure around an earnings date or a policy announcement separates the event's variance from normal-day variance, as below. |
+
+### Extracting an event move from the term structure
+
+If an expiry contains one event day, its total variance is the variance of the normal days plus the variance of the event day. So the event-day variance is the expiry's total variance minus the normal-day variance over the other days. The square root of that is the standard deviation of the event-day move, and about 0.8 times it is the expected absolute move.
+
+**Example:** 10 trading days to expiry, quoted implied volatility 50%, normal-day volatility 30%, 252 trading days a year. Total variance is 0.25 times 10 divided by 252, or 0.00992. Normal-day variance for the other 9 days is 0.09 times 9 divided by 252, or 0.00321. The event-day variance is 0.00671, so the event-day standard deviation is about **8.2%** and the expected absolute move is about **6.5%**.
+
+<EventMoveCalculator />
+
+<Note>
+  The calculator assumes one event day, a constant normal-day volatility and a normal distribution for the event move (the 0.8 factor). Real event moves are often bimodal, so treat the result as a first estimate.
+</Note>
+
+### Implied correlation
+
+An index's variance is the weighted sum of the constituents' variances plus the covariance terms. Given the index implied volatility and the constituents' implied volatilities, you can solve for the single average correlation that makes the two consistent. Index implied volatility is usually higher than this approach would give at the realized correlation, because investors pay for index downside protection. Dispersion trades sell index volatility and buy single-stock volatility to trade that gap.
+
+## Points to verify before relying on this page
+
+- **Annualization and day-count conventions** for realized volatility (252 days, treatment of Hong Kong half days and typhoon closures) are desk conventions.
+- **Fitting choices** (SVI versus SABR, mids versus bid-ask, weights by vega) differ by desk and are not documented here.
+- **Hong Kong stock option exercise style and forward extraction** follow the HKEX contract terms on the [listed derivatives page](/equities-derivatives/hk/listed-derivatives/overview). The de-Americanization method is a modeling choice.
+- **The empirical SSR of about 1.5** is reported for index options in the cited source. It has not been checked for HSI options.
+- **VHSI methodology details** (strike selection, interpolation) should be confirmed against the current Hang Seng Indexes rules.
+
+## Related pages
+
+- [Volatility surface mock interview](/equities-derivatives/mock/volatility-surface)
+- [Options, Greeks and volatility mock interview](/equities-derivatives/mock/options-greeks-volatility)
+- [Derivatives and Greeks (Quantitative Research)](/quantitative-research/interview/derivatives-greeks)
+- [Statistical models in finance](/quantitative-research/interview/statistical-models)
+- [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview)
+
+## Sources
+
+- [Range-based volatility estimators: overview and examples of usage](https://portfoliooptimizer.io/blog/range-based-volatility-estimators-overview-and-examples-of-usage/), Portfolio Optimizer
+- [OHLC measures (efficiency table)](https://bookdown.org/jarneric/financial_econometrics/5.1-ohlc-measures.html), Financial Econometrics
+- [Yang-Zhang versus close-to-close volatility](https://flashalpha.com/articles/yang-zhang-vs-close-to-close-realized-volatility), FlashAlpha
+- [Six ways to estimate realized volatility](https://macrosynergy.com/?p=43269), Macrosynergy
+- [Range-based estimators in predicting realized variance](https://link.springer.com/article/10.1007/s00181-025-02873-3), Empirical Economics
+- [Arbitrage-free SVI volatility surfaces](https://arxiv.org/pdf/1204.0646), Gatheral and Jacquier
+- [Generalised arbitrage-free SVI volatility surfaces](https://arxiv.org/pdf/1210.7111), Guo, Jacquier, Martini and Neufcourt
+- [Computing the SSR](https://arxiv.org/pdf/2406.16131), Friz and Gatheral
+- [On the skew stickiness ratio](https://arxiv.org/html/2602.05241v1), Fukasawa
+- [Stickiness ratio and volatility regimes](https://www.bayes.city.ac.uk/__data/assets/pdf_file/0019/151093/Sepp.pdf), Sepp
+- [HSI Volatility Index futures](https://www.hkex.com.hk/eng/prod/drprod/vhsi/vhsispec.htm), HKEX
+
+export const EventMoveCalculator = () => {
+  const [days, setDays] = useState(10);
+  const [iv, setIv] = useState(50);
+  const [base, setBase] = useState(30);
+  const total = (iv / 100) ** 2 * days / 252;
+  const normal = (base / 100) ** 2 * (days - 1) / 252;
+  const eventVar = total - normal;
+  const sd = eventVar > 0 ? Math.sqrt(eventVar) : null;
+  const row = { display: "grid", gap: 4, fontSize: 14 };
+  return (
+    <div className="not-prose" style={{ border: "1px solid rgba(127,127,127,.25)", borderRadius: 12, padding: 16, display: "grid", gap: 12 }}>
+      <label style={row}>
+        Trading days to expiry (including the event day): {days}
+        <input type="range" min={1} max={40} value={days} onChange={(e) => setDays(Number(e.target.value))} />
+      </label>
+      <label style={row}>
+        Quoted implied volatility for the expiry: {iv}%
+        <input type="range" min={5} max={150} value={iv} onChange={(e) => setIv(Number(e.target.value))} />
+      </label>
+      <label style={row}>
+        Normal-day volatility: {base}%
+        <input type="range" min={5} max={100} value={base} onChange={(e) => setBase(Number(e.target.value))} />
+      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8, fontSize: 14 }}>
+        <div style={{ padding: 10, borderRadius: 8, background: "rgba(127,127,127,.1)" }}>Total variance: {total.toFixed(5)}</div>
+        <div style={{ padding: 10, borderRadius: 8, background: "rgba(127,127,127,.1)" }}>Normal-day variance: {normal.toFixed(5)}</div>
+        <div style={{ padding: 10, borderRadius: 8, background: "rgba(127,127,127,.1)" }}>Event-day move (1 s.d.): {sd === null ? "n/a" : (sd * 100).toFixed(1) + "%"}</div>
+        <div style={{ padding: 10, borderRadius: 8, background: "rgba(127,127,127,.1)" }}>Expected absolute move: {sd === null ? "n/a" : (sd * 80).toFixed(1) + "%"}</div>
+      </div>
+      {sd === null && <div style={{ fontSize: 13, color: "#d97706" }}>The quoted volatility is too low to contain any event variance at this normal-day volatility.</div>}
+    </div>
+  );
+};

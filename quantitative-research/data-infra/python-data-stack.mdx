@@ -1,0 +1,31 @@
+---
+title: "Python data stack"
+description: "pandas 與 polars 的取捨、向量化與記憶體管理。"
+keywords:
+  - "pandas"
+  - "polars"
+  - "vectorization"
+  - "memory"
+  - "Python"
+sidebarTitle: "Python data stack"
+---
+
+<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。套件版本與效能比較需實測或查官方文件後再寫。</Info>
+
+## 大綱
+
+1. pandas 與 polars 的設計差異與適用情境
+2. 向量化思維：避免逐行迴圈
+3. 記憶體：dtype、分塊處理與不必要的複製
+4. 時間序列處理：重樣本、時區與 as-of 合併
+5. 效能剖析與瓶頸定位
+
+## 面試常問
+
+- 100GB 的 tick 資料要怎麼在單機處理？
+- 什麼時候該把單機處理改成並行或分散式？
+
+## Related pages
+
+- [Event-driven vs vectorized](/quantitative-research/backtesting/event-driven-vs-vectorized)
+- [Interview：Data engineering](/quantitative-research/interview/data-engineering)

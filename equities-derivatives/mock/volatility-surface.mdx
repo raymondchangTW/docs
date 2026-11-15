@@ -1,0 +1,174 @@
+---
+title: "Volatility estimation and surface mock interview"
+sidebarTitle: "Volatility surface"
+description: "Mock interview questions on realized volatility estimators, building and checking an implied volatility surface, forwards from put-call parity, event volatility, implied correlation and skew dynamics."
+icon: "chart-area"
+keywords:
+  - "mock interview"
+  - "volatility surface"
+  - "realized volatility"
+  - "implied volatility"
+  - "skew stickiness"
+  - "implied correlation"
+  - "event volatility"
+---
+
+This page covers volatility questions for options, warrant and volatility desks: how you measure volatility, how you build and sanity-check a surface, and what you do with it. The concepts are explained on [Volatility estimation and the implied volatility surface](/equities-derivatives/global/volatility-surface), so the answers here focus on how to reason under interview conditions.
+
+<Info>
+  **Status of this page.** Written on 15 November 2026. These are general practice frameworks, not any firm's interview content. Worked numbers are illustrative.
+</Info>
+
+## Measuring volatility
+
+<AccordionGroup>
+  <Accordion title="Q1. You only have daily open, high, low and close prices. How do you estimate volatility, and which estimator do you pick?">
+    Name the options and their assumptions, then pick based on the asset:
+
+    - **Close-to-close:** simple, handles drift and overnight gaps, but needs a long window.
+    - **Parkinson and Garman-Klass:** use the range, so they are several times more efficient, but assume zero drift and ignore the overnight gap.
+    - **Rogers-Satchell:** removes the drift assumption but still ignores the gap.
+    - **Yang-Zhang:** combines overnight, open-to-close and Rogers-Satchell terms, so it handles both drift and gaps. It is a good default for stocks with meaningful overnight moves.
+
+    **Follow-up:** For a Hong Kong stock, what extra gap do you have?
+
+    → The lunch break. Range estimators built on a single session miss it, so either treat the morning and afternoon as separate sessions or accept a small downward bias.
+  </Accordion>
+
+  <Accordion title="Q2. Your 20-day close-to-close volatility is 28%, but Garman-Klass gives 22%. Which is wrong?">
+    Probably neither. Garman-Klass sees only the trading session, while close-to-close includes the overnight gap. A gap of this size suggests that **a lot of the variance is happening overnight**, for example because of news outside trading hours or a strong lead from another market.
+
+    **What to check:** recompute with Yang-Zhang, which includes the overnight term, and look at the split between overnight and intraday variance. If the overnight share is large, an option that is delta-hedged only during the day will realize the close-to-close number, not the intraday one.
+
+    **Follow-up:** Why does this matter when comparing realized with implied?
+
+    → Because the estimator can change the sign of implied minus realized on many days. State which estimator you used before saying options are cheap or rich.
+  </Accordion>
+
+  <Accordion title="Q3. You compute realized variance from 1-second returns and it is far higher than from 5-minute returns. Why?">
+    **Microstructure noise.** At very high frequency, trades bounce between bid and ask, and each bounce looks like a return. Summing many tiny squared returns adds up the noise rather than the true variance.
+
+    **Fixes:** sample at a coarser interval, use mid prices rather than trade prices, or use a noise-robust estimator. If one large move dominates, compare with bipower variation to separate the jump from the continuous part.
+  </Accordion>
+
+  <Accordion title="Q4. Should you price options with a GARCH forecast or with implied volatility?">
+    **Price and hedge with implied volatility.** It is the market's price for the option, it is what your hedges trade at, and marking to anything else creates P&L that is not real.
+
+    **Use the forecast for decisions.** If your forecast of realized volatility is below implied, you might sell options and delta hedge, expecting to earn the gap. The persistent difference between implied and realized for index options is called the volatility risk premium, and it is compensation for crash risk, so a short-volatility strategy that looks steady can lose a lot in a sell-off.
+  </Accordion>
+</AccordionGroup>
+
+## Building the surface
+
+<AccordionGroup>
+  <Accordion title="Q5. Walk me through building a volatility surface for HSI options from scratch.">
+    1. **Clean the data:** use out-of-the-money puts and calls, drop zero bids, wide spreads and stale quotes.
+    2. **Forward per expiry:** use the matching HSI futures price, or back it out from put-call parity near the money.
+    3. **Implied volatility per strike** with a robust solver.
+    4. **Fit each expiry** with a smile parameterization such as SVI in total variance against log-moneyness.
+    5. **Interpolate across expiries** in total variance at fixed moneyness.
+    6. **Check arbitrage:** total variance must not fall with expiry (calendar), and call prices must be convex in strike (butterfly).
+    7. **Extrapolate the wings** with a bounded slope.
+
+    **Follow-up:** Why interpolate in total variance rather than in volatility?
+
+    → Because the calendar no-arbitrage condition is that total variance increases with maturity. Interpolating volatility directly can create a calendar arbitrage between two quoted expiries even when both are clean.
+  </Accordion>
+
+  <Accordion title="Q6. How do you get the forward and the implied dividend for a Hong Kong single stock option?">
+    Put-call parity gives the forward from a call and a put at the same strike: the call minus the put equals the discounted forward minus the discounted strike. Do this at several strikes near the money and average.
+
+    **Complications:**
+
+    - **American exercise:** Hong Kong stock options are American, so remove the early exercise premium first, for example with a binomial tree, or use only strikes where early exercise is unlikely.
+    - **Separating dividend from borrow:** parity gives the combined effect of dividends and borrow cost. Use the dividend forecast and the stock futures price, if one trades, to separate them.
+    - **Ex-dates:** a known ex-date before expiry should show up as a jump in the forward, not as a smooth yield.
+  </Accordion>
+
+  <Accordion title="Q7. Your fitted smile implies a negative probability density in the downside wing. What does that mean and what do you do?">
+    Negative density means call prices are not convex in strike there, which is a **butterfly arbitrage**: you could buy a butterfly for less than zero. It usually comes from a fit that bends too sharply between sparse quotes or from extrapolating too steeply.
+
+    **What to do:** refit with no-arbitrage constraints (for example an SVI or SSVI fit with the known conditions imposed), reduce the weight of illiquid strikes, and check that the wing slope stays within the moment bound. Never publish a surface with arbitrage to a pricing system, because exotics priced off it will be wrong in ways that are hard to see.
+  </Accordion>
+</AccordionGroup>
+
+## Using the surface
+
+<AccordionGroup>
+  <Accordion title="Q8. An expiry 10 trading days away contains an earnings date and trades at 50% implied volatility. Normal days are around 30%. What move is the market pricing for earnings?">
+    Split the total variance into normal days and the event day.
+
+    - **Total variance:** 0.50 squared times 10 divided by 252, or about 0.00992.
+    - **Normal days:** 0.30 squared times 9 divided by 252, or about 0.00321.
+    - **Event day:** 0.00992 minus 0.00321, or about 0.00671. Its square root is about **8.2%**, the one-standard-deviation move.
+    - **Expected absolute move:** about 0.8 times that, or **6.5%**.
+
+    **Follow-up:** How do you judge whether that is cheap?
+
+    → Compare with the stock's past earnings-day moves, adjusted for the current environment. Remember that event moves are often bimodal, so the 0.8 factor is only a first estimate.
+  </Accordion>
+
+  <Accordion title="Q9. An index has two stocks with equal weights, each with 30% implied volatility. The index implied volatility is 24%. What correlation is implied, and how would you trade it?">
+    Index variance equals the sum of the weighted variances plus the covariance term:
+
+    - 0.24 squared is 0.0576.
+    - The variance terms are 2 times 0.5 squared times 0.09, or 0.045.
+    - The covariance term is 2 times 0.5 times 0.5 times 0.09 times the correlation, or 0.045 times the correlation.
+    - So the correlation is (0.0576 minus 0.045) divided by 0.045, or about **0.28**.
+
+    **Trade:** if you expect realized correlation to be higher than 0.28, buy index volatility and sell single-stock volatility. If lower, do the reverse, which is a dispersion trade. Index implied correlation is often above realized because investors pay for index downside protection.
+
+    **Follow-up:** What is the main risk of a short-correlation dispersion trade?
+
+    → Correlations jump towards one in a crash, so the index volatility you sold rises much more than the single-stock volatility you bought.
+  </Accordion>
+
+  <Accordion title="Q10. What is the skew stickiness ratio, and how does it change your delta?">
+    It is the regression of daily changes in at-the-money volatility on spot returns, divided by the at-the-money skew. It is 0 under sticky delta, 1 under sticky strike and 2 under local volatility, and it has been reported around 1.5 for index options.
+
+    **Hedge impact:** the smile-adjusted delta is the Black-Scholes delta plus vega times the expected change in that strike's implied volatility per unit of spot. Near the money, the change in a fixed strike's volatility per unit of log-spot is roughly (ratio minus 1) times the skew.
+
+    - **Ratio of 1 (sticky strike):** no adjustment.
+    - **Ratio above 1 (for example the 1.5 reported for indices), downward skew:** a fixed strike's volatility rises when spot falls. A long call gains some vega in a sell-off, which offsets part of its delta loss, so its effective delta is **lower** than the Black-Scholes delta and hedging with the Black-Scholes delta over-hedges it.
+    - **Ratio below 1:** the adjustment flips sign and the effective delta is higher.
+
+    **Follow-up:** How do you estimate it on your own book?
+
+    → Run the regression on historical daily changes in at-the-money volatility and spot for the relevant expiry, check it in calm and stressed periods separately, and compare with what your model assumes.
+  </Accordion>
+
+  <Accordion title="Q11. You issue warrants on a Hong Kong stock whose listed options trade only near the money. How do you set the implied volatility for a far out-of-the-money warrant?">
+    - Start from the fitted surface near the money and extrapolate the skew with a controlled wing slope, cross-checked against similar stocks or the sector's options.
+    - Add an issuer margin for short gamma and vega, since you will be short the warrant, and for the hedge being illiquid at that strike.
+    - Consider existing warrants on the same stock from other issuers, because investors compare implied volatilities across issuers.
+    - Keep the quoted implied volatility stable after issue, because cutting it lowers the warrant price for investors who already hold it. See [Warrants and structured products](/equities-derivatives/mock/warrants-structured-products) Q10.
+  </Accordion>
+
+  <Accordion title="Q12. VHSI jumps from 20 to 30 in a day while the HSI falls 4%. Your book is long downside puts and short at-the-money calls. Explain your P&L.">
+    Break it into Greeks rather than guessing a total:
+
+    - **Delta:** long puts and short calls are both short delta, so the 4% fall makes money on delta.
+    - **Gamma:** long puts are long gamma and short calls are short gamma. Net gamma depends on sizes and where the strikes are after the move.
+    - **Vega:** a 10-point rise in a 30-day volatility index is a large vega move. The long puts gain, the short calls lose, and the net depends on vega sizes and how much each strike's volatility rose. Downside strikes usually rise more in a sell-off, which helps this book.
+    - **Skew:** a steeper skew helps a book that is long downside and short upside, which is a long risk-reversal-against-the-market position.
+
+    The point the interviewer wants is that you reason by Greek and by strike, not that you produce one number. VHSI measures expected 30-day HSI volatility from near-term and next-term HSI options, so it is a guide to the move in short-dated volatility, not in every strike.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Volatility estimation and the implied volatility surface](/equities-derivatives/global/volatility-surface)
+- [Options, Greeks and volatility mock interview](/equities-derivatives/mock/options-greeks-volatility)
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+
+## Sources
+
+- [Range-based volatility estimators: overview and examples of usage](https://portfoliooptimizer.io/blog/range-based-volatility-estimators-overview-and-examples-of-usage/), Portfolio Optimizer
+- [Yang-Zhang versus close-to-close volatility](https://flashalpha.com/articles/yang-zhang-vs-close-to-close-realized-volatility), FlashAlpha
+- [Arbitrage-free SVI volatility surfaces](https://arxiv.org/pdf/1204.0646), Gatheral and Jacquier
+- [Computing the SSR](https://arxiv.org/pdf/2406.16131), Friz and Gatheral
+- [On the skew stickiness ratio](https://arxiv.org/html/2602.05241v1), Fukasawa
+- [HSI Volatility Index futures](https://www.hkex.com.hk/eng/prod/drprod/vhsi/vhsispec.htm), HKEX
+- [Derivatives pricing interview questions](https://www.quantt.co.uk/resources/derivatives-pricing-interview-questions), Quantt
+- [Options pricing interview questions](https://quantvault.org/options-pricing-interview-questions.html), QuantVault

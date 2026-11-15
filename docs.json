@@ -44,14 +44,16 @@
               {
                 "group": "Concepts",
                 "pages": [
-                  "equities-derivatives/global/etf-creation-redemption"
+                  "equities-derivatives/global/etf-creation-redemption",
+                  "equities-derivatives/global/volatility-surface"
                 ]
               },
               {
                 "group": "Delta-1",
                 "pages": [
                   "equities-derivatives/global/delta-1-otc",
-                  "equities-derivatives/global/delta-1-hedging"
+                  "equities-derivatives/global/delta-1-hedging",
+                  "equities-derivatives/global/index-arbitrage"
                 ]
               },
               {
@@ -105,6 +107,8 @@
               "equities-derivatives/interview/mock-interview",
               "equities-derivatives/mock/etf-market-making",
               "equities-derivatives/mock/options-greeks-volatility",
+              "equities-derivatives/mock/volatility-surface",
+              "equities-derivatives/mock/index-arbitrage",
               "equities-derivatives/mock/delta-1-swaps-financing",
               "equities-derivatives/mock/warrants-structured-products",
               "equities-derivatives/mock/markets-risk-behavioral",
@@ -117,6 +121,106 @@
         "tab": "Quantitative Research",
         "groups": [
           {
+            "group": "Overview",
+            "pages": [
+              "quantitative-research/overview/learning-map",
+              "quantitative-research/overview/research-workflow"
+            ]
+          },
+          {
+            "group": "Foundations",
+            "pages": [
+              "quantitative-research/foundations/probability-stochastic",
+              "quantitative-research/foundations/estimation-testing",
+              "quantitative-research/foundations/regression",
+              "quantitative-research/foundations/time-series",
+              "quantitative-research/foundations/linear-algebra-optimization"
+            ]
+          },
+          {
+            "group": "Derivatives quant",
+            "pages": [
+              "quantitative-research/derivatives/ito-black-scholes",
+              "quantitative-research/derivatives/greeks-hedging-error",
+              "quantitative-research/derivatives/vol-surface-methodology",
+              "quantitative-research/derivatives/local-stochastic-vol",
+              "quantitative-research/derivatives/numerical-methods",
+              "quantitative-research/derivatives/american-dividends-borrow",
+              "quantitative-research/derivatives/structured-products-quant"
+            ]
+          },
+          {
+            "group": "Microstructure and execution",
+            "pages": [
+              "quantitative-research/microstructure/order-book-spread",
+              "quantitative-research/microstructure/market-making-models",
+              "quantitative-research/microstructure/queue-position-fill",
+              "quantitative-research/microstructure/market-impact-tca",
+              "quantitative-research/microstructure/auction-mechanisms",
+              "quantitative-research/microstructure/tick-size-rules"
+            ]
+          },
+          {
+            "group": "Alpha research",
+            "pages": [
+              "quantitative-research/alpha/signal-design",
+              "quantitative-research/alpha/signal-evaluation",
+              "quantitative-research/alpha/overfitting-controls",
+              "quantitative-research/alpha/research-discipline"
+            ]
+          },
+          {
+            "group": "Strategy families",
+            "pages": [
+              "quantitative-research/strategies/etf-arbitrage-premium-discount",
+              "quantitative-research/strategies/index-basis-arbitrage",
+              "quantitative-research/strategies/stat-arb-pairs",
+              "quantitative-research/strategies/vol-strategies",
+              "quantitative-research/strategies/event-dividend-strategies",
+              "quantitative-research/strategies/cross-market"
+            ]
+          },
+          {
+            "group": "Portfolio and risk",
+            "pages": [
+              "quantitative-research/portfolio-risk/factor-risk-models",
+              "quantitative-research/portfolio-risk/position-sizing",
+              "quantitative-research/portfolio-risk/var-es-stress",
+              "quantitative-research/portfolio-risk/cost-aware-optimization",
+              "quantitative-research/portfolio-risk/hedge-ratio-estimation"
+            ]
+          },
+          {
+            "group": "Backtesting and simulation",
+            "pages": [
+              "quantitative-research/backtesting/bias-taxonomy",
+              "quantitative-research/backtesting/event-driven-vs-vectorized",
+              "quantitative-research/backtesting/tick-simulation-fills",
+              "quantitative-research/backtesting/performance-attribution"
+            ]
+          },
+          {
+            "group": "Data and infrastructure",
+            "pages": [
+              "quantitative-research/data-infra/market-data",
+              "quantitative-research/data-infra/corporate-actions-pit",
+              "quantitative-research/data-infra/data-quality",
+              "quantitative-research/data-infra/sql-timeseries",
+              "quantitative-research/data-infra/python-data-stack",
+              "quantitative-research/data-infra/pipeline-deployment"
+            ]
+          },
+          {
+            "group": "ML in finance",
+            "pages": [
+              "quantitative-research/ml/features-labels",
+              "quantitative-research/ml/tree-models-cv",
+              "quantitative-research/ml/leakage-casebook",
+              "quantitative-research/ml/interpretability",
+              "quantitative-research/ml/nlp-llm-rl"
+            ]
+          },
+          {
             "group": "Interview questions",
             "pages": [
               "quantitative-research/interview/probability-statistics",
@@ -126,13 +230,18 @@
               "quantitative-research/interview/data-engineering",
               "quantitative-research/interview/statistical-models",
               "quantitative-research/interview/ml-in-finance",
-              "quantitative-research/mock-interview"
+              "quantitative-research/mock-interview",
+              "quantitative-research/interview/microstructure",
+              "quantitative-research/interview/vol-surface",
+              "quantitative-research/interview/index-arbitrage"
             ]
           },
           {
-            "group": "Group 2",
+            "group": "Reference",
             "pages": [
-              "page-4"
+              "quantitative-research/reference/formula-sheet",
+              "quantitative-research/reference/glossary",
+              "quantitative-research/reference/reading-list"
             ]
           }
         ]

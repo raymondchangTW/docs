@@ -1,0 +1,31 @@
+---
+title: "SQL and time-series storage"
+description: "SQL 窗口函數、as-of join 與時序資料的儲存設計。"
+keywords:
+  - "SQL"
+  - "window functions"
+  - "as-of join"
+  - "time-series database"
+  - "partitioning"
+sidebarTitle: "SQL and time-series storage"
+---
+
+<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+
+## 大綱
+
+1. 窗口函數：滾動統計、排名與差分
+2. As-of join：把 quote 對齊到 trade 的寫法與效能
+3. 分區、索引與列式儲存對查詢的影響
+4. 時序資料庫與傳統 RDBMS 的取捨
+5. 大量 tick 資料的成本與保留策略
+
+## 面試常問
+
+- 寫一個查詢：取每筆成交當時最新的 quote
+- 為什麼時序資料表需要依日期分區？
+
+## Related pages
+
+- [Interview：Data engineering](/quantitative-research/interview/data-engineering)
+- [Python data stack](/quantitative-research/data-infra/python-data-stack)

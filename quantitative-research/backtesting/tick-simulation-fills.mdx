@@ -1,0 +1,30 @@
+---
+title: "Tick-level simulation and fills"
+description: "Tick 級模擬與 fill 模型：被動/主動成交、latency 與 queue 假設。"
+keywords:
+  - "tick simulation"
+  - "fill model"
+  - "latency"
+  - "queue"
+sidebarTitle: "Tick simulation and fills"
+---
+
+<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+
+## 大綱
+
+1. 資料需求：tick、L2/L3 與時間戳精度
+2. 主動單的成交假設：穿價、滾價與 impact
+3. 被動單的成交假設：queue 位置、保守/樂觀上下界
+4. Latency 建模與行情快照的延遲
+5. 模擬與實盤的校準：用實際成交記錄檢驗模擬假設
+
+## 面試常問
+
+- 回測的被動單成交率高於實盤，可能原因是什麼？
+- 如何用實盤資料校準 fill 模型？
+
+## Related pages
+
+- [Queue position and fills](/quantitative-research/microstructure/queue-position-fill)
+- [Event-driven vs vectorized](/quantitative-research/backtesting/event-driven-vs-vectorized)

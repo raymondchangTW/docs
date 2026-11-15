@@ -1,0 +1,227 @@
+---
+title: "Index arbitrage and combined Delta-1 trades"
+sidebarTitle: "Index arbitrage and combo trades"
+description: "How index arbitrage works in practice: futures fair value, implied financing, cash-and-carry and reverse trades, execution and costs in Hong Kong, and combined trades across TRS, stock borrowing and lending, single stock futures and ETFs."
+icon: "scale-balanced"
+keywords:
+  - "index arbitrage"
+  - "cash and carry"
+  - "implied repo"
+  - "TRS"
+  - "SBL"
+  - "single stock futures"
+  - "ETF arbitrage"
+  - "stamp duty"
+  - "Delta-1"
+---
+
+<Info>
+  **Status of this page.** Written on 15 November 2026. Hong Kong cost and rule references (stamp duty, short selling, stock futures adjustments) come from the official and professional sources listed under Sources and were checked on that date. The trade descriptions are a framework, not a desk's procedures. Items that depend on desk conventions or that could not be confirmed are listed under [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
+
+Index arbitrage keeps an index future in line with the basket of stocks it tracks. On a Delta-1 desk it is less about free money than about **financing**: the futures price embeds a financing rate, the swap desk charges one, the stock loan desk earns or pays one, and an ETF embeds yet another. Combined trades move exposure to wherever it is cheapest to hold.
+
+## Fair value and implied financing
+
+The fair value of an index future is the spot index plus the financing cost of holding the basket to expiry, minus the dividends the basket pays over that period. With dividends expressed in index points:
+
+`Fair value ≈ (Spot − PV of dividends) × (1 + r × days / 365)`
+
+- **Basis versus fair value:** the futures price minus fair value. A positive value means the future is rich to cash, a negative value means it is cheap.
+- **Arbitrage band:** a trade is only worth doing when the mispricing exceeds the total cost of executing both legs, so in practice the future trades in a band around fair value rather than at it.
+- **Implied financing:** solve the formula for the rate instead. Comparing the implied rate with your own funding cost is the cleaner way to see whether the future is rich or cheap, and the gap between the two is often called the implied repo or financing spread.
+
+<FairValueCalculator />
+
+<Note>
+  The calculator uses simple interest, dividends already discounted and expressed in index points, and a single round-trip cost in basis points of spot. Real desks discount each dividend to its pay date and use their own funding curve.
+</Note>
+
+## Cash-and-carry and reverse cash-and-carry
+
+| Trade | When | Legs | What you need |
+| --- | --- | --- | --- |
+| Cash-and-carry (buy program) | Future rich: implied financing above your funding cost | Buy the basket, sell the future, fund the basket, receive the dividends | Funding and balance sheet for the basket |
+| Reverse cash-and-carry (sell program) | Future cheap: implied financing below your funding or lending rate | Sell the basket short (or sell existing inventory), buy the future, earn interest on the cash | Stock borrow for every name, or existing inventory to sell |
+
+The reverse trade is harder because shorting a whole basket needs borrow in every constituent. Holders of the basket (index funds, a desk with inventory) can do it by selling stock they already own and buying the future, which is effectively lending their position synthetically.
+
+## Execution in practice
+
+### Building the basket
+
+- **Full replication** trades every constituent at index weight. It has the lowest tracking error and the highest cost.
+- **Optimized subset** trades the largest names and a sample of the rest. It is cheaper but leaves tracking error, which becomes basis risk on the trade.
+- **ETF as the basket:** for Hong Kong, an ETF that tracks the same index can stand in for the basket. It is one line to trade and is exempt from stamp duty, but it carries its own premium, discount and tracking difference. See [ETF arbitrage](#etf-arbitrage) below.
+
+### Execution and legging
+
+The basket and the future must be traded together. Programs slice the basket and hedge the future as fills come in, and the desk sets a maximum unhedged exposure. Opening and closing auctions and the Hong Kong lunch break are points where the two legs can get out of step.
+
+### Unwinding at expiry
+
+Hong Kong index futures settle in cash against the average of index quotations taken every five minutes on the last trading day, plus the close. To lock in the settlement price, the basket has to be sold in line with that averaging over the day rather than all at once. The alternative is to roll the future and keep the basket. See [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview).
+
+### Hong Kong costs
+
+| Cost | Detail |
+| --- | --- |
+| Stamp duty on stocks | 0.1% of the consideration for each of the buyer and the seller, since 17 November 2023 (it was 0.13% from 1 August 2021). A buy-and-sell round trip in the basket therefore costs about 0.2% in stamp duty alone. |
+| Stamp duty on ETFs | All transfers of ETF shares or units are exempt, since 13 February 2015. |
+| ETF market makers | Purchases and sales of Hong Kong stocks by ETF market makers for the creation and redemption of ETF units can be exempt from stamp duty (Stamp Office notice of August 2020). |
+| Stock borrowing and lending | Transfers under qualifying stock borrowing and lending agreements can be relieved from stamp duty, subject to registration and filing with the Stamp Office. |
+| Futures | No stamp duty. Exchange fees and levies per contract apply. |
+
+Because stamp duty applies on both sides of the basket, a fresh cash-and-carry in Hong Kong needs a mispricing of more than about 0.2% plus other costs. That is why most of the arbitrage runs through existing inventory, ETFs and the futures roll rather than fresh baskets.
+
+### Short selling in Hong Kong
+
+- Only covered short selling is allowed, and only in designated securities that the exchange lists as eligible.
+- Short sales are subject to the tick rule: they may not be made below the best current ask price.
+- Net short positions must be reported to the SFC above a threshold: for stocks, the lower of 0.02% of market capitalization or HK$30 million, and for collective investment schemes such as ETFs, HK$30 million.
+
+These rules make the reverse trade slower and more expensive than the buy program.
+
+### Dividends and corporate actions
+
+- **Dividend forecasts** are the biggest model input. A long-basket, short-future position receives the actual dividends and is short the future, whose price embeds the expected dividends, so the position is **long dividends**: a cut loses money on both legs.
+- **Special dividends on single stock futures:** under the HKFE stock futures adjustment rules, a special or other cash distribution leads to a capital adjustment of the contract only if it is 2% or more of the share's closing price on the announcement day. Ordinary dividends are not adjusted, so they must be priced into the future.
+- **Index treatment:** check how the index provider treats special dividends, because that decides whether the index future's fair value moves.
+
+### Financing, margin and the roll
+
+- **Funding:** the basket needs funding and balance sheet, while the future needs only margin. The difference in funding cost is the economic heart of the trade.
+- **Roll:** before expiry, positions roll to the next contract. The calendar spread during the roll prices the next period's financing, and it tends to rise around quarter-end and year-end when balance sheet is scarce.
+- **Limits to arbitrage:** margin calls on the futures leg must be funded while the basket's gains are unrealized. Research on capital-constrained arbitrage shows that mispricings can persist or widen when arbitrageurs' capital is stretched, especially in volatile markets.
+
+## Combined trades
+
+| Trade | Legs | What you are trading | Main residual risks |
+| --- | --- | --- | --- |
+| Futures versus TRS | Receive the index return on a swap, sell futures (or the reverse) | The gap between the swap's funding spread and the futures-implied financing | Dividend treatment (actual versus expected), roll of the futures leg, counterparty and margin |
+| Basket plus SBL | Hold the basket for a cash-and-carry and lend it out | Adds lending fees to the carry | Recall, collateral, manufactured dividends, registration for stamp duty relief |
+| Stock versus single stock futures | Short stock and buy the future, or the reverse | Implied borrow cost and implied dividend in the future | Borrow availability and recall, dividend surprises, liquidity and position limits |
+| ETF versus futures versus basket | Any two of the three, with creation or redemption to close the loop | Premium or discount, implied financing, stamp duty differences | Creation cut-off and settlement timing, tracking difference |
+| Synthetic forward versus future | Long call and short put at one strike, against the future | Implied financing and borrow from put-call parity | Early exercise on American options, wide option spreads |
+
+### Futures versus TRS
+
+A total return swap and a long future give the same economic exposure, but their financing is set differently. The swap pays a reference rate plus a negotiated spread and passes actual dividends. The future embeds the market's implied financing and expected dividends.
+
+- **Client wants long exposure:** if futures are cheap (low implied financing), the desk can hedge a client swap by buying futures rather than the basket, capturing the difference between the swap spread charged and the futures-implied rate.
+- **Desk holds a long basket:** if futures are rich, the desk can sell futures against the basket and release swap capacity.
+- **Listed alternative:** total return futures, such as Eurex's index TRFs and HKEX's HSI and HSCEI total return futures, quote the funding spread directly, so the implied repo becomes a listed, tradable number without the counterparty risk of an OTC swap.
+
+### Stock borrowing and lending
+
+A desk running a cash-and-carry holds the basket and can lend it. The lending fee adds to the carry and widens the set of profitable trades. Specials (hard-to-borrow names) earn much more than general collateral names.
+
+**Watch:**
+
+- **Recall:** a lent stock can be recalled, for example before a vote or a dividend. The desk needs to be able to deliver it back or replace it.
+- **Dividends:** the borrower pays a manufactured dividend to the lender, and the tax treatment of that payment can differ from a real dividend.
+- **Stamp duty relief** requires the stock borrowing and lending agreement to be registered and returns to be filed with the Stamp Office.
+- **Reverse trade:** the borrowing side pays the fee, so the fee is part of the reverse arbitrage band.
+
+### Single stock futures arbitrage
+
+A single stock future embeds the financing rate, the expected dividend and, for hard-to-borrow stocks, the borrow cost. When a large dividend is due or the stock is hard to borrow, the future can trade below the stock price.
+
+- **Implied borrow:** the gap between the futures-implied financing rate and the market funding rate is the market's price of borrow. Compare it with what your stock loan desk can actually borrow at.
+- **Trade:** if the future implies a borrow cost above what you can borrow at, short the stock and buy the future. If you own the stock and the future is cheap, sell the stock and buy the future to earn the implied borrow synthetically.
+- **Hong Kong specifics:** stock futures are cash settled against the official closing price on the last trading day, which is the second last trading day of the month. Position limits are tiered, and some contracts have no market maker. See [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview).
+- **Options as an alternative:** a conversion or reversal (stock against a synthetic forward from a call and a put) gives the same implied financing and borrow, which is how option market makers price borrow into calls and puts.
+
+### ETF arbitrage
+
+An index ETF, the index future and the basket form a triangle. Any one that is mispriced against the other two can be traded, and creation or redemption closes the loop. In Hong Kong the ETF leg is exempt from stamp duty and the basket leg is not, which makes an ETF the natural hedge for an index future and changes the economics of each leg. Creation and redemption details are in [ETF creation, redemption and arbitrage (Hong Kong)](/equities-derivatives/hk/cash-etf/creation-redemption).
+
+## Risk checklist
+
+- Execution and legging risk on multi-name baskets.
+- Dividend forecast risk, and the sign of your dividend exposure.
+- Financing and repo changes over the life of the trade, including quarter-end spikes.
+- Borrow recall and fee changes.
+- Margin and funding liquidity on the futures leg.
+- Settlement mismatch between cash-settled futures and stocks that settle later.
+- Corporate actions that adjust one leg and not the other.
+- Withholding tax and manufactured dividends, especially for non-Hong Kong underlyings (see [Delta-1 and swaps](/equities-derivatives/mock/delta-1-swaps-financing) Q6).
+- Position limits and short position reporting thresholds.
+
+## Points to verify before relying on this page
+
+- **Stamp duty exemptions** for ETF market makers and stock borrowing relief have conditions and filing requirements. Read the Stamp Office notes before relying on them.
+- **Special dividend treatment by Hang Seng Indexes** for the index (as opposed to stock futures) is not documented here.
+- **The HKFE 2% threshold** comes from the stock futures adjustment rules as published. Check the current HKFE rules and HKEX adjustment notices for each event.
+- **Short selling tick rule** is described from the SFC's statement of the regime. Confirm the current exchange rules and any exemptions for market makers.
+- **HSI and HSCEI total return futures** terms (funding reference, quoting) are not documented here. See the HKEX contract specifications.
+- **Desk practices** such as maximum unhedged exposure, basket optimization and roll timing are conventions that differ by firm.
+
+## Related pages
+
+- [Index arbitrage and Delta-1 combo trades mock interview](/equities-derivatives/mock/index-arbitrage)
+- [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
+- [Delta-1: OTC derivatives](/equities-derivatives/global/delta-1-otc)
+- [ETF creation and redemption](/equities-derivatives/global/etf-creation-redemption)
+- [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview)
+- [China Connect Northbound trading rules](/equities-derivatives/hk/china-connect/northbound-trading)
+
+## Sources
+
+- [Index arbitrage and fair value](https://nexusfi.com/a/exchanges/index-arbitrage-fair-value), NexusFi
+- [Trading China exposure: index arbitrage and futures bases](https://www.cmegroup.com/education/trading-china-exposure), CME Group
+- [Imbalance Sheet: supply, demand and S&P 500 financing](https://www.deshaw.com/library/imbalance-sheet), D. E. Shaw
+- [Financially constrained index futures arbitrage](https://opus.lib.uts.edu.au/bitstream/10453/163139/3/FINANCIALLY%20CONSTRAINED%20INDEX%20FUTURES%20ARBITRAGE.pdf), University of Technology Sydney
+- [Reduced stamp duty rate on Hong Kong stock transfer from 17 November 2023](https://kpmg.com/cn/en/insights/2023/11/tax-alert-21-hk-the-reduced-stamp-duty-rate-on-hk-stock-transfer-will-take-effect-from-17-nov-23.html), KPMG
+- [Reduction of stamp duty on stock transactions (circular)](https://www.hkex.com.hk/Services/Circulars-and-Notices/Participant-and-Members-Circulars/SEHK/2023/20231103_CT_152_23?sc_lang=en), HKEX
+- [Hong Kong passes legislation exempting ETFs from stamp duty](https://orbitax.com/news/country/article/Hong-Kong-Passes-Legislation-t-13383), Orbitax
+- [Stamp duty: stock borrowing relief and notices](https://www.ird.gov.hk/eng/tax/sdu.htm), Inland Revenue Department
+- [SFC on short selling (2008)](https://webb-site.com/codocs/SFC080926.pdf), Securities and Futures Commission
+- [SFC concludes on expanding scope of short position reporting](https://www.charltonslaw.com/newsletters/hong-kong-law/en/2016/324/SFC-Concludes-on-Expanding-Scope-of-Short-Position-Reporting.pdf), Charltons
+- [HKFE regulations for trading stock futures contracts (adjustment methodology)](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Rules-and-Forms-and-Fees/Rules/HKFE/Rule-Update_Rules-Regulations-and-Procedures-of-the-Futures-Exchange/45-hkferules-revising-wording.doc), HKEX
+- [Will a long SSF ever trade at a discount to the underlying stock?](https://ibkb.interactivebrokers.com/fr/node/96), Interactive Brokers
+- [Implying the cost of carry in options](https://moontowermeta.com/implying-the-cost-of-carry-in-options/), Moontower
+- [Index total return futures](https://www.eurex.com/ex-en/markets/idx/trf), Eurex
+- [The role of total return futures](https://www.eurex.com/ec-en/find/news/The-role-of-Total-Return-Futures-2850202), Eurex
+
+export const FairValueCalculator = () => {
+  const [spot, setSpot] = useState(20000);
+  const [rate, setRate] = useState(4);
+  const [days, setDays] = useState(30);
+  const [div, setDiv] = useState(60);
+  const [fut, setFut] = useState(20040);
+  const [cost, setCost] = useState(25);
+  const t = days / 365;
+  const fv = (spot - div) * (1 + (rate / 100) * t);
+  const mis = fut - fv;
+  const implied = days > 0 && spot > div ? (fut / (spot - div) - 1) / t : 0;
+  const band = (cost / 10000) * spot;
+  const verdict = Math.abs(mis) <= band ? "Inside the cost band: no trade" : mis > 0 ? "Future rich: cash-and-carry (buy basket, sell future)" : "Future cheap: reverse (sell basket, buy future)";
+  const field = { display: "grid", gap: 4, fontSize: 14 };
+  const box = { padding: 10, borderRadius: 8, background: "rgba(127,127,127,.1)", fontSize: 14 };
+  const num = (label, value, set, step) => (
+    <label style={field}>
+      {label}
+      <input type="number" step={step} value={value} onChange={(e) => set(Number(e.target.value))} style={{ padding: 6, borderRadius: 6, border: "1px solid rgba(127,127,127,.35)", background: "transparent", color: "inherit", font: "inherit" }} />
+    </label>
+  );
+  return (
+    <div className="not-prose" style={{ border: "1px solid rgba(127,127,127,.25)", borderRadius: 12, padding: 16, display: "grid", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+        {num("Spot index", spot, setSpot, 1)}
+        {num("Funding rate (%)", rate, setRate, 0.1)}
+        {num("Days to expiry", days, setDays, 1)}
+        {num("PV of dividends (index points)", div, setDiv, 1)}
+        {num("Futures price", fut, setFut, 1)}
+        {num("Round-trip cost (bps of spot)", cost, setCost, 1)}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
+        <div style={box}>Fair value: {fv.toFixed(2)}</div>
+        <div style={box}>Future minus fair value: {mis.toFixed(2)} pts</div>
+        <div style={box}>Implied financing: {(implied * 100).toFixed(2)}%</div>
+        <div style={box}>Cost band: ±{band.toFixed(1)} pts</div>
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>{verdict}</div>
+    </div>
+  );
+};

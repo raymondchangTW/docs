@@ -1,0 +1,163 @@
+---
+title: "Index arbitrage and combined Delta-1 trades mock interview"
+sidebarTitle: "Index arbitrage and combo trades"
+description: "Mock interview questions on index futures fair value, implied financing, Hong Kong costs and short selling rules, cash-and-carry execution, and combined trades across TRS, stock lending, single stock futures and ETFs."
+icon: "scale-balanced"
+keywords:
+  - "mock interview"
+  - "index arbitrage"
+  - "cash and carry"
+  - "implied repo"
+  - "single stock futures"
+  - "SBL"
+  - "TRS"
+  - "ETF arbitrage"
+---
+
+This page covers index arbitrage and the combined trades a Delta-1 desk runs across futures, swaps, stock lending, single stock futures and ETFs. Interviewers use these questions to see whether you can price a trade end to end, including costs and rules, and whether you know which exposure each leg leaves you with. Background is on [Index arbitrage and combined Delta-1 trades](/equities-derivatives/global/index-arbitrage).
+
+<Info>
+  **Status of this page.** Written on 15 November 2026. These are general practice frameworks, not any firm's interview content or desk practice. Numbers are illustrative. Hong Kong cost and rule references follow the sources on the linked background page and should be checked against current rules.
+</Info>
+
+## Fair value and costs
+
+<AccordionGroup>
+  <Accordion title="Q1. The HSI is 20,000, the funding rate is 4%, expiry is 30 days away and dividends to expiry are worth 60 index points. The future trades at 20,040. Is there a trade?">
+    **Fair value:** (20,000 minus 60) times (1 plus 0.04 times 30 divided by 365), or 19,940 times 1.00329, which is about **20,006**. The future is about **34 points rich**.
+
+    **Costs:** a cash-and-carry buys the basket now and sells it at expiry. Hong Kong stamp duty is 0.1% on each side, so the round trip costs about 0.2% of 20,000, or **40 points**, before fees and market impact. The mispricing does not cover it.
+
+    **So:** no fresh cash-and-carry. You could still act if you already hold the basket (sell the rich future against inventory) or use an index ETF, which is exempt from stamp duty, as the long leg.
+
+    **Follow-up:** What financing rate does the future imply?
+
+    → 20,040 divided by 19,940, minus 1, divided by 30/365, or about **6.1%**, against a 4% funding cost.
+  </Accordion>
+
+  <Accordion title="Q2. What is one HSI futures contract worth, and how many do you need to hedge a HK$50 million basket?">
+    The multiplier is HK$50 per index point, so at 20,000 one contract is worth **HK$1 million**. A HK$50 million basket with a beta of one to the index needs **50 contracts**. If the basket is not the index (an optimized subset or a sector tilt), scale by its beta and accept the tracking error as basis risk.
+  </Accordion>
+
+  <Accordion title="Q3. Why does the cash-and-carry position lose money if a big constituent cuts its dividend?">
+    The position is long the basket and short the future. The basket receives less dividend than expected, and the futures price rises because less dividend is now deducted from fair value, which hurts the short future. **Both legs lose, so the trade is long dividends.** The reverse trade is short dividends.
+
+    **Follow-up:** How do you hedge that exposure?
+
+    → With dividend futures (HSI dividend point futures exist in Hong Kong) or by sizing the trade with a conservative dividend forecast.
+  </Accordion>
+</AccordionGroup>
+
+## Execution and rules
+
+<AccordionGroup>
+  <Accordion title="Q4. You are long the basket and short HSI futures into expiry. How do you exit at the settlement price?">
+    HSI futures settle against the average of index quotations taken every five minutes on the last trading day, plus the close. To lock in that average, sell the basket evenly across the day so that your average sale price tracks the settlement calculation. Selling everything at one time leaves you exposed to the difference between that price and the average.
+
+    **Alternative:** roll the short future to the next month and keep the basket, if the calendar spread prices the next period's financing attractively.
+  </Accordion>
+
+  <Accordion title="Q5. The future is cheap. What stops you from running the reverse trade in Hong Kong, and how do you get around it?">
+    - **Borrow:** you need to borrow every constituent, and some may be scarce or expensive.
+    - **Short selling rules:** only covered short selling of designated securities is allowed, and short sales may not be made below the best current ask, so execution is slower.
+    - **Reporting:** net short positions above the lower of 0.02% of market capitalization or HK$30 million must be reported.
+    - **Cost:** stamp duty and borrow fees widen the band.
+
+    **Ways around it:** sell basket inventory you already hold and buy the future (synthetic lending), sell or short an index ETF instead of the basket, or receive the index return on a swap from a desk that holds the stock.
+  </Accordion>
+
+  <Accordion title="Q6. Halfway through building a buy program the market drops 1%. Half the basket is bought and all the futures are sold. What is your position?">
+    You are net **short** the index on half the notional, because the futures hedge the whole size but only half the basket is in. The drop makes money on the extra short futures, but the remaining basket is now cheaper, and the fair value of the trade has changed.
+
+    **What to do:** decide by rule, not by feel. Either finish the basket at the new prices (the trade's edge is recomputed), or buy back the excess futures so the hedge matches the basket. Good programs keep the unhedged exposure within a limit by hedging the future in step with basket fills.
+  </Accordion>
+</AccordionGroup>
+
+## Combined trades
+
+<AccordionGroup>
+  <Accordion title="Q7. You run a cash-and-carry and hold the basket for three months. How can stock lending improve the trade, and what can go wrong?">
+    Lend the basket. The lending fee adds to your carry, especially on hard-to-borrow names.
+
+    **What can go wrong:**
+
+    - **Recall:** the borrower must return the stock when you recall it, but if you need it urgently and the borrower is slow, you may have to buy it in.
+    - **Dividends:** you receive a manufactured dividend from the borrower instead of the real one, and its tax treatment can differ.
+    - **Collateral:** you hold the borrower's collateral, so there is counterparty and collateral reinvestment risk.
+    - **Stamp duty:** relief on the stock transfers depends on registering the agreement and filing returns with the Stamp Office.
+  </Accordion>
+
+  <Accordion title="Q8. A Hong Kong stock trades at 100. Its 3-month stock future trades at 98.50, with no dividend before expiry and a 4% funding rate. What is going on, and what do you do?">
+    With no dividend, fair value is about 100 times (1 plus 0.04 times 0.25), or **101**. The future is 2.50 below that.
+
+    The future implies a financing rate of (98.50 divided by 100, minus 1) divided by 0.25, or about **minus 6%**. Against a 4% funding rate, the market is pricing a **borrow cost of about 10% a year**: the stock is hard to borrow, so shorting through the future is the cheap way to be short.
+
+    **Trades:**
+
+    - **If you can borrow below 10%:** short the stock and buy the future, earning the difference.
+    - **If you own the stock:** sell it and buy the future, earning the implied borrow synthetically, as long as you can buy the stock back at expiry.
+
+    **Risks:** borrow recall or fee changes, a dividend that appears before expiry, futures liquidity and position limits.
+  </Accordion>
+
+  <Accordion title="Q9. A company announces a special dividend equal to 3% of its share price. What happens to its stock futures and to an index future that includes it?">
+    - **Stock futures:** under the HKFE adjustment rules, a special cash distribution leads to a capital adjustment of the contract when it is 2% or more of the closing price on the announcement day. At 3%, open positions are adjusted, so holders are protected. Below 2%, the contract is not adjusted, and the futures price moves by the dividend.
+    - **Index future:** it depends on how the index provider treats the special dividend. If the index is not adjusted, the index drops on the ex-date and the futures fair value falls by the dividend's value in index points, which is a gain for a short future against a long basket that receives the dividend.
+
+    **Follow-up:** Why does the 2% threshold matter for your book?
+
+    → Below the threshold, the dividend is a pricing risk you carry, so your dividend forecast must include the chance of small special dividends.
+  </Accordion>
+
+  <Accordion title="Q10. A client wants one year of long HSI exposure. Do you hedge the client's total return swap with the basket, futures or an ETF?">
+    Compare the all-in cost of each hedge with the swap spread you charge.
+
+    - **Basket:** funding cost plus stamp duty in and out, plus lending income if you lend it. You receive actual dividends, which match what the swap passes through.
+    - **Futures:** only margin, but you must roll four times or more, each roll at the market's implied financing, and the future embeds expected rather than actual dividends.
+    - **Index ETF:** exempt from stamp duty and one line to trade, but with its own fees, tracking difference and possible premium or discount.
+    - **Total return futures:** quote the funding spread directly, so they can lock the financing for the term without an OTC counterparty.
+
+    **Answer the trade-off:** the futures hedge is cheapest when the market's implied financing is below your funding cost, and the basket or ETF is better when futures are rich. Mention that the dividend and roll risks are yours whichever you choose.
+  </Accordion>
+
+  <Accordion title="Q11. The Tracker Fund trades at a 0.3% premium to its live fair value, and HSI futures are at fair value. What trade do you consider?">
+    Sell the ETF and hedge with futures or the basket, then close the position with a creation (deliver the basket or cash, receive new units) or wait for the premium to close.
+
+    - **Hedge choice:** futures are quick and cheap to trade, while the basket is needed for an in-kind creation. ETF market makers can be exempt from stamp duty on basket trades for creations and redemptions, which changes the cost of the basket leg.
+    - **Check first:** whether the premium is real or a stale input (for example a constituent that has not traded), the creation cut-off time, and the creation fee.
+    - **Residual risks:** the gap between ETF and index (fees, cash drag), and settlement timing between the ETF, the basket and the future.
+
+    See [ETF market making and arbitrage](/equities-derivatives/mock/etf-market-making) for the mechanism.
+  </Accordion>
+
+  <Accordion title="Q12. During the quarter-end roll, the calendar spread implies a financing rate well above your funding cost. What do you do and why does it happen?">
+    **Why:** at quarter-end and year-end, banks' balance sheet costs rise, so the cost of holding a long basket for the next period rises and the roll prices that in.
+
+    **What to do:** if your own funding is cheaper than the implied rate, you are paid to provide balance sheet. Sell the next-month future against a long basket (or roll a short futures hedge into the deferred month at the rich level). Size it against your own balance sheet limits, because the same quarter-end pressure applies to you.
+
+    **Follow-up:** What could go wrong?
+
+    → The financing spread can widen further before it converges, margin on the futures leg must be funded meanwhile, and balance sheet limits may force you out early.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Index arbitrage and combined Delta-1 trades](/equities-derivatives/global/index-arbitrage)
+- [Delta-1, swaps and financing mock interview](/equities-derivatives/mock/delta-1-swaps-financing)
+- [ETF market making and arbitrage mock interview](/equities-derivatives/mock/etf-market-making)
+- [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview)
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+
+## Sources
+
+- [Index arbitrage and fair value](https://nexusfi.com/a/exchanges/index-arbitrage-fair-value), NexusFi
+- [Imbalance Sheet: supply, demand and S&P 500 financing](https://www.deshaw.com/library/imbalance-sheet), D. E. Shaw
+- [Reduced stamp duty rate on Hong Kong stock transfer from 17 November 2023](https://kpmg.com/cn/en/insights/2023/11/tax-alert-21-hk-the-reduced-stamp-duty-rate-on-hk-stock-transfer-will-take-effect-from-17-nov-23.html), KPMG
+- [Stamp duty: stock borrowing relief and notices](https://www.ird.gov.hk/eng/tax/sdu.htm), Inland Revenue Department
+- [SFC on short selling (2008)](https://webb-site.com/codocs/SFC080926.pdf), Securities and Futures Commission
+- [SFC concludes on expanding scope of short position reporting](https://www.charltonslaw.com/newsletters/hong-kong-law/en/2016/324/SFC-Concludes-on-Expanding-Scope-of-Short-Position-Reporting.pdf), Charltons
+- [HKFE regulations for trading stock futures contracts (adjustment methodology)](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Rules-and-Forms-and-Fees/Rules/HKFE/Rule-Update_Rules-Regulations-and-Procedures-of-the-Futures-Exchange/45-hkferules-revising-wording.doc), HKEX
+- [Will a long SSF ever trade at a discount to the underlying stock?](https://ibkb.interactivebrokers.com/fr/node/96), Interactive Brokers
+- [The role of total return futures](https://www.eurex.com/ec-en/find/news/The-role-of-Total-Return-Futures-2850202), Eurex
+- [Financially constrained index futures arbitrage](https://opus.lib.uts.edu.au/bitstream/10453/163139/3/FINANCIALLY%20CONSTRAINED%20INDEX%20FUTURES%20ARBITRAGE.pdf), University of Technology Sydney

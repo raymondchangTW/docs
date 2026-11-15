@@ -1,0 +1,31 @@
+---
+title: "Overfitting controls"
+description: "Deflated Sharpe、PBO、walk-forward 與 purged CV 等防止過度擬合的方法。"
+keywords:
+  - "overfitting"
+  - "deflated Sharpe"
+  - "PBO"
+  - "walk-forward"
+  - "purged cross-validation"
+sidebarTitle: "Overfitting controls"
+---
+
+<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+
+## 大綱
+
+1. 過度擬合的來源：多次試驗、參數搜尋、資料窺探
+2. Deflated Sharpe ratio 與試驗次數的修正
+3. PBO（probability of backtest overfitting）與 CSCV 的概念
+4. Walk-forward 與 purged / embargoed K-fold
+5. 實務檢查表：參數敏感度、鄰近參數穩定性、經濟合理性
+
+## 面試常問
+
+- 測了 100 個策略挑出最佳者，Sharpe 該怎麼折減？
+- 為什麼金融時間序列的 K-fold 需要 purge？
+
+## Related pages
+
+- [Estimation and hypothesis testing](/quantitative-research/foundations/estimation-testing)
+- [Bias taxonomy](/quantitative-research/backtesting/bias-taxonomy)

@@ -1,0 +1,29 @@
+---
+title: "Event-driven vs vectorized backtests"
+description: "事件驅動與向量化回測的取捨與適用情境。"
+keywords:
+  - "event-driven backtest"
+  - "vectorized backtest"
+  - "simulation architecture"
+sidebarTitle: "Event-driven vs vectorized"
+---
+
+<Info>**Status of this page：** 大綱（skeleton）。內容尚未撰寫，未經來源驗證。</Info>
+
+## 大綱
+
+1. 向量化回測：速度優勢、適用於低頻與節奏固定的策略
+2. 事件驅動：貼近實盤邏輯、特別適合訂單與狀態相依的策略
+3. 兩者結果不一致時的對照與除錯
+4. 研究與生產共用同一份策略邏輯的架構
+5. 效能考量：資料量、並行化與記憶體
+
+## 面試常問
+
+- 什麼情況必須用事件驅動回測？
+- 如何證明一個回測引擎沒有 look-ahead？
+
+## Related pages
+
+- [Tick-level simulation and fills](/quantitative-research/backtesting/tick-simulation-fills)
+- [Python data stack](/quantitative-research/data-infra/python-data-stack)
