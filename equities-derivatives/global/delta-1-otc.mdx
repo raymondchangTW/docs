@@ -1,27 +1,114 @@
 ---
 title: "Delta-1: OTC derivatives"
 sidebarTitle: "OTC derivatives"
-description: "Over-the-counter derivatives used in Delta-1 trading, financing and hedging. Draft placeholder."
+description: "Over-the-counter equity derivatives used in Delta-1 trading, financing and hedging: instrument structures, ISDA documentation and collateral, and the Hong Kong regulatory framework."
 keywords:
   - "Delta-1"
   - "OTC derivatives"
   - "total return swap"
   - "equity swap"
   - "ISDA"
+  - "CSA"
+  - "Hong Kong"
+  - "SFC"
+  - "HKMA"
 icon: "handshake"
 ---
 
-<Warning>
-  **Draft placeholder.** This page has no verified content yet. The scope below is a proposal to confirm or change before it is written.
-</Warning>
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. The instrument descriptions in the first section are general structural descriptions and are not tied to a single source. The documentation and Hong Kong regulatory sections are based on the sources listed at the end. The Hong Kong OTC regime has been phased in over several years, so the commencement and scope of individual requirements need checking against the SFC and HKMA before relying on this page. See [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
 
-This page is intended to cover over-the-counter derivatives that a Delta-1 desk uses for trading, financing and hedging. It sits in the Global section because the instruments and documentation are largely market-neutral. Market-specific rules link back to each market's pages.
+This page sits in the Global section because the instruments and documentation are largely market-neutral. The regulatory section covers Hong Kong only. Other markets are not yet covered.
 
-## Proposed scope
+## Instruments
 
-- Total return swaps and equity swaps on single stocks, baskets and indices.
-- Documentation and collateral, including ISDA and credit support arrangements.
-- Regulatory and reporting obligations by jurisdiction for OTC derivative transactions.
-- Hedging and financing links to ETF market making and warrant issuance.
+Delta-1 OTC products give a counterparty a linear exposure to an underlying, with no optionality. Common structures are:
 
-Related pages: [hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging) and [ETF market maker rules (Hong Kong)](/equities-derivatives/hk/cash-etf/market-maker-rules).
+| Structure | Description |
+| --- | --- |
+| Total return swap (TRS) | One party pays the total return of a reference asset (price return plus dividends) and receives a funding leg, typically a floating rate plus a spread. The reference can be a single stock, a basket or an index. |
+| Equity swap | The same economic exposure. The term is often used where the equity leg is a price return, with dividends passed through under the confirmation. |
+| Swap on an ETF or index | The reference asset is an ETF or an index. The hedge and the documentation terms differ by reference asset. |
+
+Terms that drive pricing and risk on these trades, and that are set in the confirmation:
+
+- The funding spread, which reflects the dealer's financing cost and balance sheet use.
+- Dividend treatment, including the withholding tax assumption.
+- Corporate action adjustments.
+- Reset and payment frequency, and early termination provisions.
+
+For market making desks, a swap is typically hedged with the underlying cash position or with listed futures. See [hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging).
+
+## Documentation and collateral
+
+OTC derivatives are documented under the ISDA framework. The main pieces are:
+
+| Component | Role |
+| --- | --- |
+| ISDA Master Agreement | The legal framework between the parties. The 1992 and 2002 forms are both in use. It allows all transactions under it to be treated as one agreement, with close-out netting on default. |
+| Schedule | Negotiated changes to the pre-printed Master Agreement. |
+| Credit support documents | Collateral terms. ISDA publishes the Credit Support Annex (CSA) and the Credit Support Deed. |
+| Confirmation | The economic terms of each trade. It incorporates the relevant definitions by reference. |
+| Definitions | The 2002 ISDA Equity Derivatives Definitions apply to equity transactions such as equity swaps, options and forwards. |
+
+Collateral can be structured in two ways. Under a title transfer CSA, title to the margin passes to the receiving party, which can net the collateral against what it is owed on default. Under a security interest structure, such as the Credit Support Deed or the New York law CSA, the receiving party holds a charge over the collateral and cannot use it freely.
+
+The CSA sets thresholds, minimum transfer amounts, eligible collateral, valuation and call timing, interest on cash collateral and substitution rights. These are negotiated terms and differ by counterparty.
+
+## Hong Kong regulatory framework
+
+### Overview
+
+The OTC derivatives regime in Hong Kong was introduced by the Securities and Futures (Amendment) Ordinance 2014 and sits within the Securities and Futures Ordinance (SFO). It covers reporting, clearing, licensing and, through separate rules, margin and risk mitigation for non-centrally cleared transactions. The SFC and the Hong Kong Monetary Authority (HKMA) share responsibility. The SFC and HKMA regime was designed in line with the G20 commitments on reporting, clearing and trading.
+
+### Mandatory reporting
+
+Reportable transactions are reported to the HKMA Trade Repository (HKTR). Reporting covers five asset classes: interest rate, foreign exchange, equity, credit and commodity derivatives. For equity derivatives, a Hong Kong nexus arises where the underlying entity is listed in Hong Kong. Where there is more than one underlying, a specified percentage of the entities must be listed in Hong Kong.
+
+The HKMA and SFC published consultation conclusions in September 2024 setting out enhancements to the reporting regime.
+
+### Mandatory clearing
+
+The first phase of mandatory clearing covers only certain standardised interest rate swaps. The SFC maintains a list of designated central counterparties, which includes OTC Clearing Hong Kong Limited among others. Equity swaps and TRS are not in the first phase scope.
+
+### Licensing
+
+The 2014 amendments introduced Type 11 (dealing in or advising on OTC derivative products) and Type 12 (client clearing services for OTC derivative transactions) regulated activities, and expanded Type 9 (asset management) to cover portfolios of OTC derivative transactions. Existing Type 1 and Type 4 licences cover only those equity derivatives that fall within the definition of securities. A Type 9 licensed manager whose OTC dealing is incidental to its asset management is exempt from Type 11.
+
+### Margin and risk mitigation
+
+The SFC margin requirements for non-centrally cleared OTC derivatives apply to licensed corporations. The 2019 consultation conclusions tie the scope to an average aggregate notional amount of non-centrally cleared OTC derivatives exceeding HK\$60 billion. Authorised institutions follow the HKMA Supervisory Policy Manual module CR-G-14, "Non-centrally Cleared OTC Derivatives Transactions – Margin and Other Risk Mitigation Standards".
+
+On 22 December 2025 the SFC issued a circular exempting non-centrally cleared single-stock options, equity basket options and equity index options from the margin requirements from 4 January 2026, until further notice. This exemption is for equity options. This page has not confirmed how the margin requirements apply to equity swaps and TRS.
+
+## Points to verify before relying on this page
+
+- **Instrument descriptions** are general structural descriptions. Check the confirmation templates and ISDA definitions your desk uses.
+- **Commencement of the licensing regime.** Sources from 2020 say the licensing regime had been delayed. Sources from 2025 describe a new regime still being implemented, with a mandatory reporting date of 29 September 2025 for the new reporting requirements. Check the current status with the SFC.
+- **Scope of mandatory clearing.** Only phase 1 (certain interest rate swaps) is documented here. Confirm that no equity products have been added.
+- **Margin treatment of equity swaps and TRS.** The 2019 conclusions list some instruments as subject to variation margin only under conditions. The relevant paragraphs were not read in full. The December 2025 exemption covers equity options only.
+- **HKMA proposal of 8 June 2026** on comparable jurisdictions under CR-G-14 was found as a reference in an ISDA submission. Its outcome was not checked.
+- **Other jurisdictions.** The regulatory section covers Hong Kong only.
+- **Tax.** Dividend withholding and other tax treatment of swaps are not covered.
+
+## Related pages
+
+- [Hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
+- [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview)
+- [ETF market maker rules (Hong Kong)](/equities-derivatives/hk/cash-etf/market-maker-rules)
+
+## Sources
+
+- [SFC, OTC derivatives regulatory regime](https://www.sfc.hk/en/Regulatory-functions/Market/OTC-derivatives-regulatory-regime)
+- [HKMA, OTC Derivatives Trade Repository](https://www.hkma.gov.hk/eng/key-functions/international-financial-centre/financial-market-infrastructure/over-the-counter-derivatives-trade-repository/)
+- [EY, Hong Kong OTC derivatives reporting](https://www.ey.com/en_cn/technical/hk-fsrm-insights/adapting-to-international-standards-and-revamping-reporting-capabilities)
+- [Clifford Chance, Hong Kong enacts primary legislation for the OTC derivatives regime](https://financialmarketstoolkit.cliffordchance.com/content/dam/cliffordchance/briefings/2014/04/hong-kong-enacts-its-primary-legislation-relating-to-the-proposed-changes-to-the-regulatory-regime-for-the-hong-kong-otc.pdf)
+- [PwC Hong Kong, OTC derivatives reform overview (August 2025)](https://www.pwchk.com/en/consulting/otc-derivatives-reform-in-hk-overview-aug2025.pdf)
+- [Charles Russell Speechlys, Hong Kong's new OTC derivatives regime](https://www.charlesrussellspeechlys.com/en/insights/expert-insights/financial-services/2025/navigating-hong-kongs-new-otc-derivatives-regime--a-primer-for-type-9-asset-managers/)
+- [SFC, consultation conclusions on OTC derivatives margin (December 2019)](https://www.sfc.hk/web/EN/files/SOM/OTC/Consultation%20Conclusion%20on%20OTCD%20Margin%20Dec%202019_Eng.pdf)
+- [Timothy Loh, SFC circular on the equity options margin exemption (22 December 2025)](https://www.timothyloh.com/insights/latest-news/circular-to-licensed-corporations-exemption-for-non-centrally-cleared-equity-options-from-margin-requirements-20251222)
+- [HKMA, SPM CR-G-14](https://brdr.hkma.gov.hk/chi/doc-ldg/docId/getPdf/20200911-2-EN/CR-G-14.pdf)
+- [ISDA, 2002 Master Agreement overview](https://membership.isda.org/wp-content/uploads/2020/04/The-ISDA-Master-Agreement-–-Part-I-Architecture-Risks-and-Compliance.pdf)
+- [HMRC, CFM13100 on the ISDA Master Agreement and CSA](https://www.gov.uk/hmrc-internal-manuals/corporate-finance-manual/cfm13100)
+- [Mondaq, Derivatives 2024 Hong Kong chapter](https://www.mondaq.com/hongkong/finance/1479860/derivatives-2024-hong-kong-chapter)

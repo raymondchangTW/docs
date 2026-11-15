@@ -1,28 +1,60 @@
 ---
 title: "Delta-1: hedging with listed derivatives"
 sidebarTitle: "Hedging with listed derivatives"
-description: "How a Delta-1 desk uses exchange-traded derivatives to hedge market making and issuance inventory, with links to each market's contract pages. Draft placeholder."
+description: "How a Delta-1 desk uses exchange-traded futures to hedge market making and issuance inventory: hedge sizing, basis and roll, limits and where each market's contract terms are documented."
 keywords:
   - "Delta-1"
   - "hedging"
   - "futures"
+  - "basis"
+  - "roll"
   - "listed derivatives"
   - "market making"
 icon: "shield-halved"
 ---
 
-<Warning>
-  **Draft placeholder.** This page has no verified content yet. The scope below is a proposal to confirm or change before it is written.
-</Warning>
+<Info>
+  **Status of this page.** Last checked on 15 November 2026. This page is a framework for how listed derivatives are used in hedging. It is not tied to a single source. Market-specific facts, such as contract months, settlement and position limits, are taken from the Hong Kong listed derivatives page, which carries the sources. Hedge sizing and roll conventions differ by desk and are listed under [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
 
-This page replaces a separate Delta-1 listed derivatives page. Contract specifications, margining and position limits are market-specific, so they sit in each market's listed derivatives pages. This page covers the use cases that cut across markets.
+Contract specifications, margining and position limits are market-specific, so they sit in each market's listed derivatives page. This page covers the use cases that cut across markets.
 
-## Proposed scope
+## What is being hedged
 
-- Hedging inventory from ETF market making with index and stock futures.
-- Hedging warrant and CBBC issuance.
-- Basis, roll and financing considerations.
-- Short selling and position limit exceptions for hedging, with links to market pages.
+| Inventory source | Typical exposure | Typical hedge instruments |
+| --- | --- | --- |
+| ETF market making and arbitrage | Net long or short ETF units, plus any basket of underlying stocks held for creation or redemption | Index futures that match the ETF's index, or stock futures for large single-stock weights |
+| Warrant and CBBC issuance | Delta, and for warrants also gamma and vega, on a single stock or an index | The underlying stock, stock futures or index futures for the delta component |
+| OTC swaps | Linear exposure to a stock, basket or index | The underlying stock or listed futures. See [OTC derivatives](/equities-derivatives/global/delta-1-otc) |
+
+For options-like inventory, a futures hedge covers only the delta. Gamma, vega and dividend risk remain and are managed separately.
+
+## Hedge sizing
+
+The number of futures contracts for a delta hedge is the inventory's delta exposure in currency divided by the futures' contract value, where contract value is the futures price times the contract multiplier.
+
+Practical points:
+
+- For an ETF position, the delta exposure is the ETF's market value times its beta to the futures' index. If the ETF tracks the same index, the beta is close to one, and the residual is tracking and basis risk.
+- Contract multipliers differ by product. For example, the Hong Kong index futures use a multiplier per index point, and Hong Kong stock futures use the board lot size of the underlying. See [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview).
+- Whole contracts only. Rounding leaves a residual that the desk either holds or trades out in the cash market.
+
+## Basis, roll and financing
+
+| Topic | What to consider |
+| --- | --- |
+| Basis | The futures price differs from the spot level by financing cost net of expected dividends. A hedge with futures carries this basis, and it converges towards zero at expiry. |
+| Roll | Futures expire. The hedge is moved to the next contract month before expiry. Roll cost depends on the calendar spread at the time. The contract month structure and last trading day differ by product. In Hong Kong, index and stock futures have their last trading day on the second last trading day of the contract month. |
+| Settlement | Hong Kong index futures settle in cash against an average of index quotations on the last trading day. An ETF position is not settled this way, so the settlement price can differ from where the desk exits the ETF or its basket. |
+| Dividends | Dividend timing affects the futures price and the ETF's net asset value differently. Dividend point futures and total return futures exist in Hong Kong for related exposures. |
+| Financing | A cash hedge needs funding and stock borrow. A futures hedge needs margin instead. The choice depends on funding cost, borrow availability and position limits. |
+
+## Limits and constraints
+
+- **Position limits.** Exchange limits apply to futures and options by product, and large open positions must be reported. In Hong Kong, index products have delta-based limits and single stock futures have tiered net limits plus a single-month limit. A hedge that is large relative to the limit may need to be split across instruments.
+- **Margin.** Futures hedges require margin at the clearing house, which adds funding need. HKEX uses a portfolio-based margining system.
+- **Liquidity.** Some Hong Kong single stock futures have no market maker and trade order-driven. The hedge instrument should be chosen for its liquidity at the size required.
+- **Short selling.** Short selling and hedging exceptions are market-specific. For Hong Kong warrants, see the [liquidity provider rules](/equities-derivatives/hk/warrants/liquidity-provider-rules).
 
 ## Market pages
 
@@ -30,4 +62,19 @@ This page replaces a separate Delta-1 listed derivatives page. Contract specific
 | --- | --- |
 | Hong Kong | [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview) |
 
-Related page: [Delta-1 OTC derivatives](/equities-derivatives/global/delta-1-otc).
+Other markets are not yet covered.
+
+## Points to verify before relying on this page
+
+- **Hedge sizing formula** is a standard approach, not a desk policy. Beta, rounding and rebalancing thresholds are set by each desk.
+- **Roll timing** and the choice between spot-month and next-month contracts are desk conventions and are not documented here.
+- **Dividend and financing effects** on futures basis are described qualitatively. No numbers are given.
+- **Short selling and position limit exceptions for hedging** are not documented for listed derivatives. Only the Hong Kong warrant liquidity provider page covers short selling.
+- **Gamma and vega hedging** for options-like inventory is not covered.
+
+## Related pages
+
+- [OTC derivatives](/equities-derivatives/global/delta-1-otc)
+- [Hong Kong listed derivatives](/equities-derivatives/hk/listed-derivatives/overview)
+- [ETF creation, redemption and arbitrage (Hong Kong)](/equities-derivatives/hk/cash-etf/creation-redemption)
+- [ETF market maker rules (Hong Kong)](/equities-derivatives/hk/cash-etf/market-maker-rules)
