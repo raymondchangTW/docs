@@ -1,0 +1,144 @@
+---
+title: "Warrant liquidity provider rules and restrictions"
+sidebarTitle: "Liquidity provider rules"
+description: "Appointment, quote request and active quote obligations, exemptions, restrictions and oversight for liquidity providers of HKEX derivative warrants."
+keywords: ["HKEX", "liquidity provider", "market maker", "active quote", "quote request", "Industry Principles", "broker ID", "short selling", "derivative warrants"]
+icon: "arrows-left-right"
+---
+
+Every derivative warrant (DW) listed on the Stock Exchange of Hong Kong (SEHK) must have a liquidity provider (LP). This page sets out who the LP is, what it must quote, when it is excused, and what limits apply to it. The LP regime also covers CBBCs, and the CBBC differences are noted below and on the [CBBC rules](/equity-derivatives/hk-cbbc-rules) page.
+
+<Info>
+**Status of this page.** Last checked on 15 November 2026. Service levels follow the HKEX DW and CBBC Product Sheets marked "Last updated: 18 June 2026". Active quote criteria and permitted interruptions follow the Industry Principles on Liquidity Provision, updated July 2019. HKEX's liquidity provision guidance page shows a June 2026 update, so confirm the operative terms before relying on this page.
+</Info>
+
+**Out of scope:** market making in ETFs and other exchange traded products, and market making in listed options and futures. HKEX runs separate programmes for those.
+
+Related pages: [warrant issuance](/equity-derivatives/hk-warrant-issuance) and [trading rules and costs](/equity-derivatives/hk-derivative-warrant-trading-rules).
+
+## Role and appointment
+
+| Item | Rule |
+|------|------|
+| Requirement | The issuer must appoint an LP for each structured product it issues, including DWs, CBBCs and inline warrants |
+| Who can act | An Exchange Participant. It is usually, but not necessarily, a member of the issuer's group. |
+| Cardinality | An issuer may appoint different LPs for different products, and one LP may serve several products. Each product has only one LP. |
+| Back-up | An issuer may appoint a back-up LP for contingency purposes |
+| Identification | Each LP has a unique Broker ID in the range 95XX, 96XX or 97XX, used for all products it supports. This separates liquidity providing from other agency trading. |
+| Changes | A change of LP must be announced before it takes effect |
+| Obligations | Set in each product's listing document, and measured against the Product Sheet minimums and the Industry Principles |
+
+## Sources of obligation
+
+Three layers define what an LP must do.
+
+1. **Product Sheet.** HKEX publishes minimum service levels for each product type. Since 1 July 2026 the Listing Rules no longer fix these numbers. They require issuers to match the levels HKEX publishes.
+2. **Listing document.** Each issue states its own service levels. Issuers must comply with what the listing document says.
+3. **Industry Principles.** The July 2019 principles set the active quote standards. They are not binding, and occasional non-compliance alone does not trigger sanctions. Compliance is, however, relevant to the Exchange's assessment of an issuer's suitability to list.
+
+## Quote request (QR)
+
+QR applies to all DWs and CBBCs, whatever the underlying. An investor asks for a quote, and the LP must respond within the committed service level.
+
+| Parameter | Requirement |
+|-----------|-------------|
+| Maximum bid-ask spread | 20 spreads |
+| Minimum quotation size | 20 board lots |
+| Maximum response time | 10 minutes |
+| Minimum holding time | 5 minutes. The quote may be refreshed if the underlying or market conditions change, and it lapses if an investor trades on it during this period. |
+
+### QR exemptions
+
+The Product Sheets list these circumstances in which QR is not required:
+
+- Pre-opening or closing auction sessions, or other circumstances the Exchange prescribes.
+- The first 5 minutes of each morning session, or of first trading on a day.
+- Suspension of the product or its underlying.
+- No product available for market making. The LP must still provide bid prices.
+- Theoretical value below HK$0.01.
+- For a CBBC, after a mandatory call event.
+- For index underlyings, suspension or limitation of related options or futures trading, or the index not being calculated or published as scheduled.
+- Operational or technical problems beyond the LP's control.
+- Exceptional price movements or high volatility that materially impair the LP's ability to hedge or unwind a hedge.
+
+## Active quote (AQ)
+
+AQ is a tighter service. The LP enters orders without waiting for a request, but only on products that meet the eligibility criteria.
+
+| Product | Underlying | Maximum spread | Minimum size | Continuity |
+|---------|-----------|----------------|--------------|------------|
+| DW | Local index | 5 spreads | 20 board lots | At least 90% of the Qualified Period, no interruption over 10 minutes in a trading day for each product |
+| DW | Actively traded stock | 10 spreads | 20 board lots | Same |
+| CBBC | Local index | 10 spreads | 20 board lots | Same |
+| CBBC | Actively traded stock | 15 spreads | 20 board lots | Same |
+
+AQ spreads may vary with market conditions, hedging cost, the underlying's own spread and the product terms.
+
+### Qualified Period
+
+AQ applies only while all the conditions for the product are met and no QR exemption applies.
+
+| Condition | DW | CBBC |
+|-----------|----|------|
+| Underlying | Actively traded stock or local index | Same |
+| Outstanding in the market | 50% or less of the total issue size | Same |
+| Time to maturity | At least 30 calendar days | Not applicable |
+| Moneyness or distance to call | Between 20% in-the-money and 20% out-of-the-money | Stock price more than 2% away from the call price, or index level more than 1% away from the call level |
+
+The Industry Principles define an active underlying as any local index, or any stock that is eligible for CBBC issuance on the Exchange's published list and has high turnover. Outside these criteria, AQ is voluntary and the AQ spread limits do not apply, although QR service levels still do.
+
+### Permitted interruptions
+
+An LP may interrupt active quotes in the following circumstances:
+
+- A sudden change in the product's trading pattern.
+- News on the underlying that may affect its price.
+- Exceptional price movement or volatility that impairs hedging.
+- An underlying spread wider than normal that pushes the product beyond the AQ spread limit.
+- A reasonable suspicion of mispricing, a system issue or an error.
+- A reasonable suspicion of abnormal trading in the underlying.
+- Operational or technical failures, such as loss of a network or data feed.
+- Financial risk arising from the frequency or volume of trades.
+
+On request, an issuer should explain to the Exchange any failure to meet AQ service levels and any prolonged interruption.
+
+<Warning>
+**Unresolved discrepancy.** A law-firm summary of the 2026 amendments states that, from 1 July 2026, the 20-board-lot minimum is deleted from the Listing Rules and the exemption for the first five minutes after market open is removed. The HKEX Product Sheets dated 18 June 2026 still show both. Treat the figures above as the Product Sheet position and confirm the operative service levels in the listing document before relying on them.
+</Warning>
+
+## Restrictions and limits on the LP
+
+| Area | Position |
+|------|----------|
+| Price support | An LP is not required to support the price of a structured product. In practice it is free to buy and sell at any price, like other market participants. |
+| Order handling | An LP need not fill every order. It may quote at prices it considers fair within the maximum spread in the listing document, so investor orders can go unexecuted. |
+| Hedging | The Industry Principles set no hedging obligation. Hedging appears only as a ground for exemption, a permitted interruption, and a factor in spreads. |
+| Short selling | DWs are not designated securities for short selling, so other investors may not sell a DW they do not own. The Rules of the Exchange carve out exceptions for structured product liquidity providers and for structured product hedging participants. HKEX refers to its Schedules 14, 15, 18 and 19 for the exception regimes. |
+| Identification | All LP activity runs under the LP's own Broker ID, so the market can distinguish it |
+| Service levels | Each product's listing document states when the LP is not obliged to quote. These grounds vary by product. |
+
+## Oversight
+
+- The Exchange evaluates LP performance and may take regulatory action for non-compliance.
+- HKEX's 2012 guide on enhancing regulation of the structured products market stated that the Exchange may suspend new issuance by issuers that fail to comply, and may review their suitability to act as issuers.
+- Where the Exchange proposes non-minor changes to Product Sheet liquidity requirements, it engages with issuers and then notifies them once the changes are final.
+- Under the Chapter 15A overhaul, issuers also face continuing eligibility obligations, and a failure on credit rating blocks new launches while existing obligations, including liquidity provision, continue.
+
+## Points to verify before relying on this page
+
+1. The operative LP minimum quotation size and the first-five-minutes exemption after 1 July 2026.
+2. Whether the Industry Principles have been revised since July 2019 to reflect the 2026 amendments.
+3. The exact Exchange Rules schedule and conditions that govern structured product liquidity provider short selling.
+4. Back-up LP and Broker ID requirements, which the Industry Principles do not cover and which this page takes from IFEC investor guidance.
+
+## Sources
+
+- [HKEX: Industry Principles on Liquidity Provision for Listed Structured Products, July 2019](https://www.hkex.com.hk/-/media/HKEX-Market/Products/Securities/Derivative-Warrants/Industry-Principles-on-Liquidity-Provision-for-Listed-Structured-Products/principle.pdf)
+- [HKEX: DW Product Sheet, last updated 18 June 2026](https://www.hkex.com.hk/-/media/HKEX-Market/Listing/Rules-and-Guidance/Other-Resources/Structured-Products/ProductSheet_DW_july.pdf)
+- [HKEX: CBBC Product Sheet, last updated 18 June 2026](https://www.hkex.com.hk/-/media/HKEX-Market/Listing/Rules-and-Guidance/Other-Resources/Structured-Products/ProductSheet_CBBC_july.pdf)
+- [HKEX: liquidity provision and pricing guidance](https://www.hkex.com.hk/Listing/Rules-and-Resources/Guidance/Structured-Products/Guidance/Liquidity-Provision-and-Pricing?sc_lang=en)
+- [Investor and Financial Education Council: liquidity providers](https://www.ifec.org.hk/web/en/investment/investment-products/warrants/liquidity-providers.page)
+- [Charltons: HKEX overhauls Listing Rules Chapter 15A on structured products](https://www.charltonslaw.com/hkex-overhauls-listing-rules-chapter-15a-on-structured-products/)
+- [HKEX: regulated short selling](https://www.hkex.com.hk/Services/Trading/Securities/Overview/Regulated-Short-Selling?sc_lang=en)
+- [HKEX: Guide on Enhancing Regulation of the Listed Structured Products Market, 27 July 2012](https://www.hkex.com.hk/News/News-Release/2012/1207272news?sc_lang=en)
+- [HKEX: structured products FAQ on products](https://www.hkex.com.hk/-/media/HKEX-Market/Listing/Rules-and-Guidance/Other-Resources/Structured-Products/SP_FAQ_Products.pdf)

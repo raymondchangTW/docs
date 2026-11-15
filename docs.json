@@ -38,15 +38,38 @@
         "tab": "Equity Derivatives",
         "groups": [
           {
-            "group": "Group 1",
+            "group": "Listed Derivatives",
             "pages": [
-              "page-1"
+              {
+                "group": "HKEX Warrant",
+                "pages": [
+                  "equity-derivatives/hk-warrant-issuance",
+                  "equity-derivatives/hk-warrant-liquidity-provider-rules",
+                  "equity-derivatives/hk-derivative-warrant-trading-rules",
+                  "equity-derivatives/hk-cbbc-rules"
+                ]
+              }
             ]
           },
           {
-            "group": "Group 2",
+            "group": "Delta-1 & ETF",
             "pages": [
-              "page-2"
+              "page-2",
+              {
+                "group": "Delta-1",
+                "pages": [
+                  "equity-derivatives/delta-1-listed-derivatives",
+                  "equity-derivatives/delta-1-otc-derivatives"
+                ]
+              },
+              {
+                "group": "ETF",
+                "pages": [
+                  "equity-derivatives/hk-etf-trading-rules",
+                  "equity-derivatives/hk-etf-market-maker-rules",
+                  "equity-derivatives/hk-etf-creation-redemption"
+                ]
+              }
             ]
           }
         ]
@@ -65,6 +88,19 @@
             "pages": [
               "page-4"
             ]
+          }
+        ]
+      },
+      {
+        "tab": "Relocation Life",
+        "groups": [
+          {
+            "group": "Vietnam",
+            "pages": []
+          },
+          {
+            "group": "Hong Kong",
+            "pages": []
           }
         ]
       }
