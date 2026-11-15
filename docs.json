@@ -282,12 +282,6 @@
     "dark": "/logo/dark.svg"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
@@ -296,15 +290,16 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/raymondctw",
+      "linkedin": "https://www.linkedin.com/in/raymondchangtw"
     }
   },
   "appearance": {
     "default": "light"
   },
   "styling": {
-    "codeblocks": "dark"
+    "codeblocks": "dark",
+    "latex": true
   },
   "redirects": [
     {
