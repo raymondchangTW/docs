@@ -65,7 +65,9 @@
               },
               {
                 "group": "Warrants & CBBC",
-                "pages": []
+                "pages": [
+                  "equity-derivatives/hk/warrants/issuance"
+                ]
               },
               {
                 "group": "Listed derivatives",
