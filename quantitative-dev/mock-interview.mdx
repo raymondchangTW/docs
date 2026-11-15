@@ -1,0 +1,192 @@
+---
+title: "Quant developer mock interview: system design and coding"
+sidebarTitle: "Mock Interview"
+description: "Mock interview for quantitative developer roles: market data design, backtest framework, pricing service, testing numerical code, concurrency and incidents."
+keywords:
+  - "mock interview"
+  - "quant developer"
+  - "system design"
+  - "market data"
+  - "backtesting framework"
+  - "Python"
+  - "SQL"
+  - "Docker"
+icon: "comments"
+---
+
+這一頁是量化開發 (Quantitative Dev) 方向的模擬面試，重點在系統設計、程式品質與線上穩定性。每題包含主問題、常見追問與回答要點。答案是設計原則與思考框架，不含程式碼，需要程式範例時再另外請求。
+
+統計與研究方法的題目請看 Quantitative Research 分頁的 [Mock Interview](/quantitative-research/mock-interview)，交易台實務的題目請看 Equities & Derivatives 分頁的 [Mock Interview](/equities-derivatives/interview/mock-interview)。
+
+<Info>
+  **頁面狀態。** 最後檢查日期：2026 年 11 月 15 日。這些是通用的練習框架，不代表任何特定公司的面試內容或技術堆疊。
+</Info>
+
+## System design
+
+<AccordionGroup>
+  <Accordion title="Q1. Design a market data ingestion and storage system for ETF, stock and futures prices used by both research and live pricing.">
+    **先釐清需求：** 延遲要求（即時報價還是日終研究）、資料量、來源數量、保留期間、誰是使用者。
+
+    **架構思路：**
+
+    - **接收層：** 一個來源一個適配器，把各家格式正規化成內部統一 schema（代碼、UTC 時間戳、報價、成交、來源、接收時間）。原始資料不可變地保留。
+    - **即時路徑：** 低延遲的訊息佇列或串流，送到定價與風險服務。要處理亂序、重複、斷線與背壓。
+    - **歷史儲存：** 時序或欄式儲存，依日期與代碼分區。即時路徑實時寫入，之後批次重算並對帳。
+    - **品質與監控：** 缺值、陳舊、異常、延遲的自動偵測與告警。
+
+    **追問：** 研究端如何避免拿到「之後才知道」的資料？
+
+    → 資料要同時記錄事件時間與接收時間，模型領取資料時以 point-in-time 查詢。修正過的資料要保留版本，不該覆蓋舊值。見 [Data engineering](/quantitative-research/interview/data-engineering)。
+  </Accordion>
+
+  <Accordion title="Q2. Design a backtesting framework. Event-driven or vectorized?">
+    - **Vectorized：** 速度快、實作簡單，適合訊號研究與日頻率策略。弱點是難以模擬路徑相依的邏輯（止損、部位限額、成交量限制）。
+    - **Event-driven：** 按時間順序消費事件（報價、成交、訂單回報），與實盤領域邏輯可以共用，較真實，但較慢、實作較複雜。
+
+    常見做法：用 vectorized 快速篩選想法，候選者再用 event-driven 驗證成本與執行。
+
+    **設計重點：**
+
+    - 統一時間軸，訊號只能使用「當時已知」的資料。
+    - 成本模型可插拔：價差、手續費、借券、滑價。
+    - **可重現：** 記錄程式版本、資料版本、參數與隨機種子，同一組輸入必須得到同一個結果。
+    - 產出報表與損益歸因，而不只是一個 Sharpe。
+
+    **追問：** 如何防止前視偏誤？
+
+    → 架構層面強制：策略僅能透過一個「目前時間之前」的資料介面取得資料；測試中加入「把未來資料故意改錯後結果應變化」的檢查。見 [Regression and backtesting](/quantitative-research/interview/statistics-backtesting) Q8。
+  </Accordion>
+
+  <Accordion title="Q3. Design a live pricing and hedging service for an ETF market maker. How do you make it safe?">
+    **功能拆解：** 市場資料輸入→公允價值計算→報價產生→庫存與風險→對沖建議或執行。
+
+    **安全設計：**
+
+    - **陳舊資料保護：** 任一輸入超過時限未更新，報價自動加寬或撤報。
+    - **合理性檢查：** 報價與公允價值偏離過大、價格異常跳動時拒絕送出。
+    - **風險限額：** 部位、名目金額、下單頻率、單筆大小的硬限制。
+    - **Kill switch：** 可由人工或自動觸發，立即撤掉所有報價。
+    - **架構隔離：** 定價邏輯與執行、風險檢查分開，一個模組故障不會拖垮全部。
+    - **可觀測性：** 延遲、拒絕率、部位差異的監控與告警。
+
+    **追問：** 服務重啟後如何恢復部位狀態？
+
+    → 部位以成交事件為真實來源（event sourcing 或以成交回報重建），重啟後先與經紀商或清算的部位對帳，再恢復報價。不要用記憶體中的累計值作為唯一來源。
+  </Accordion>
+</AccordionGroup>
+
+## Code quality
+
+<AccordionGroup>
+  <Accordion title="Q4. How do you test numerical and pricing code?">
+    - **解析基準：** 和有封閉解的情況比對，例如歐式選擇權的 Black-Scholes 公式。
+    - **性質測試：** 驗證應該恆成立的關係，例如 put-call parity、價格隨履約價單調、delta 落在 0 到 1。
+    - **數字容差：** 浮點數不應該用相等比較，要設絕對或相對容差。
+    - **黃金測試 (golden test)：** 把已驗證的輸出保存下來，重構時確認結果沒變。
+    - **隨機性：** Monte Carlo 固定種子，並用統計方式驗證收斂。
+    - **邊界情境：** 極端波動率、接近到期、價內外深度、零利率。
+
+    **追問：** 為什麼平行計算的結果每次小數點後幾位都不同？
+
+    → 浮點數加法不滿足結合律，平行化改變加總順序會改變結果的尾數。要驗證在容差內一致，若需要逐位相同，需固定加總順序。
+  </Accordion>
+
+  <Accordion title="Q5. Float or Decimal for prices and money? How do you handle tick sizes?">
+    浮點數無法精確表示許多十進位小數（例如 0.1），會累積誤差。研究與分析用浮點數通常可以，但帳務、結算與訂單價格要用十進位定點數或整數表示。
+
+    **價格跡距 (tick size)：** 將價格儲存為「跡數」整數，訂單價格送出前必須對齊到合法跡距，且不同價位區間可能有不同跡距。具體規則依交易所，見 [Trading rules](/equities-derivatives/hk/cash-etf/trading-rules)。四捨五入規則要明確定義並統一，避免不同模組各自處理。
+  </Accordion>
+
+  <Accordion title="Q6. How would you review a pull request that changes a pricing function?">
+    - 先看變更的目的與影響範圍，誰會呼叫這個函式。
+    - 檢查公式、單位、符號、邊界條件、時區與錄入驗證。
+    - 測試是否涵蓋新行為，且舉例對照舊版本的輸出差異。
+    - 性能變化與記憶體。設定、密碼或金鑰是否被寫進程式。
+    - 發布計畫：是否需要灰階段、影子模式，或可以快速回滾。
+
+    風格問題盡量交給自動化工具，人工審查專注在正確性與風險。
+  </Accordion>
+</AccordionGroup>
+
+## Python, SQL and concurrency
+
+<AccordionGroup>
+  <Accordion title="Q7. A pandas job on a large dataset runs out of memory or is too slow. How do you investigate?">
+    先量測，再優化。
+
+    - **記憶體：** 檢查資料型別（數值精度、字串改類別型別）、只讀必要的欄位、分塊處理。
+    - **速度：** 用 profiler 找熱點，避免逐列迭代，改用向量化與分組運算。
+    - **格式與儲存：** 改用欄式檔案與分區，只讀需要的分區。
+    - **規模超過單機：** 考慮資料庫內計算或分散式工具。
+
+    見 [Data engineering](/quantitative-research/interview/data-engineering) Q5。
+  </Accordion>
+
+  <Accordion title="Q8. A SQL query on a large price table suddenly became slow. How do you diagnose it?">
+    - 看執行計畫 (explain plan)：是否全表掃描、join 順序是否合理。
+    - 檢查索引與分區是否符合查詢條件（代碼與時間範圍）。
+    - 檢查統計資料是否過期、資料量是否突然變大。
+    - 確認查詢是否在欄位上套用函式導致索引失效，或 join 產生意外的重複列。
+
+    原則：用計畫與量測判斷，不要先猜。
+  </Accordion>
+
+  <Accordion title="Q9. Position updates arrive from several threads or processes. What can go wrong and how do you design for it?">
+    - **競爭條件 (race condition)：** 兩個執行緒同時讀再寫同一個部位，其中一個更新會被覆蓋。
+    - **重複訊息：** 網路重試造成同一筆成交被處理兩次。
+    - **亂序：** 成交與取消回報順序和實際不同。
+
+    **設計：** 用單一寫入者或鎖、用成交編號做冪等去重、用序號處理亂序、以事件重建部位。並定時與外部部位對帳。
+
+    **追問：** Python 的 GIL 是否讓這些問題消失？
+
+    → 不會。GIL 只保證單個位元碼指令的執行，複合操作（讀、計算、寫）仍可能被切開，多行程更是完全不同的記憶體空間。見 [Data engineering](/quantitative-research/interview/data-engineering) Q6。
+  </Accordion>
+</AccordionGroup>
+
+## Operations and incidents
+
+<AccordionGroup>
+  <Accordion title="Q10. A container running a nightly job is killed with no error message. How do you investigate?">
+    常見原因是記憶體不足 (OOM kill)。
+
+    - 看容器的結束狀態與原因，以及主機的系統日誌是否有 OOM 記錄。
+    - 檢查容器的記憶體與 CPU 限制。
+    - 比對資料量是否變大，或最近有程式變更。
+    - 確認採用分塊處理，或調整資源設定。
+
+    **防范：** 在作業中加入記憶體監控與失敗告警，避免「無聲」失敗。見 [Data engineering](/quantitative-research/interview/data-engineering) Q9、Q10。
+  </Accordion>
+
+  <Accordion title="Q11. A wrong price was published to clients for 10 minutes. Walk me through your response.">
+    **順序：止血、評估、修復、檢討。**
+
+    - **止血：** 立即用 kill switch 或切回備援來源，停止繼續發出這個價格。
+    - **評估：** 確認哪些客戶、交易、部位受影響，金額多大，並通知風險、合規與相關主管。
+    - **修復：** 找出根本原因（資料、設定、程式變更），驗證修正後再恢復。
+    - **檢討：** 寫事後報告（不追究個人），列出時間線、根本原因、為何沒有早點偵測到，以及後續預防措施（自動檢查、限額、測試）。
+
+    具體合規與通報義務以公司與監管規定為準，面試時可說明你會依公司流程升級。
+  </Accordion>
+</AccordionGroup>
+
+## Behavioral questions
+
+<AccordionGroup>
+  <Accordion title="Q12. Tell me about a time you disagreed with a colleague on a technical design.">
+    用 STAR 結構：情境、任務、行動、結果。
+
+    重點：用數據或原型取代主觀爭論、明確指出各方案的取捨、最終如何達成共識。請用你自己的真實經歷填入。
+  </Accordion>
+
+  <Accordion title="Q13. You are asked to deliver a feature in two weeks, but it needs a risky refactor. What do you do?">
+    先釐清「必須交什麼」與「不重構會有什麼代價」。提出兩或三個方案：先交最小可用版本、分階段重構、或延後並說明風險。與利害關係人確認取捨，並用自動化測試與特性開關降低風險。這類問題考的是專案管理與溝通，沒有唯一正確答案。
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Mock Interview (Quantitative Research)](/quantitative-research/mock-interview)
+- [Mock Interview (Equities & Derivatives)](/equities-derivatives/interview/mock-interview)
+- [Data engineering questions](/quantitative-research/interview/data-engineering)

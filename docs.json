@@ -141,6 +141,17 @@
             "pages": []
           }
         ]
+      },
+      {
+        "tab": "Quantitative Dev",
+        "groups": [
+          {
+            "group": "Interview",
+            "pages": [
+              "quantitative-dev/mock-interview"
+            ]
+          }
+        ]
       }
     ]
   },
