@@ -35,10 +35,38 @@
         ]
       },
       {
-        "tab": "Equity Derivatives"
+        "tab": "Equity Derivatives",
+        "groups": [
+          {
+            "group": "Group 1",
+            "pages": [
+              "page-1"
+            ]
+          },
+          {
+            "group": "Group 2",
+            "pages": [
+              "page-2"
+            ]
+          }
+        ]
       },
       {
-        "tab": "Quantitative Research"
+        "tab": "Quantitative Research",
+        "groups": [
+          {
+            "group": "Group 1",
+            "pages": [
+              "page-3"
+            ]
+          },
+          {
+            "group": "Group 2",
+            "pages": [
+              "page-4"
+            ]
+          }
+        ]
       }
     ]
   },
