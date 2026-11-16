@@ -254,8 +254,8 @@
     ]
   },
   "logo": {
-    "light": "/images/RCKnowledgeBase標誌.png",
-    "dark": "/images/RCKnowledgeBase標誌(1).png"
+    "light": "/images/1.png",
+    "dark": "/images/2.png"
   },
   "navbar": {
     "primary": {
