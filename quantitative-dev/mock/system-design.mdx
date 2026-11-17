@@ -14,7 +14,7 @@ keywords:
 icon: "sitemap"
 ---
 
-Trading system design rounds ask you to reason about latency budgets, deterministic behavior, fault tolerance and risk controls, which generic web-scale prep does not cover. This page has ten design questions with follow-ups and answer points. The answers are principles, not code.
+Trading system design rounds ask you to reason about latency budgets, deterministic behavior, fault tolerance and risk controls, which generic web-scale prep does not cover. This page has eleven design questions with follow-ups and answer points. The answers are principles, not code.
 
 <Info>
   **Status of this page.** Last checked on 15 November 2026. These are general practice frameworks, not any firm's interview content or technology stack. Latency and throughput figures vary by firm tier and are deliberately left out.
@@ -200,10 +200,33 @@ Trading system design rounds ask you to reason about latency budgets, determinis
 
     → Break the difference into position differences (missing or late fills, corporate actions) and price differences (different closing prices or FX rates), and fix the source rather than adjusting the number.
   </Accordion>
+
+  <Accordion title="Q11. Design a DMA gateway that lets clients send orders to an exchange under your firm's membership.">
+    **Clarify first:** which venues and protocols (FIX or binary), how many clients, whether clients may sub-delegate access, and the latency tier. The firm is accountable for every order under its code, so safety comes before speed.
+
+    **Architecture:**
+
+    - **Client sessions:** one authenticated session per client, mapped to a client ID, account and limit profile. Every order carries the client identity from entry to the exchange, so any order can be traced to its sender.
+    - **Risk layer on the only path:** all orders pass through the firm's pre-trade checks before the exchange gateway. Clients cannot bypass or change them. Limits are stored per client and per sub-account.
+    - **Exchange connectivity:** a pool of exchange sessions with a capacity limit, such as a throttle. A fair scheduler divides capacity between clients, so one client's burst cannot starve the others.
+    - **Order state:** unique client order IDs, an order state machine and a durable event log, so duplicates are rejected and the book can be rebuilt after a crash.
+    - **Drop copy and reconciliation:** compare fills and open orders with the exchange record, and give clients a drop copy.
+
+    **Controls:** an operator kill switch per client and for the whole gateway, cancel on disconnect, and fail closed when risk state or configuration is missing.
+
+    **Follow-up 1:** A client sends orders faster than its share of the exchange throttle. What happens?
+
+    → Apply a per-client rate limit before the shared session, and reject or queue the excess with a clear reason code. Letting the exchange reject messages makes the firm's session unpredictable for every client.
+
+    **Follow-up 2:** How do you handle a client that sub-delegates to its own clients?
+
+    → Require the sub-client identity on each order, apply limits at that level too, and refuse sub-delegation where the firm cannot identify and control the underlying flow. See [Direct market access (DMA)](/equities-derivatives/global/direct-market-access).
+  </Accordion>
 </AccordionGroup>
 
 ## Related pages
 
+- [Direct market access (DMA)](/equities-derivatives/global/direct-market-access)
 - [Code quality](/quantitative-dev/mock/code-quality)
 - [Operations and incidents](/quantitative-dev/mock/operations-incidents)
 - [Mock Interview overview](/quantitative-dev/mock-interview)

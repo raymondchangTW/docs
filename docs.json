@@ -21,7 +21,8 @@
                 "group": "Concepts",
                 "pages": [
                   "equities-derivatives/global/etf-creation-redemption",
-                  "equities-derivatives/global/volatility-surface"
+                  "equities-derivatives/global/volatility-surface",
+                  "equities-derivatives/global/direct-market-access"
                 ]
               },
               {
@@ -88,7 +89,8 @@
               "equities-derivatives/mock/delta-1-swaps-financing",
               "equities-derivatives/mock/warrants-structured-products",
               "equities-derivatives/mock/markets-risk-behavioral",
-              "equities-derivatives/mock/fx-hedging"
+              "equities-derivatives/mock/fx-hedging",
+              "equities-derivatives/mock/dma-electronic-execution"
             ]
           }
         ]

@@ -1,0 +1,205 @@
+---
+title: "DMA and electronic execution mock interview"
+sidebarTitle: "DMA and electronic execution"
+description: "Mock interview questions on direct market access for Delta-1 and ETF desks: DMA versus sponsored access, pre-trade risk controls, throttles, hedging execution, latency, incident response and broker due diligence."
+icon: "route"
+keywords:
+  - "mock interview"
+  - "DMA"
+  - "direct market access"
+  - "sponsored access"
+  - "pre-trade risk"
+  - "OCG-C"
+  - "throttle"
+  - "execution"
+  - "kill switch"
+  - "Delta-1"
+  - "ETF arbitrage"
+---
+
+This page covers direct market access (DMA) and electronic execution questions for Delta-1, ETF market making and arbitrage desks. Each question has a main question, common follow-ups and answer points. The answers are thinking frameworks, so say out loud which assumptions you would check. For the background and rule summaries, use [Direct market access (DMA)](/equities-derivatives/global/direct-market-access) rather than repeating them in an interview.
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. These are general practice frameworks, not any firm's interview content, access policy or desk practice. Rules and limits differ by market and broker, so say in the interview that you would confirm them against the current rule text and the broker's documentation.
+</Info>
+
+## Concepts and regulation
+
+<AccordionGroup>
+  <Accordion title="Q1. What is DMA, and how does it differ from sponsored access and from a broker algorithm?">
+    **DMA** lets the client send orders electronically to a venue through the broker's infrastructure and market participant ID, without the broker's staff handling each order. The broker's pre-trade risk layer sits in the path of every order.
+
+    - **Sponsored access:** the client sends orders under the broker's code but through its own connection to the venue, not through the broker's infrastructure. The broker's controls must still apply, for example at the venue gateway.
+    - **Broker algorithm or smart order router:** the broker owns the execution logic. The client sends a parent order and the broker decides slicing, timing and routing.
+    - **Care order:** a broker trader works the order with discretion.
+
+    The deciding question is who owns the execution logic and who owns the connection. With DMA the client owns the logic and the broker owns the connection and the risk layer.
+
+    **Follow-up:** What is "naked" access and why is it a problem?
+
+    → It is access with no pre-trade filter by the broker. A client error or bug goes straight to the market, while the broker is still accountable for orders under its name. US Rule 15c3-5 effectively prohibits it, and the EU rules prohibit DEA without the required controls.
+  </Accordion>
+
+  <Accordion title="Q2. Your client sends an erroneous order through your DMA service. Who is responsible?">
+    **The firm whose name or code is on the order stays accountable to the venue and the regulator.** The client is responsible to the broker under the contract, but that does not remove the broker's duty to have effective controls.
+
+    - **US:** Rule 15c3-5 requires automated pre-trade controls under the broker-dealer's direct and exclusive control, with limited exceptions.
+    - **EU and UK:** the DEA provider must have controls and suitability checks, and ESMA's Q&A says its obligations apply whether or not the client is an authorised EU firm.
+    - **Hong Kong:** the SFC Code of Conduct covers electronic trading and DMA in paragraph 18 and Schedule 7, so a licensed firm needs controls and a check that the client is suitable.
+
+    **Follow-up:** Does it change if the client sub-delegates access to its own clients?
+
+    → The provider cannot ignore the underlying flow. It must be able to identify and control it, and the sub-delegating client needs to understand its own clients and their systems. Ask for the contract terms and the due diligence the provider requires.
+  </Accordion>
+</AccordionGroup>
+
+## Pre-trade controls
+
+<AccordionGroup>
+  <Accordion title="Q3. List the pre-trade risk controls you would expect on a DMA path. Which ones matter most for a hedging desk?">
+    **Core set:** maximum order size and notional, price collar against a reference price, credit and position limits, order and message rate limits, duplicate order detection, restricted lists and regulatory flags, and a kill switch with cancel on disconnect.
+
+    **For a hedging desk:**
+
+    - The **price collar** matters most for market and aggressive limit orders in illiquid names, such as the tail of an ETF basket.
+    - **Rate limits** matter when a basket or a delta rebalance sends many orders at once.
+    - **Position and notional limits** must be sized so that a legitimate large hedge fits. A limit that is too tight rejects the hedge at the worst moment.
+    - **Cancel on disconnect** matters for resting orders, because a stale hedge order can fill after the desk has changed its view.
+
+    **Follow-up:** A legitimate hedge is rejected by a limit. What do you do in real time?
+
+    → Do not look for a way around the control. Check which limit fired, ask the broker to raise it temporarily through the approved channel, and meanwhile split the hedge or use another instrument. Afterwards, review whether the limit needs a permanent change.
+  </Accordion>
+
+  <Accordion title="Q4. Should the client also run its own pre-trade checks if the broker already has them?">
+    **Yes, for different reasons.**
+
+    - The broker's checks protect the broker and the market, and they are generic across clients. They usually catch problems after your system has already decided to send the order.
+    - Your own checks reflect your strategy: expected hedge size, a sanity check against your own fair value, and your own limits. They catch errors earlier and more precisely.
+    - Your own checks also reduce the number of broker rejects, which keeps your order flow clean and your relationship with the broker healthy.
+
+    Layer them so that the client's limits are tighter than the broker's. The broker's limits are the backstop and should rarely fire.
+
+    **Follow-up:** Which side should fail closed?
+
+    → Both. If the risk state is stale or the configuration cannot be loaded, reject new orders. A false reject costs an opportunity, while a false accept can cause unbounded loss.
+  </Accordion>
+</AccordionGroup>
+
+## Execution and hedging
+
+<AccordionGroup>
+  <Accordion title="Q5. Why would an ETF or Delta-1 desk use DMA for its hedging legs instead of calling a broker?">
+    - **Speed and consistency:** hedge legs follow the quote or the delta automatically, with no human step between decision and order.
+    - **Control of logic:** the desk can use its own signal, such as fair value, inventory and queue position, to decide when to send and how aggressively.
+    - **Cost:** a DMA commission is usually lower than a high-touch commission, but the desk then carries the cost of building and operating its own execution logic.
+    - **Information:** a trader does not need to reveal intentions to a broker's desk, although the broker still sees the order flow on its systems.
+
+    **Trade-offs:** the desk is responsible for execution quality, error handling and monitoring, and its mistakes reach the market quickly.
+
+    **Follow-up:** When would you rather use a broker algorithm or a care order?
+
+    → For large orders in illiquid names where market impact dominates and the broker's liquidity access or discretion adds value, or when the desk does not have a good execution model for that market.
+  </Accordion>
+
+  <Accordion title="Q6. In Hong Kong you need to send hedge orders for a 50-stock basket within a second. What can go wrong with the connection?">
+    **Throttle and shared capacity.** HKEX governs the rate of messages into its trading platform through the OCG-C gateway with a throttle, and messages above the entitled limit in a window are rejected. A DMA client typically shares its broker's session with other clients, and the broker also applies its own rate limits.
+
+    **What to do:**
+
+    - Ask the broker for the session throttle and your own rate limit, and size the burst to fit. Orders, cancels and amendments all count as messages.
+    - Prioritise the legs that carry the most risk, and spread the rest over several windows.
+    - Handle rejects explicitly. A rejected leg must be retried or re-priced, and the desk must know its residual exposure at all times.
+    - Remember that throttle windows can be misaligned between your system and the gateway, so a burst you count as legal can still be rejected.
+
+    **Follow-up:** What do you do about the residual exposure while some legs are rejected?
+
+    → Hedge the net exposure with a more liquid instrument, such as an index future, while the remaining legs are sent. Then unwind the temporary hedge. Say that the basis between the future and the basket is the cost of this approach.
+  </Accordion>
+
+  <Accordion title="Q7. Where does latency come from in a DMA order path, and when does it matter for ETF arbitrage?">
+    **Components:** the client's decision and order system, the client-side checks, the network to the broker, the broker's gateway and risk layer, the network to the exchange, the exchange gateway and matching, and the return path for acknowledgements and fills.
+
+    **When it matters:**
+
+    - For a competitive quote or a leg that moves with a fast signal, every added step reduces the chance of getting the queue position or the price.
+    - For a slow premium and discount trade held for minutes, the dominant risk is the market moving while the legs are sent, so consistency and reject handling matter more than microseconds.
+
+    **Follow-up:** How would you measure it?
+
+    → Timestamp each hop at the same clock source and record the distribution, not only the average. Focus on the tail, because the slowest orders are the ones that fill at bad prices.
+  </Accordion>
+</AccordionGroup>
+
+## Incidents and broker selection
+
+<AccordionGroup>
+  <Accordion title="Q8. Your hedging algorithm starts sending the same order repeatedly. Walk through your response.">
+    **First minute:** stop the damage.
+
+    - Trigger the strategy-level kill switch to stop new orders and cancel open orders. If the system does not respond, use the broker's kill switch or call the broker's support line to block the session.
+    - Do not restart the algorithm before you know why it looped.
+
+    **Then:**
+
+    - Work out the position. Use fills from the broker and the exchange, not your internal state, because the internal state may be wrong.
+    - Hedge the unwanted exposure in the most liquid instrument, and escalate to risk and compliance.
+    - Notify the broker. If the orders caused market disruption, expect questions from the broker and possibly the exchange.
+
+    **Afterwards:** reproduce the loop from the logs, fix the root cause, add a test and a new control, such as a duplicate-order check or a per-instrument rate limit, and run a post-mortem.
+
+    **Follow-up:** Why do client-side controls matter if the broker would stop this anyway?
+
+    → The broker's limits are the last line of defence and may only trigger after a large position exists. Your own controls limit the loss earlier. See the [system design questions](/quantitative-dev/mock/system-design) on kill switches and pre-trade checks.
+  </Accordion>
+
+  <Accordion title="Q9. A client market order in a thin Hong Kong stock moves the price sharply within minutes. What controls should have prevented it?">
+    **Price protection at the point of order entry.** A market order into a thin book takes whatever liquidity is there, so the controls should include:
+
+    - A **price collar** against a reference price that rejects or converts orders that would trade too far from it.
+    - A **maximum order size** relative to the average daily volume or the visible book.
+    - Algorithm logic that **limits the participation rate**, so a large order is spread over time.
+    - **Supervision** that monitors executions and alerts when an order moves the price.
+
+    Public regulatory actions in Hong Kong have involved client market orders executed through electronic and algorithmic systems that moved share prices sharply, so this scenario is realistic. Say you would read the SFC's published statements for the specifics.
+
+    **Follow-up:** Would a limit order solve it?
+
+    → It caps the price you pay, but not the size or the rate. A limit order with a bad limit price, or many small orders in a loop, can still cause damage, so the other controls remain necessary.
+  </Accordion>
+
+  <Accordion title="Q10. You are choosing a DMA broker for Hong Kong and other Asian markets. What do you check?">
+    - **Coverage:** markets, products and order types, and whether the broker is an EP in Hong Kong or routes through another firm.
+    - **Risk controls:** which pre-trade controls are available, who can change the limits, how fast, and how the kill switch works. Ask for a written description.
+    - **Capacity:** throttle per session, number of sessions, and whether your flow shares capacity with other clients.
+    - **Latency and stability:** hosting options, connectivity, historic outages and how the broker communicated them.
+    - **Protocols and tools:** FIX or binary interfaces, drop copy of executions and test environments.
+    - **Post-trade:** clearing and settlement, give-ups, margin, financing and the reports you need to reconcile.
+    - **Regulatory fit:** the broker's licences, its DMA due diligence on you, and its rules on sub-delegation.
+    - **Cost:** commissions, exchange and regulatory fees, market data and connectivity charges.
+
+    **Follow-up:** Which of these would you test before you go live?
+
+    → The kill switch, cancel on disconnect, reject handling for each limit, the behaviour when the session drops and reconnects, and reconciliation of fills against the broker's reports.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Direct market access (DMA)](/equities-derivatives/global/direct-market-access)
+- [Mock Interview overview](/equities-derivatives/interview/mock-interview)
+- [ETF market making mock interview](/equities-derivatives/mock/etf-market-making)
+- [System design mock interview (quant developer)](/quantitative-dev/mock/system-design)
+- [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
+
+## Sources
+
+- [Market Access](https://www.finra.org/industry/market-access), FINRA
+- [Risk Management Controls for Brokers or Dealers with Market Access, final rule](https://www.sec.gov/rules/final/2010/34-63241.pdf), SEC
+- [ESMA Q&A on MiFID II and MiFIR market structures: direct electronic access](https://www.esma.europa.eu/publications-data/questions-answers/1618), ESMA
+- [FIA due diligence template for prospective DEA clients](https://www.fia.org/sites/default/files/2019-05/FIA-DEA-DDQ-Template---No-Annexes-FINAL.pdf), FIA
+- [Code of Conduct for Persons Licensed by or Registered with the SFC](https://sfc.hk/en/Rules-and-standards/Codes-and-guidelines/Codes/Code-of-Conduct-for-Persons-Licensed), SFC
+- [Hong Kong electronic trading rules: sub-delegation of direct market access](https://www.jpmorgan.com/directdoc/hk_subdelegation.pdf), J.P. Morgan
+- [SFC fines IBHK concerning electronic and algorithmic trading systems](https://dev2.charltonslaw.com/legal/newsletters/397/sfc-fines-ibhk-concerning-electronic-and-algorithmic-trading-systems.pdf), Charltons
+- [OCG-C FAQ: throttle](https://www.hkex.com.hk/Global/Exchange/FAQ/Securities-Market/Trading/Orion-Central-Gateway-Securities-Market-(OCGC)?sc_lang=en), HKEX
+- [Orion Central Gateway, Securities Market (OCG-C)](https://www.hkex.com.hk/eng/market/sec_tradinfra/ocg/orioncg.htm), HKEX
