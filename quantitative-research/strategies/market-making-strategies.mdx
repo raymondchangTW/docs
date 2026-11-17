@@ -1,0 +1,151 @@
+---
+title: "Market-making strategies"
+sidebarTitle: "Market-making strategies"
+description: "How an electronic market maker earns and loses money: profit and loss anatomy, fair value, quoting, inventory and hedging, obligations as constraints, performance metrics, failure modes, and how it differs for ETFs, stocks and options."
+icon: "arrows-left-right"
+keywords:
+  - "market making"
+  - "quoting"
+  - "fair value"
+  - "iNAV"
+  - "inventory"
+  - "hedging"
+  - "adverse selection"
+  - "markout"
+  - "realised spread"
+  - "ETF market making"
+  - "Delta-1"
+---
+
+This page describes market making as a strategy: how the pieces fit together from fair value to quote to hedge to evaluation. The formulas for optimal quotes are on [Market-making models](/quantitative-research/microstructure/market-making-models). The theory of the spread is on [Order book and spread](/quantitative-research/microstructure/order-book-spread). Exchange obligations for Hong Kong ETFs are on [ETF market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules). This page does not repeat them.
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. This is a general framework. It is not any firm's strategy, parameters or desk practice, and it contains no numerical parameters. The theory points follow the microstructure papers listed under Sources. The ETF fair value points follow public ETF explainers and one practitioner account, and are listed under [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
+
+## What a market maker does
+
+A market maker posts bids and offers, takes the other side of incoming orders, and tries to keep the average price paid for liquidity below the average price received for it. Two risks follow from this. The first is **adverse selection**: some counterparties know more than the market maker. The second is **inventory risk**: the position that builds up can lose value before it is unwound.
+
+Glosten and Milgrom showed the first point in a clean form. Even if the dealer is risk-neutral and earns zero expected profit, the presence of better-informed traders produces a positive bid-ask spread, because a customer who agrees to trade may know something the dealer does not. Ho and Stoll set out the inventory side, in which the dealer's quotes depend on the position held, and Avellaneda and Stoikov built a model that is closely related to their work.
+
+## Profit and loss anatomy
+
+| Component | Sign | What drives it |
+| --- | --- | --- |
+| Spread captured | Positive | Quote width, share of fills at the favourable side of the mid |
+| Fees and rebates | Either | Exchange fee schedule, any fee waivers for market makers |
+| Adverse selection | Negative | Fills that are followed by a price move against the position |
+| Inventory P&L | Either | Position size times price moves while inventory is held |
+| Hedging cost | Negative | Hedge spread, slippage, basis, financing and borrow |
+| Obligation cost | Negative | Quoting when the market is unattractive because the exchange requires it |
+| Operational loss | Negative | Stale data, bugs, rejected hedges |
+
+The main analytical task is to split realised P&L into these components, so that a change in the total can be traced to a cause. A strategy that makes money on the spread and loses it back on adverse selection is not a good strategy, even if the quoted spread looks wide. See [Order flow and toxicity](/quantitative-research/microstructure/order-flow-toxicity) for how to measure it.
+
+## Fair value
+
+Every quote is centred on a fair value, and the quality of fair value decides how often the maker is picked off.
+
+- **Inputs.** Prices of the instrument's own market, related instruments (futures, constituents, correlated products), currency, and any order-flow signals.
+- **Combination.** Weight each input by how fresh and how reliable it is. A stale input should lose weight automatically.
+- **Uncertainty.** Output a point estimate and an uncertainty band. The band feeds the spread.
+
+### Fair value for an ETF
+
+Most ETFs publish an indicative net asset value (iNAV) based on the market values of the underlying constituents, and public sources describe it as typically updated every 15 seconds. It is an indicative reference, not an executable price, and it can be misleading when constituents trade in a different time zone.
+
+When the underlying market is closed or illiquid, market makers use a proxy to estimate fair value, for example index futures that are still trading. One practitioner account of ETF market making describes the approach as building a fair value for the basket from exchange data, adjusting a synthetic future for financing, measuring the premium or discount of the traded future against it, and applying that premium to the ETF by beta, because futures tend to lead cash prices. Treat this as an illustration of the idea, not a standard method. Your own estimate should be tested against realised outcomes.
+
+## Quoting
+
+Given a fair value, a quote has four parameters.
+
+| Parameter | What it expresses | Typical adjustments |
+| --- | --- | --- |
+| Centre | Where you would trade with no inventory | Fair value plus a short-horizon signal |
+| Skew | Shift of both quotes with inventory | Move quotes against the position so that it unwinds. A long position lowers both bid and offer. |
+| Width | Compensation for risk and adverse selection | Wider when volatility, uncertainty or order-flow toxicity rise |
+| Size | Exposure offered at each price | Smaller where the quote is more exposed or the hedge is thin |
+
+Inventory skew follows from the Ho-Stoll and Avellaneda-Stoikov logic. See [Market-making models](/quantitative-research/microstructure/market-making-models) for the reservation price and the worked example.
+
+Two practical points apply. First, quotes must be placed on the tick grid, which can matter more than the optimal width in large-tick instruments. See [Tick size and exchange rules](/quantitative-research/microstructure/tick-size-rules). Second, in a price-time priority book, the position in the queue has a value, so the decision to join, hold or cancel depends on the expected waiting time. See [Queue position and fill probability](/quantitative-research/microstructure/queue-position-fill).
+
+## Inventory and hedging
+
+When a quote is hit, the maker holds an unwanted position. There are three responses, and they are usually combined.
+
+1. **Skew** to attract offsetting flow and let the position unwind in the market.
+2. **Hedge** with a liquid correlated instrument, such as an index future for an ETF or the underlying stock for a derivative. The risk then becomes the residual after the hedge, which is the basis, tracking difference and any timing mismatch.
+3. **Reduce** by trading out in the market, at a cost, when limits are approached.
+
+For ETFs the creation and redemption mechanism gives a fourth route, which is to create or redeem units through an authorised participant. See [ETF creation and redemption](/equities-derivatives/global/etf-creation-redemption). For hedge instruments and limits, see [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging).
+
+## Obligations as constraints
+
+Exchange market maker obligations, such as a maximum spread, a minimum size and a minimum quoting time, act as constraints on the quoting problem. The optimal unconstrained quote may be outside them. The cost of meeting an obligation in bad conditions is part of the strategy's economics, and it is offset by the incentives the exchange offers. For the Hong Kong ETF regime, see [ETF market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules). Always check the current rules, since they change.
+
+## Measuring performance
+
+| Metric | What it tells you |
+| --- | --- |
+| Realised spread | Spread kept after the price move that follows a fill |
+| Markout by horizon | Adverse selection, at several time horizons after each fill |
+| Fill rate and queue wait | Whether quotes are competitive |
+| Inventory distribution | How often and how far the position strays |
+| P&L variance versus a fixed-width baseline | Whether the quoting logic adds value |
+| Quote uptime and spread versus obligation | Compliance with exchange requirements |
+
+Test quoting logic in a simulator that models queue position and latency, or it will look better than it is. See [Tick simulation and fills](/quantitative-research/backtesting/tick-simulation-fills).
+
+## Failure modes and controls
+
+| Failure | Cause | Control |
+| --- | --- | --- |
+| Quotes picked off after a related move | Stale fair value input | Staleness timers that widen or pull quotes automatically |
+| Hedge cannot be executed | Hedge instrument illiquid or halted | Position limits and a fallback hedge |
+| Large losses in a few seconds | Loop, bad price or wrong sign | Pre-trade limits, rate limits and a kill switch outside the strategy. See [Direct market access (DMA)](/equities-derivatives/global/direct-market-access). |
+| Systematic losses on busy days | Informed or toxic flow | Toxicity measures that widen quotes. See [Order flow and toxicity](/quantitative-research/microstructure/order-flow-toxicity). |
+| Gaps at the open or after a break | Information arrives while quoting is off | Wider opening quotes and attention to auctions. See [Auction mechanisms](/quantitative-research/microstructure/auction-mechanisms). |
+| Obligation breach | Quoting turned off during stress | Monitoring of participation and a plan for stress periods |
+
+## Differences by product
+
+| Product | Fair value | Main hedge | Special points |
+| --- | --- | --- | --- |
+| ETF | Basket value and proxies, iNAV as a reference | Index futures, basket, related ETF | Creation and redemption, closed underlying markets, ETF spreads reflect creation cost, basket liquidity and hedging cost |
+| Single stock | Own market, sector and index moves | Index or sector future, correlated stock | Event risk, thin books, auctions |
+| Warrants and options | Model value from volatility surface and underlying | Underlying, futures | Gamma and vega as well as delta. See [Warrants and structured products](/equities-derivatives/mock/warrants-structured-products). |
+| Futures | Related spot and calendar spreads | Other contract months, spot | Margin, roll and position limits |
+
+## Points to verify before relying on this page
+
+1. **ETF fair value method.** The synthetic-future approach is a practitioner account and may not match current practice. Test any fair value model on your own data.
+2. **iNAV frequency.** The 15-second update interval is the common description, but each exchange and issuer has its own rule. Check the product's documents.
+3. **Hong Kong specifics.** Obligation levels, fee waivers and short-selling exemptions change. Use the HKEX pages.
+4. **Parameters.** No spread, size or limit values are given here, because they depend on the instrument, the venue and the desk.
+5. **Model assumptions.** The Avellaneda-Stoikov model assumes an exogenous mid price and no informative trades. Its limits are listed on the models page.
+
+## Related pages
+
+- [Market-making models](/quantitative-research/microstructure/market-making-models)
+- [Order flow and toxicity](/quantitative-research/microstructure/order-flow-toxicity)
+- [Queue position and fill probability](/quantitative-research/microstructure/queue-position-fill)
+- [Low-latency and high-frequency trading](/quantitative-research/microstructure/low-latency-hft)
+- [ETF arbitrage: premium and discount](/quantitative-research/strategies/etf-arbitrage-premium-discount)
+- [Microstructure and market-making questions](/quantitative-research/interview/microstructure)
+- [ETF market making mock interview](/equities-derivatives/mock/etf-market-making)
+
+## Sources
+
+- Glosten and Milgrom (1985), [Bid, ask and transaction prices in a specialist market with heterogeneously informed traders](https://econpapers.repec.org/RePEc:eee:jfinec:v:14:y:1985:i:1:p:71-100), Journal of Financial Economics 14(1)
+- Ho and Stoll (1981), [Optimal dealer pricing under transactions and return uncertainty](https://econpapers.repec.org/RePEc:eee:jfinec:v:9:y:1981:i:1:p:47-73), Journal of Financial Economics 9(1)
+- Avellaneda and Stoikov (2008), [High-frequency trading in a limit order book](https://math.nyu.edu/%7Eavellane/HighFrequencyTrading.pdf), Quantitative Finance 8(3)
+- Easley and O'Hara (1987), [Price, trade size and information in securities markets](https://www.edegan.com/pdfs/Easley%20OHara%20(1987)%20-%20Price%20Trade%20Size%20and%20Information%20in%20Securities%20Markets.pdf), Journal of Financial Economics
+- [Understanding iNAV](https://www.etf.com/sections/etf-basics/understanding-inav), etf.com
+- [Understanding an ETF's iNAV](https://fidelity.com/learning-center/investment-products/etf/etfs-inav), Fidelity
+- [Do ETFs really need intraday iNAVs? It depends](https://www.etfcentral.com/news/do-etfs-really-need-intraday-inavs-it-depends), ETF Central
+- [Pricing ETFs: how premium and discount is calculated](https://im.natixis.com/us/portfolio-construction/etf-pricing-premium-discount), Natixis Investment Managers
+- [ETFs: creation, arbitrage, tracking and applications](https://open-exam-prep.com/study-guides/cfa-level2/portfolio-management/etf-mechanics-backtesting), study guide (ETF spread drivers)
+- [Mermaids, fireflies and the bid-ask spread](https://moontowermeta.com/mermaids-fireflies-and-the-bid-ask-spread/), Moontower (practitioner account of ETF fair value)

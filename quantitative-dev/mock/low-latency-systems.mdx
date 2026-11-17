@@ -1,0 +1,168 @@
+---
+title: "Quant dev mock interview: low-latency systems"
+sidebarTitle: "Low-latency systems"
+description: "Low-latency systems mock interview for quant developers: tick-to-trade, kernel bypass, lock-free queues, memory and cache, CPU isolation, tail latency measurement, clock synchronisation and when not to optimise."
+icon: "bolt"
+keywords:
+  - "mock interview"
+  - "quant developer"
+  - "low latency"
+  - "kernel bypass"
+  - "lock-free"
+  - "SPSC queue"
+  - "cache"
+  - "NUMA"
+  - "tail latency"
+  - "tick-to-trade"
+  - "HFT"
+---
+
+Low-latency rounds test whether you can reason about where time goes in a trading path and how to keep it predictable. This page has nine questions with follow-ups and answer points. The answers are principles, not code. Background is on [Low-latency infrastructure](/quantitative-research/data-infra/low-latency-infrastructure).
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. These are general practice frameworks, not any firm's interview content or technology stack. The phrasings are paraphrased from public interview guides listed under Sources. Latency figures are deliberately left out, because they depend on the hardware and the firm tier.
+</Info>
+
+## Framework for any latency question
+
+1. **Define the metric.** Tick-to-trade or round trip, which percentile, and under what message rate.
+2. **Find where the time goes.** Network, kernel, decoding, strategy, risk, order send. Measure before changing anything.
+3. **Fix the biggest stage, then measure again.** The bottleneck often moves.
+4. **Protect the tail and the safety checks.** Predictability and risk controls come before the last microsecond.
+
+## Questions
+
+<AccordionGroup>
+  <Accordion title="Q1. Define tick-to-trade latency. How would you measure it in production?">
+    **Definition:** the time from a market data packet arriving on the wire to the resulting order leaving on the wire. It is the sum of network card and driver time, decoding, strategy, risk checks and order encoding.
+
+    **Measurement:**
+
+    - Timestamp at the network card for the incoming packet and for the outgoing order, using one clock source, so the measurement includes everything between the two wires.
+    - Also timestamp inside the application at each stage, so you can see which stage grew.
+    - Record the full distribution and report p50, p99 and p99.9, not only the mean.
+
+    **Follow-up:** Why not just use timestamps in the application?
+
+    → Application timestamps miss the time spent before the application sees the packet and after it sends the order, and the timestamping itself adds delay.
+  </Accordion>
+
+  <Accordion title="Q2. Why is the kernel network stack a problem for market data, and what does kernel bypass change?">
+    The kernel path handles each packet with interrupts, copies between kernel and application memory and general-purpose processing. That cost and its variation are small for most programs, but they matter in a race.
+
+    **Kernel bypass** lets the application read from the network card directly in userspace, so there are fewer copies, no interrupt per packet and more predictable timing. Common options are socket-compatible userspace stacks such as OpenOnload, lower-level interfaces such as ef_vi, and DPDK.
+
+    **Follow-up 1:** Onload or ef_vi, and why?
+
+    → Onload keeps the socket interface, so existing code can run with little change, at the cost of less control. A lower-level interface gives more control and lower overhead, but you write more of the handling yourself. The choice depends on the team, the latency target and how much code you want to own.
+
+    **Follow-up 2:** When would you not bypass the kernel?
+
+    → When the strategy is not latency sensitive, when the added complexity and maintenance cost are not justified, or when the bottleneck is elsewhere, for example in the strategy or order processor. Measure first.
+  </Accordion>
+
+  <Accordion title="Q3. Your p99 tick-to-trade doubled overnight. How do you tell whether it is the network or your code?">
+    **Compare timestamps by stage.** Take the network card timestamps for the incoming packet and the outgoing order and the application timestamps in between.
+
+    - If the delay is between the wire and the application, look at the network, the card, the driver, interrupts, a changed switch path or another process on the isolated cores.
+    - If it is inside the application, look at what changed in the release: a new allocation, a lock, a bigger data structure or a logging call on the hot path.
+    - Check whether the message rate changed. Queueing at busy times raises the tail even if the code is unchanged.
+    - Roll back the latest change if the evidence points to it, then investigate offline.
+
+    **Follow-up:** How do you stop it happening silently again?
+
+    → Monitor percentiles per stage in production with alerts, and run a latency regression test in the release process.
+  </Accordion>
+
+  <Accordion title="Q4. Sketch a lock-free single-producer single-consumer queue between the thread that reads the network and the strategy thread.">
+    **Design:** a fixed-size ring buffer in pre-allocated memory with one writer and one reader.
+
+    - The producer advances a write index and the consumer advances a read index. Each index is written by only one thread, so no lock is needed.
+    - The producer checks the read index to avoid overwriting unread data, and the consumer checks the write index to avoid reading empty slots.
+    - Use the correct memory ordering so the data is visible before the index update that publishes it.
+    - Keep the two indices on different cache lines so that the two threads do not slow each other by sharing a line, which is called false sharing.
+    - Choose a size that is a power of two so wrapping is a cheap mask.
+
+    **Follow-up:** What should happen when the queue is full?
+
+    → The policy must be explicit. For market data you may drop or conflate old updates and mark the book as uncertain. For orders you should reject and alert rather than silently lose them. Never block the producer on the hot path.
+  </Accordion>
+
+  <Accordion title="Q5. Why avoid memory allocation and locks on the hot path?">
+    - **Allocation** can take a variable amount of time and may involve the operating system, which creates rare long delays. Pre-allocate at start-up and reuse objects.
+    - **Locks** can block a thread when another thread holds them, so the wait depends on scheduling and is not bounded. Use single-writer designs and non-blocking queues.
+    - **Page faults and system calls** also cost unpredictable time, so touch memory ahead of time and avoid system calls on the hot path.
+
+    The goal is a path whose time is nearly the same each run, since the slow cases decide who gets filled.
+
+    **Follow-up:** What about languages with garbage collection?
+
+    → Collection pauses are a tail-latency risk. Teams either keep the hot path free of allocation, tune or choose a collector for short pauses, or write the hot path in a language without collection. Say that you would measure pauses under load.
+  </Accordion>
+
+  <Accordion title="Q6. How do CPU and memory layout affect latency?">
+    - **Cache.** Data that is in the CPU cache is much faster to read than data in main memory. Keep the order book and hot state compact and access them in order.
+    - **False sharing.** Two threads writing to variables on the same cache line slow each other. Separate them.
+    - **NUMA.** On multi-socket machines, memory attached to the other socket is slower. Run the thread and allocate its memory on the socket where the network card is attached.
+    - **Isolation.** Reserve cores for the trading threads, keep other tasks off them and stop the kernel timer tick on those cores, so the thread is not interrupted.
+
+    **Follow-up:** How do you find out whether a cache miss is your problem?
+
+    → Use hardware performance counters and a profiler on a replay of recorded data, and compare the per-stage time with and without the suspect structure.
+  </Accordion>
+
+  <Accordion title="Q7. How do you keep clocks consistent across machines, and why does it matter?">
+    **Why:** latency numbers, event ordering between machines, replay and regulatory records all depend on timestamps that can be compared.
+
+    - Use a common time source with hardware support on the machines and network cards, and monitor the offset.
+    - Record which clock produced each timestamp, and keep wire timestamps separate from application ones.
+    - Treat a clock jump as an incident, because decisions based on time, such as stale data checks, can go wrong.
+
+    **Follow-up:** What breaks if the clocks disagree?
+
+    → Measured latencies can come out negative or inflated, a replay can reorder events, and stale-data protections can trigger or fail to trigger at the wrong time. Which exact accuracy is needed depends on the regulation and the venue, so check the rules that apply.
+  </Accordion>
+
+  <Accordion title="Q8. You are asked to cut 10 percent from tick-to-trade. How do you decide what to do?">
+    1. **Measure per stage** with hardware timestamps and look at the tail.
+    2. **Rank by contribution.** Pick the stage with the largest share, not the one that is easiest to change.
+    3. **Estimate gain and cost.** A hardware path may give the largest gain but costs the most and is hardest to change. A software change may give less but ship faster.
+    4. **Change one thing at a time** and measure again, because the bottleneck can move to the next stage.
+    5. **Check the safety checks** are still on the path and still measured.
+
+    **Follow-up:** When do you stop optimising?
+
+    → When the extra speed no longer changes the strategy's results. Link the latency to the profit, for example fill share and markouts, so you can stop when the benefit is smaller than the cost.
+  </Accordion>
+
+  <Accordion title="Q9. How do you keep a low-latency system safe? Which risk checks stay on the critical path?">
+    **Principle:** the firm is accountable for every order, so speed does not remove the controls. They are designed to be fast.
+
+    - **Keep the checks in memory** on the only path to the exchange gateway: size, notional, price collar, position limits, rate limits and duplicate detection.
+    - **Measure the check latency** as a stage, so its cost is visible.
+    - **Fail closed** when risk state is stale or the configuration is missing.
+    - **Independent kill switch** that does not depend on the strategy code, plus cancel on disconnect.
+    - **Test them regularly,** including under load, because an untested control is not a control.
+
+    **Follow-up:** A risk check is adding too much latency. What do you do?
+
+    → Optimise the check, for example by simplifying it or keeping state closer to the thread, and move less urgent checks to a second layer. Do not remove a control to save time without risk approval. See [Direct market access (DMA)](/equities-derivatives/global/direct-market-access) and the [system design questions](/quantitative-dev/mock/system-design).
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Low-latency infrastructure](/quantitative-research/data-infra/low-latency-infrastructure)
+- [Low-latency and high-frequency trading](/quantitative-research/microstructure/low-latency-hft)
+- [System design](/quantitative-dev/mock/system-design)
+- [Python, SQL and concurrency](/quantitative-dev/mock/python-sql-concurrency)
+- [Mock Interview overview](/quantitative-dev/mock-interview)
+
+## Sources
+
+- [Why HFT desks will not let the kernel touch a market-data packet](https://www.techinterview.org/post/3233477282/hft-kernel-bypass-interview/), techinterview.org
+- [Kernel bypass](https://databento.com/microstructure/kernel-bypass), Databento
+- [Kernel tuning for low-latency trading systems](https://www.youngju.dev/blog/linux/2026-06-13-low-latency-trading-kernel-tuning.en), Youngju Kim
+- [The kernel-bypass bottleneck trap](https://hftadvisory.substack.com/p/the-kernel-bypass-bottleneck-trap), HFT Advisory
+- [Low latency trading systems reference](https://nmbr7.github.io/notes/hardware/low-latency-trading/), nmbr7 notes
+- [Quant developer interview loop, round by round](https://www.techinterview.org/post/3233477393/quant-developer-interview-loop/), techinterview.org

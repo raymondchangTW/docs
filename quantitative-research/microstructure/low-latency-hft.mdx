@@ -1,0 +1,119 @@
+---
+title: "Low-latency and high-frequency trading"
+sidebarTitle: "Low-latency and HFT"
+description: "What high-frequency trading is, where speed creates edge, strategy families and their latency sensitivity, the speed arms race and frequent batch auctions, MiFID II and Hong Kong rules, and what it means for an ETF and Delta-1 desk."
+icon: "bolt"
+keywords:
+  - "HFT"
+  - "high-frequency trading"
+  - "low latency"
+  - "tick-to-trade"
+  - "latency arbitrage"
+  - "co-location"
+  - "market making"
+  - "frequent batch auctions"
+  - "MiFID II"
+  - "RTS 6"
+  - "HKEX hosting"
+---
+
+This page explains what low-latency and high-frequency trading (HFT) means, where speed creates an edge and where it does not, and how the activity is regulated. It then links the ideas to ETF market making and arbitrage. For the engineering side, see [Low-latency infrastructure](/quantitative-research/data-infra/low-latency-infrastructure).
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. The regulatory definitions follow the MiFID II material and law-firm summaries listed under Sources. The research findings follow the Budish, Cramton and Shim paper. The Hong Kong points follow HKEX hosting materials and the SFC Code of Conduct headings. Strategy descriptions are general frameworks, not any firm's practice. See [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
+
+## What counts as HFT
+
+There is no single global definition. The most precise legal one is in MiFID II, which treats high-frequency algorithmic trading as a subset of algorithmic trading. Algorithmic trading means a computer algorithm automatically determines parameters of orders, such as whether to initiate the order, its timing, price or quantity. The high-frequency technique is characterised by infrastructure intended to minimise network and other latencies, a system decision to initiate, generate, route or execute an order without human intervention, and high intraday message rates of orders, quotes or cancellations.
+
+In ESMA's 2020 consultation, the current HFT definition is described as based on high intraday message rates, and ESMA asked whether a static daily measure would be better. Industry bodies have argued that a separate HFT definition is not necessary for regulation. Other jurisdictions use different tests, so check the rule that applies to your firm and venue.
+
+## Latency vocabulary
+
+| Term | Meaning |
+| --- | --- |
+| Tick-to-trade | Time from a market data packet arriving on the wire to the resulting order leaving on the wire. Often used with wire-to-wire when the tick causes the order. |
+| Round trip | Time from sending an order to receiving the exchange acknowledgement or fill. |
+| Tail latency | The slow end of the distribution, such as p99 and p99.9. In a race only the winner is filled, so the tail often matters more than the average. |
+| Jitter | Variation in latency from message to message. A predictable system is usually preferred to a faster but erratic one. |
+
+## Where speed creates edge
+
+- **Queue position.** Under price-time priority, an earlier order is filled first. Speed helps a market maker join the queue early and cancel before it is hit by an informed order. See [Queue position and fill probability](/quantitative-research/microstructure/queue-position-fill).
+- **Stale quotes and adverse selection.** When a related price moves, a quote that is not updated in time is picked off. A faster update lowers the cost of being picked off. See [Market-making models](/quantitative-research/microstructure/market-making-models).
+- **Races between related instruments.** Budish, Cramton and Shim studied the E-mini S&P 500 future and the SPY ETF. When one moved, an algorithm could trade the other before it adjusted. They found that the median duration of these opportunities fell from 97 milliseconds in 2005 to 7 milliseconds in 2011, while their profitability stayed constant.
+
+## Where speed does not help
+
+Speed matters less when the edge comes from a view that lasts minutes or longer, such as a slow premium and discount trade, or when capacity and cost dominate. A faster system does not fix a signal that has no edge after costs. For these strategies, consistency, correct reject handling and good risk controls matter more than microseconds.
+
+## Strategy families and their latency sensitivity
+
+| Family | Idea | Latency sensitivity | Link to an ETF and Delta-1 desk |
+| --- | --- | --- | --- |
+| Electronic market making | Quote both sides, earn the spread, manage inventory and adverse selection | High for quote updates and cancels | ETF quoting under exchange obligations. See [ETF market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules). |
+| Cross-instrument arbitrage | Trade a price gap between related instruments, such as a future and an ETF | High when many competitors see the same gap | [Index basis arbitrage](/quantitative-research/strategies/index-basis-arbitrage) and [ETF arbitrage](/quantitative-research/strategies/etf-arbitrage-premium-discount) |
+| Latency arbitrage | Trade against a stale price on a slower venue or feed | Very high | A risk to your own quotes. It is the main source of adverse selection from faster counterparties. |
+| Short-horizon statistical strategies | Predict price moves over seconds to minutes from order flow and related prices | Medium to high | [Stat arb and pairs](/quantitative-research/strategies/stat-arb-pairs) |
+| Execution algorithms | Slice and route orders to cut cost and impact | Medium | [Market impact and TCA](/quantitative-research/microstructure/market-impact-tca) |
+
+## The arms race and market design
+
+Budish, Cramton and Shim argue that the continuous limit order book is a flawed design. At high-frequency horizons correlations between related instruments break down, which creates mechanical arbitrage opportunities for whoever is fastest. Competition does not remove the opportunities. It only raises the speed needed to capture them. They propose frequent batch auctions, which are uniform-price auctions held at discrete intervals such as every tenth of a second, so that tiny speed advantages matter less and competition shifts from speed to price.
+
+A later paper by Budish, Lee and Shim studies why exchanges might not adopt such designs. It notes that exchanges earn rents from selling speed technology such as proprietary data feeds and co-location. These are research views and are debated. They explain why latency spending can be rational for a firm even when the race has no social benefit.
+
+## Regulation
+
+<Tabs>
+  <Tab title="EU (MiFID II)">
+    RTS 6 applies to firms engaged in algorithmic trading, and in scope are high-frequency systems, quoting engines, algorithmic trading systems and smart order routers. The rules have been enforced since 3 January 2018. Firms must carry out an annual self-assessment and validation of their algorithmic trading against the requirements. The requirements include controlled testing and an emergency kill functionality aimed at preventing market disorder. Market makers using algorithmic trading are also subject to specific requirements.
+  </Tab>
+  <Tab title="Hong Kong">
+    The SFC Code of Conduct sets out electronic trading in paragraph 18. Its table of contents lists provisions on algorithmic trading, including qualification, testing and risk management, after the DMA paragraphs. Read the current text for the exact duties. See [Direct market access (DMA)](/equities-derivatives/global/direct-market-access) for the access rules.
+  </Tab>
+</Tabs>
+
+## Hong Kong infrastructure
+
+HKEX offers Hosting Services at its data centre in Tseung Kwan O. HKEX describes them as low-latency co-location, with low-latency access to the securities and derivatives markets and direct market data feeds. HKEX says the services are open to Exchange Participants and certain other firms, using what it calls an ecosystem approach. Orders reach the securities market through the Orion Central Gateway (OCG-C), which has a throttle on message rates. See [DMA: OCG-C and throttles](/equities-derivatives/global/direct-market-access).
+
+## Risks to know
+
+- **Runaway algorithms.** A fast system can build a large loss in a short time, so kill switches and pre-trade checks must sit outside the strategy code. See the [system design questions](/quantitative-dev/mock/system-design).
+- **Overfitting to latency.** A backtest that ignores latency overstates fills. Model your own latency and a conservative queue rule. See [Tick simulation and fills](/quantitative-research/backtesting/tick-simulation-fills).
+- **Cost.** Co-location, data feeds and engineering are fixed costs, and the edge must cover them at your scale.
+- **Fragile edge.** An edge based on being faster than others disappears when someone gets faster.
+
+## Points to verify before relying on this page
+
+1. **MiFID II text.** The definitions come from law-firm summaries of Article 4(1)(39) and 4(1)(40). Check the current consolidated text and any changes after the ESMA review.
+2. **SFC provisions.** Read paragraphs 18.9 to 18.11 and Schedule 7 of the Code of Conduct for the exact algorithmic trading duties.
+3. **Research figures.** The 97 and 7 millisecond figures are from the 2005 to 2011 study. Current durations differ and are not covered here.
+4. **HKEX hosting.** Eligibility, rack counts and fees change. Check the current HKEX information package.
+5. **Other markets.** US, Japan, Korea, Taiwan and mainland China have their own rules on algorithmic and high-frequency trading, which are not covered here.
+
+## Related pages
+
+- [Low-latency infrastructure](/quantitative-research/data-infra/low-latency-infrastructure)
+- [Direct market access (DMA)](/equities-derivatives/global/direct-market-access)
+- [Order book and spread](/quantitative-research/microstructure/order-book-spread)
+- [Queue position and fill probability](/quantitative-research/microstructure/queue-position-fill)
+- [HFT and low-latency mock interview](/quantitative-research/interview/hft-low-latency)
+
+## Sources
+
+- [MiFID II algorithmic and high-frequency trading for investment firms](https://www.hoganlovells.com/~/media/hogan-lovells/pdf/mifid/subtopic-pdf/lwdlib01-4924013-v1-mifid_ii_algo_and_hft_trading_jan_2016.pdf), Hogan Lovells
+- [MiFID II and algorithmic trading](https://www.hoganlovells.com/~/media/hogan-lovells/pdf/mifid/new_mifid_update_31_dec_2016/5466119v1mifid-ii-algorithmic-trading-29122016lwdlib01.pdf), Hogan Lovells
+- [Algorithmic trading under MiFID II: increased regulatory expectations and annual self-assessment](https://www.kroll.com/en/publications/financial-compliance-regulation/algorithmic-trading-under-mifid-ii), Kroll
+- [MiFID II and algorithmic trading: what you need to know](https://tradingtechnologies.com/blog/2017/07/25/mifid-ii-and-algorithmic-trading-what-you-need-to-know-now/), Trading Technologies
+- [ESMA consultation on algorithmic trading: at a glance](https://kpmg.com/uk/en/insights/regulatory/at-a-glance.html), KPMG
+- [FIA EPTA response to the ESMA consultation on algorithmic trading](https://www.fia.org/sites/default/files/2021-03/20210312_FIA%20EPTA_Response_ALGO%20TRADING%20CP_ESMA_2021_FINAL_0.pdf), FIA EPTA
+- [The high-frequency trading arms race: frequent batch auctions as a market design response](https://www.econ.umd.edu/publicationprofile/2087), Budish, Cramton and Shim, Quarterly Journal of Economics
+- [Research spotlight on the arms race paper](https://www.richmondfed.org/publications/research/econ_focus/2015/q3/research_spotlight), Federal Reserve Bank of Richmond
+- [Will the market fix the market? A theory of stock exchange competition and innovation](https://www.nber.org/system/files/working_papers/w25855/revisions/w25855.rev0.pdf), Budish, Lee and Shim, NBER
+- [Code of Conduct for Persons Licensed by or Registered with the SFC](https://sfc.hk/en/Rules-and-standards/Codes-and-guidelines/Codes/Code-of-Conduct-for-Persons-Licensed), SFC
+- [HKEX Hosting Information Package](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Connectivity/Hosting-Services/Information-package-20231208/HKEX-Hosting-Information-Package-v,-d-,4_e.pdf), HKEX
+- [HKEX Hosting Services fact sheet, October 2022](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Connectivity/Hosting-Services/Hosting-Fact-Sheet/20221031/HKEX_Hosting-Fact-Sheet_202210_e.pdf), HKEX
+- [Low latency trading systems reference](https://nmbr7.github.io/notes/hardware/low-latency-trading/), nmbr7 notes (definition of tick-to-trade)

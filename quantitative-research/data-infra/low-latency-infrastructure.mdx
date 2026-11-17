@@ -1,0 +1,123 @@
+---
+title: "Low-latency infrastructure"
+sidebarTitle: "Low-latency infrastructure"
+description: "The layers of a low-latency trading stack: co-location, kernel bypass networking, hardware timestamping, FPGA, operating system tuning, lock-free software design and how to measure tail latency."
+icon: "microchip"
+keywords:
+  - "low latency"
+  - "kernel bypass"
+  - "DPDK"
+  - "OpenOnload"
+  - "ef_vi"
+  - "FPGA"
+  - "NUMA"
+  - "CPU isolation"
+  - "lock-free"
+  - "tail latency"
+  - "timestamping"
+  - "tick-to-trade"
+---
+
+This page lists the layers of a low-latency trading stack and the trade-offs at each layer. It is a map for understanding and for interview preparation, not a build guide. For what the speed is used for, see [Low-latency and high-frequency trading](/quantitative-research/microstructure/low-latency-hft).
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. Much of the engineering material comes from vendor documentation, practitioner blogs and interview guides listed under Sources, not from peer-reviewed work. Treat the techniques as common practice, not as a standard, and treat any latency figures from those sources as examples that depend on hardware and workload. No latency numbers are given here.
+</Info>
+
+## Where the time goes
+
+A trading path has several stages. Each is a place to lose or save time.
+
+| Stage | What happens | Typical levers |
+| --- | --- | --- |
+| Distance and network | Signal travels from the exchange to the firm | Co-location in the exchange data centre, short cross-connects, fewer network hops |
+| Network card and kernel | Packets are received and handed to the application | Kernel bypass, userspace network stacks, hardware offload |
+| Market data decoding | Feed messages are parsed and the book is updated | Efficient parsers, FPGA feed handlers |
+| Strategy | Signal and decision logic | Simple, branch-light logic, data kept in cache |
+| Risk checks | Pre-trade limits | Checks kept in memory, on the critical path with measured latency |
+| Order send | Message encoded and sent | Pre-built message templates, a fast gateway |
+
+Tick-to-trade is the sum of these stages from packet in to order out. Because only the fastest participant gets the fill in a race, the slow tail of the distribution matters as much as the average.
+
+## Co-location and hosting
+
+Co-location puts the firm's servers in the exchange's data centre, which removes most of the distance. HKEX offers Hosting Services at its Tseung Kwan O data centre, which it describes as low-latency co-location with direct market data feeds and low-latency access to the securities and derivatives markets. Where the firm is not co-located, a mutualised provider or a broker's hosted DMA service is the usual alternative. See [Direct market access (DMA)](/equities-derivatives/global/direct-market-access) for the broker route.
+
+## Network stack and kernel bypass
+
+The operating system's network stack adds work per packet, such as interrupts and copies between kernel and application memory. Kernel bypass lets the application read from the network card directly in userspace. Common options named in vendor and practitioner material are:
+
+| Option | Idea | Trade-off |
+| --- | --- | --- |
+| Socket-compatible userspace stacks (for example OpenOnload, TCPDirect, Mellanox VMA) | Accelerate existing socket-style code | Easier to adopt, less control |
+| Lower-level frame interfaces (for example ef_vi) | The application handles frames directly | More control, more code to write and maintain |
+| DPDK | Open source framework for direct network card access from applications | Flexible, but you often implement more of the network handling yourself |
+| FPGA network cards or boards | Parse and react in hardware | Lowest latency for simple logic, highest development cost and hardest to change |
+
+A practitioner source reports that kernel bypass gave a 20 to 30 percent reduction in tick-to-trade in its deployments and that the bottleneck then moves to the next stage, such as the order processor. Treat this as one data point and measure your own path.
+
+## Timestamping
+
+You cannot tune what you do not timestamp. Serious shops timestamp packets at the network card so that the time includes the wire and card, and not only the application. Use a common clock source across machines, and keep both the wire timestamp and the application timestamp for each event so you can see where time is lost. The same data supports replay and post-trade analysis, which is also needed for regulators and for debugging.
+
+## Operating system and hardware tuning
+
+The common themes in practitioner guides are:
+
+- **CPU isolation.** Reserve cores for the trading threads and keep other work off them, for example with isolated cores and a stopped kernel timer tick on those cores.
+- **NUMA awareness.** Pin the thread and its memory to the processor socket that the network card is attached to, so packets do not cross sockets.
+- **Interrupt handling.** Reduce or remove interrupt coalescing on the latency path and prefer polling to interrupts, which trades CPU use for lower latency.
+- **Predictability.** Avoid anything that causes occasional long pauses, such as page faults, memory allocation on the hot path and background jobs.
+
+One practitioner article states that in trading an unpredictable system is worse than a slow one. This is why tuning aims at the tail, not at the average.
+
+## Software design
+
+- **No locks and no allocation on the hot path.** Use pre-allocated memory and queues that do not block. A single-producer single-consumer queue between the thread that reads the network and the strategy thread is the standard interview example.
+- **Busy polling.** The thread spins on the receive queue instead of sleeping, which removes wake-up delay.
+- **Cache friendliness.** Keep the order book and hot state compact so they stay in the CPU cache.
+- **Determinism.** The same input stream should give the same decisions, so that any session can be replayed. See [system design questions](/quantitative-dev/mock/system-design).
+- **Separate the hot path from everything else.** Logging, persistence and monitoring run on other threads or other machines and take data from the hot path through non-blocking queues.
+
+## Measuring latency
+
+| Practice | Why |
+| --- | --- |
+| Record the full distribution, including p99 and p99.9 | Averages hide the slow orders that fill at bad prices |
+| Measure per stage | A change that speeds one stage can move the bottleneck to another |
+| Use hardware timestamps and one clock source | Software timestamps include the delay you are trying to measure |
+| Test under realistic message rates, including bursts | Latency often rises sharply when the feed is busiest |
+| Track it in production, with alerts | Latency drifts as code, data volume and hardware change |
+
+A common interview question is how to tell whether a doubled p99 tick-to-trade is caused by the network or by your own code. The answer is to compare the wire timestamps with the application timestamps, so you can see in which stage the extra time appears.
+
+## Trade-offs to state in an interview
+
+- **Speed versus cost and flexibility.** Each step from kernel bypass to FPGA costs more to build and is harder to change.
+- **Speed versus safety.** Every risk check adds latency on the critical path, but removing checks is not an option for a firm that is accountable for its orders. See [Direct market access (DMA)](/equities-derivatives/global/direct-market-access).
+- **Speed versus need.** Match the investment to the strategy. A slow arbitrage does not need a hardware path.
+
+## Points to verify before relying on this page
+
+1. **Vendor claims.** Product capabilities and latency figures come from vendors and practitioners. Benchmark on your own hardware.
+2. **Tuning settings.** Kernel and network card settings differ by hardware and operating system version. Check the vendor documentation for your setup.
+3. **HKEX hosting.** Eligibility, space and connection options change. Use the current HKEX information package.
+4. **Other languages and runtimes.** This page does not cover garbage-collected runtimes, which need their own pause-avoidance techniques.
+
+## Related pages
+
+- [Low-latency and high-frequency trading](/quantitative-research/microstructure/low-latency-hft)
+- [Pipeline and deployment](/quantitative-research/data-infra/pipeline-deployment)
+- [Low-latency systems mock interview (quant developer)](/quantitative-dev/mock/low-latency-systems)
+- [System design mock interview (quant developer)](/quantitative-dev/mock/system-design)
+
+## Sources
+
+- [Kernel bypass](https://databento.com/microstructure/kernel-bypass), Databento
+- [Why HFT desks will not let the kernel touch a market-data packet](https://www.techinterview.org/post/3233477282/hft-kernel-bypass-interview/), techinterview.org
+- [The kernel-bypass bottleneck trap](https://hftadvisory.substack.com/p/the-kernel-bypass-bottleneck-trap), HFT Advisory
+- [Kernel tuning for low-latency trading systems](https://www.youngju.dev/blog/linux/2026-06-13-low-latency-trading-kernel-tuning.en), Youngju Kim
+- [Latency engineering for trading systems](https://blogger-94s.pages.dev/trading/latency_engineering), practitioner blog
+- [Low latency trading systems reference](https://nmbr7.github.io/notes/hardware/low-latency-trading/), nmbr7 notes
+- [HKEX Hosting Information Package](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Connectivity/Hosting-Services/Information-package-20231208/HKEX-Hosting-Information-Package-v,-d-,4_e.pdf), HKEX
+- [HKEX Hosting Services fact sheet, October 2022](https://www.hkex.com.hk/-/media/HKEX-Market/Services/Connectivity/Hosting-Services/Hosting-Fact-Sheet/20221031/HKEX_Hosting-Fact-Sheet_202210_e.pdf), HKEX

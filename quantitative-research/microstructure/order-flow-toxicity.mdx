@@ -1,0 +1,103 @@
+---
+title: "Order flow and toxicity"
+sidebarTitle: "Order flow and toxicity"
+description: "Order flow imbalance, trade classification, VPIN and flow toxicity: what each measures, how a market maker uses them to widen, skew or pull quotes, and why the measures are contested."
+icon: "wave-square"
+keywords:
+  - "order flow imbalance"
+  - "OFI"
+  - "VPIN"
+  - "flow toxicity"
+  - "adverse selection"
+  - "trade classification"
+  - "markout"
+  - "market making"
+  - "informed trading"
+---
+
+This page covers measures of order flow that a market maker uses to judge whether incoming trades are likely to be informed. It connects the spread theory on [Order book and spread](/quantitative-research/microstructure/order-book-spread) with the quoting decisions on [Market-making strategies](/quantitative-research/strategies/market-making-strategies).
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. The order flow imbalance results follow Cont, Kukanov and Stoikov. The VPIN material follows Easley, Lopez de Prado and O'Hara and the critical replies by Andersen and Bondarenko. No parameters or thresholds are given, because they must be estimated for each instrument. See [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
+
+## Why measure order flow
+
+A market maker loses money when it trades with someone who knows more. Flow toxicity is the term for this risk. Easley and O'Hara describe it as the risk that liquidity providers face when trading with traders who have better information. If the maker can detect toxic flow early, it can widen, skew or pull quotes before the losses build up.
+
+## Order flow imbalance (OFI)
+
+Cont, Kukanov and Stoikov studied the price impact of limit orders, market orders and cancellations in US stocks. They found that over short intervals price changes are mainly driven by **order flow imbalance**, defined as the imbalance between supply and demand at the best bid and ask. The relation is linear, with a slope inversely proportional to market depth, and it was robust to intraday seasonality and stable across time scales and stocks. They also found that the relation between price changes and trade volume is noisier and less robust. They point to OFI as a possible measure of adverse selection in limit order executions.
+
+In practice:
+
+- OFI counts changes in size at the touch, not only trades. A cancellation of bid size counts as selling pressure, and a new bid counts as buying pressure.
+- The same imbalance moves price more when depth is thin, so a market maker reads OFI together with depth.
+- The signal decays quickly, so it is used for short-horizon quote adjustment, not for holding positions.
+
+The simpler queue imbalance and microprice on [Order book and spread](/quantitative-research/microstructure/order-book-spread) are related, and OFI extends them to events over time.
+
+## Trade classification
+
+Many measures need to know whether a trade was buyer-initiated or seller-initiated.
+
+| Method | Idea | Weakness |
+| --- | --- | --- |
+| Tick rule | Compare the trade price with the previous trade price | Misclassifies trades at unchanged prices |
+| Quote rule or Lee-Ready | Compare the trade price with the prevailing mid | Depends on correct quote and trade timestamps |
+| Exchange-provided aggressor flag | The feed states which side was aggressive | Available only on some feeds and venues |
+| Bulk volume classification | Assign volume in a time or volume bucket to buys and sells by price change | Approximate by construction |
+
+Classification errors bias every measure that depends on them. Use the aggressor flag when the feed has one, and check it against a second method.
+
+## VPIN and flow toxicity
+
+Easley, Lopez de Prado and O'Hara proposed the Volume-Synchronized Probability of Informed Trading (VPIN). It estimates flow toxicity from volume imbalance and trade intensity, and it is updated in volume time instead of clock time. They argued that it is a useful indicator of short-term toxicity-induced volatility and linked rising toxicity to the withdrawal of liquidity providers before the 2010 flash crash.
+
+The measure is contested. Andersen and Bondarenko found that the volume classification used in VPIN generates systematic errors correlated with trading volume and volatility. They reported that when they controlled for trading intensity and volatility, the measure had no incremental predictive power for future volatility, and they concluded that it is not suitable for capturing order flow toxicity. Their earlier study reached similar conclusions and stressed that any toxicity metric should be adopted only if it performs well against suitable benchmarks.
+
+The practical reading is that VPIN is a documented idea and a candidate feature, not a validated standard. A desk that uses it should test it against its own fills.
+
+## Using toxicity in quoting
+
+| Observation | Possible response | Cost |
+| --- | --- | --- |
+| Imbalance persistently on one side | Skew the centre away from the pressure and widen that side | Fewer fills on that side |
+| Related instrument moved, own quote not yet updated | Cancel or reprice at once | Lost queue position |
+| Toxicity measure high | Widen both sides or reduce size | Lower volume and possible obligation pressure |
+| Toxicity measure extreme | Pull quotes, subject to exchange obligations | Quote uptime falls |
+
+Exchange obligations limit how far a market maker can widen or pull. See [ETF market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules) for the Hong Kong ETF regime. Each response should be validated with markouts, so the effect on realised spread is measured and not assumed.
+
+## Validating a toxicity signal
+
+1. **Define the target.** Use the markout of your own fills at one or more horizons, since that is the loss you want to avoid.
+2. **Build the feature without look-ahead.** Use only information available at the time of the quote.
+3. **Compare with a baseline.** Test whether the feature predicts markouts after controlling for volatility and volume, which is the issue raised against VPIN.
+4. **Check stability.** Results by time of day, instrument and regime. A signal that works only in one period is not reliable.
+5. **Check the cost.** The fills given up by widening must be less costly than the losses avoided.
+
+## Points to verify before relying on this page
+
+1. **Original papers.** Read Cont, Kukanov and Stoikov for the exact OFI definition, which counts events at the best prices.
+2. **VPIN debate.** The measure's validity is disputed. Read both the original and the critical replies before using it.
+3. **Hong Kong data.** Check whether the HKEX feed in use carries an aggressor flag and order-level information. This matters for classification and for OFI.
+4. **Horizon and scope.** The OFI results are from US equities over short intervals. Relationships in other markets and at other horizons need their own test.
+
+## Related pages
+
+- [Order book and spread](/quantitative-research/microstructure/order-book-spread)
+- [Market-making models](/quantitative-research/microstructure/market-making-models)
+- [Market-making strategies](/quantitative-research/strategies/market-making-strategies)
+- [Queue position and fill probability](/quantitative-research/microstructure/queue-position-fill)
+- [Microstructure and market-making questions](/quantitative-research/interview/microstructure)
+
+## Sources
+
+- Cont, Kukanov and Stoikov (2014), [The price impact of order book events](https://arxiv.org/abs/1011.6402), Journal of Financial Econometrics 12(1)
+- Easley, Lopez de Prado and O'Hara (2011), [The microstructure of the flash crash: flow toxicity, liquidity crashes and the probability of informed trading](https://papers.ssrn.com/abstract=1695041), Journal of Portfolio Management 37(2)
+- Easley, Lopez de Prado and O'Hara, [Flow toxicity and liquidity in a high frequency world](https://www.stern.nyu.edu/sites/default/files/assets/documents/con_035928.pdf)
+- [Stock market flash crashes now predictable, thanks to Cornell-developed metric](https://news.cornell.edu/node/272493), Cornell Chronicle
+- Andersen and Bondarenko (2014), [VPIN and the flash crash](https://repec.econ.au.dk/repec/creates/rp/11/rp11_50.pdf), Journal of Financial Markets 17
+- Andersen and Bondarenko (2013), [Assessing measures of order flow toxicity via perfect trade classification](https://repec.econ.au.dk/repec/creates/rp/13/rp13_43.pdf)
+- Glosten and Milgrom (1985), [Bid, ask and transaction prices in a specialist market with heterogeneously informed traders](https://econpapers.repec.org/RePEc:eee:jfinec:v:14:y:1985:i:1:p:71-100), Journal of Financial Economics 14(1)

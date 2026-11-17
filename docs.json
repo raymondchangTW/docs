@@ -135,7 +135,9 @@
               "quantitative-research/microstructure/queue-position-fill",
               "quantitative-research/microstructure/market-impact-tca",
               "quantitative-research/microstructure/auction-mechanisms",
-              "quantitative-research/microstructure/tick-size-rules"
+              "quantitative-research/microstructure/tick-size-rules",
+              "quantitative-research/microstructure/low-latency-hft",
+              "quantitative-research/microstructure/order-flow-toxicity"
             ]
           },
           {
@@ -155,7 +157,8 @@
               "quantitative-research/strategies/stat-arb-pairs",
               "quantitative-research/strategies/vol-strategies",
               "quantitative-research/strategies/event-dividend-strategies",
-              "quantitative-research/strategies/cross-market"
+              "quantitative-research/strategies/cross-market",
+              "quantitative-research/strategies/market-making-strategies"
             ]
           },
           {
@@ -185,7 +188,8 @@
               "quantitative-research/data-infra/data-quality",
               "quantitative-research/data-infra/sql-timeseries",
               "quantitative-research/data-infra/python-data-stack",
-              "quantitative-research/data-infra/pipeline-deployment"
+              "quantitative-research/data-infra/pipeline-deployment",
+              "quantitative-research/data-infra/low-latency-infrastructure"
             ]
           },
           {
@@ -211,7 +215,8 @@
               "quantitative-research/mock-interview",
               "quantitative-research/interview/microstructure",
               "quantitative-research/interview/vol-surface",
-              "quantitative-research/interview/index-arbitrage"
+              "quantitative-research/interview/index-arbitrage",
+              "quantitative-research/interview/hft-low-latency"
             ]
           },
           {
@@ -248,7 +253,8 @@
               "quantitative-dev/mock/code-quality",
               "quantitative-dev/mock/python-sql-concurrency",
               "quantitative-dev/mock/operations-incidents",
-              "quantitative-dev/mock/behavioral"
+              "quantitative-dev/mock/behavioral",
+              "quantitative-dev/mock/low-latency-systems"
             ]
           }
         ]

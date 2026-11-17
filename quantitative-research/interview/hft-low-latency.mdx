@@ -1,0 +1,159 @@
+---
+title: "HFT and low-latency mock interview"
+sidebarTitle: "HFT and low latency"
+description: "Mock interview questions on high-frequency and low-latency trading for quant research roles: where speed creates edge, adverse selection, latency arbitrage, queue position, backtesting with latency, markouts and the speed arms race."
+icon: "bolt"
+keywords:
+  - "mock interview"
+  - "HFT"
+  - "high-frequency trading"
+  - "low latency"
+  - "latency arbitrage"
+  - "adverse selection"
+  - "queue position"
+  - "markout"
+  - "backtest"
+  - "frequent batch auctions"
+---
+
+This page covers high-frequency and low-latency trading questions for quantitative research roles. Each question has a main question, common follow-ups and answer points. The answers are thinking frameworks, so say out loud which assumptions you would test. Background is on [Low-latency and high-frequency trading](/quantitative-research/microstructure/low-latency-hft).
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. These are general practice frameworks, not any firm's interview content or strategy. The research findings cited come from the Budish, Cramton and Shim paper listed under Sources.
+</Info>
+
+## Concepts
+
+<AccordionGroup>
+  <Accordion title="Q1. What makes a strategy a high-frequency strategy? Is it only about holding period?">
+    **No. Holding period is only a symptom.** A useful description combines three features: infrastructure built to minimise latency, automated decisions with no human step, and high message rates of orders, quotes and cancels. MiFID II uses a test of this kind for high-frequency algorithmic trading.
+
+    - A firm can have a short holding period without being latency sensitive, for example a signal that trades every few minutes on a broker algorithm.
+    - A market maker can hold positions for minutes and still be latency sensitive, because its edge depends on updating and cancelling quotes quickly.
+
+    **Follow-up:** Why does the distinction matter?
+
+    → It decides the cost structure and the risk. A latency-sensitive strategy needs co-location, data feeds and engineering, and it faces competition on speed. A slower strategy competes on the quality of its signal, its capacity and its costs.
+  </Accordion>
+
+  <Accordion title="Q2. Where does speed create an edge for an ETF market maker?">
+    - **Quote updates.** When the futures or constituents move, the ETF quote must move too. A slow update is picked off by faster traders, which is adverse selection.
+    - **Queue position.** Joining the queue early at a price level gives priority when volume arrives. See [Queue position and fill probability](/quantitative-research/microstructure/queue-position-fill).
+    - **Hedging.** The hedge leg must follow the fill quickly so the inventory risk stays small.
+
+    **Where it does not help:** a slow premium and discount trade held for minutes, where costs and capacity matter more.
+
+    **Follow-up:** How would you decide how much to spend on speed?
+
+    → Estimate the profit that depends on speed, for example the share of fills and the adverse selection saved by a given latency improvement, and compare it with the fixed and running cost. Measure the effect using your own fills at different latencies, not only simulation.
+  </Accordion>
+</AccordionGroup>
+
+## Adverse selection and latency arbitrage
+
+<AccordionGroup>
+  <Accordion title="Q3. What is latency arbitrage, and how does it hurt a market maker?">
+    **Latency arbitrage** is trading against a stale price: a faster participant sees a price change in a related instrument or venue and trades against quotes that have not yet been updated.
+
+    - For the market maker, the quote that gets hit is the one that is stale, so fills are concentrated when the quote is wrong. This is adverse selection with a clear cause.
+    - The loss shows up as negative markouts after fills, which are the mid price moves after a fill, measured against the fill direction.
+
+    **Follow-up:** How do you reduce the loss without being the fastest?
+
+    → Widen or pull quotes when related prices move, use faster signals only for the cancel path, quote smaller size in the most exposed instruments, and avoid quoting where the stale-quote risk is highest. Each of these costs fill volume, so the trade-off is measured with markouts.
+  </Accordion>
+
+  <Accordion title="Q4. How do you measure adverse selection from your own fills?">
+    **Use markouts.** For each fill, record the mid price at the fill and at fixed horizons after it, such as a few milliseconds, one second and ten seconds, and sign the change by the fill direction.
+
+    - A fill that is followed by a mid move against you has negative markout and is adverse.
+    - Average markout by instrument, time of day, quote size, how long the quote rested and the state of related instruments.
+    - Compare the realised spread (the spread captured after the markout) with the quoted spread. A strategy can show a wide quoted spread and a small or negative realised spread.
+
+    **Follow-up:** Why must the mid price be a good reference?
+
+    → A stale or noisy mid price biases the markouts. Use a consistent timestamp source and a fair value that includes related instruments, and check results are stable when you change the reference.
+  </Accordion>
+
+  <Accordion title="Q5. The arms race paper argues that continuous limit order books create a speed race. Summarise the argument and the proposed fix.">
+    **Argument:** In a continuous market, time is treated as continuous and orders are processed one at a time. At high-frequency horizons, prices of closely related instruments are no longer perfectly correlated, which creates mechanical arbitrage opportunities for whoever is fastest. The authors found for the E-mini S&P 500 future and the SPY ETF that the duration of these opportunities fell sharply over time while their profitability stayed constant. Competition only raised the speed required.
+
+    **Fix:** Frequent batch auctions, which are uniform-price auctions held at discrete intervals, for example every tenth of a second. A tiny speed advantage is worth less because orders in the same interval are treated together, and competition shifts toward price.
+
+    **Follow-up:** What are the counterarguments?
+
+    → These are research views and debated. Points commonly raised are that speed competition also tightens spreads and improves price discovery, that batch intervals add delay and could shift the race elsewhere, and that exchanges have adopted such designs only in limited form. Say you would read the original paper and the later replies before taking a side.
+  </Accordion>
+</AccordionGroup>
+
+## Research and backtesting
+
+<AccordionGroup>
+  <Accordion title="Q6. A passive market making strategy shows a high Sharpe ratio in a tick backtest. What do you check before believing it?">
+    - **Fill model.** A backtest that fills when the price touches your limit overstates fills. Use an explicit queue assumption, conservative and optimistic, and report both. A strategy that works only under the optimistic rule is not validated.
+    - **Latency.** Add your realistic latency for data in, decision, and order out. Orders must be placed on the book state as it was when they arrived, not when they were sent.
+    - **Adverse selection.** Fills must use post-fill price moves, not unconditional ones.
+    - **Data.** Check that the feed and timestamps in the backtest match what you receive live, including gaps and ordering.
+    - **Costs and capacity.** Fees, rebates, borrow and what happens to the edge at larger size.
+
+    See [Tick simulation and fills](/quantitative-research/backtesting/tick-simulation-fills).
+
+    **Follow-up:** How do you validate the model after going live?
+
+    → Compare live fills, queue waiting times and markouts with the backtest by instrument and time of day. Differences point to errors in the fill or latency model.
+  </Accordion>
+
+  <Accordion title="Q7. How would you estimate how much of a strategy's profit depends on being fast?">
+    **Idea:** find a natural experiment or controlled variation in latency.
+
+    - **Historical variation.** Compare outcomes on days or periods when your latency was different because of hardware changes, congestion or feed problems.
+    - **Controlled delay.** In live or paper trading, add a small randomised delay to some orders and compare fills and markouts with the undelayed ones. This needs risk approval and a small size.
+    - **Simulation.** Replay recorded data with different latencies and a fill model, noting that the answer is only as good as the fill model.
+
+    **Follow-up:** What can mislead you?
+
+    → Competitors change their speed too, so past sensitivity may not hold. Also the market is busier at some times, so latency effects can be correlated with volatility and not caused by speed itself.
+  </Accordion>
+
+  <Accordion title="Q8. A signal predicts the next 100 milliseconds of price moves, but its edge disappears at 5 milliseconds of latency. What do you do?">
+    **Work out the economics.** The edge is available only to participants faster than the signal's decay, so the question is whether you can reach that speed and whether others are already faster.
+
+    - Estimate how the expected profit per trade falls with latency, and where it crosses cost per trade.
+    - Check the capacity, since many fast competitors can take the same opportunities.
+    - Consider using the signal differently, for example to cancel or reprice resting quotes, where a smaller edge can still reduce adverse selection.
+    - If you cannot reach the required speed at a reasonable cost, stop. A signal with no edge at your latency has no value to you.
+
+    **Follow-up:** How does the signal's decay relate to the arms race?
+
+    → If many firms can trade on the same decaying signal, the opportunity is taken by the fastest and the required speed rises. That is the pattern the arms race paper describes.
+  </Accordion>
+
+  <Accordion title="Q9. What risks are specific to a latency-sensitive strategy that a slower strategy does not face?">
+    - **Runaway loss speed.** Errors reach the market in microseconds, so controls must be automatic and outside the strategy: pre-trade limits, rate limits and a kill switch.
+    - **Regulatory duties.** In the EU, firms engaged in algorithmic trading face testing, annual self-assessment and kill functionality requirements. Hong Kong has electronic trading and algorithmic trading provisions in the SFC Code of Conduct. Say you would check the rules that apply to the firm.
+    - **Fixed costs.** Co-location, feeds and engineering are paid whether or not the strategy works.
+    - **Fragility.** An advantage in speed erodes when others get faster.
+    - **Operational risk.** Feed gaps, clock errors and session drops matter more when decisions happen in microseconds.
+
+    **Follow-up:** Which would you test first before going live?
+
+    → The kill switch and cancel on disconnect, then behaviour when market data has a gap or the clock jumps. See [Direct market access (DMA)](/equities-derivatives/global/direct-market-access).
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+- [Low-latency and high-frequency trading](/quantitative-research/microstructure/low-latency-hft)
+- [Low-latency infrastructure](/quantitative-research/data-infra/low-latency-infrastructure)
+- [Microstructure and execution questions](/quantitative-research/interview/microstructure)
+- [Mock Interview (Quantitative Research)](/quantitative-research/mock-interview)
+- [Low-latency systems mock interview (quant developer)](/quantitative-dev/mock/low-latency-systems)
+
+## Sources
+
+- [The high-frequency trading arms race: frequent batch auctions as a market design response](https://www.econ.umd.edu/publicationprofile/2087), Budish, Cramton and Shim, Quarterly Journal of Economics
+- [Research spotlight on the arms race paper](https://www.richmondfed.org/publications/research/econ_focus/2015/q3/research_spotlight), Federal Reserve Bank of Richmond
+- [MiFID II algorithmic and high-frequency trading for investment firms](https://www.hoganlovells.com/~/media/hogan-lovells/pdf/mifid/subtopic-pdf/lwdlib01-4924013-v1-mifid_ii_algo_and_hft_trading_jan_2016.pdf), Hogan Lovells
+- [Algorithmic trading under MiFID II: increased regulatory expectations and annual self-assessment](https://www.kroll.com/en/publications/financial-compliance-regulation/algorithmic-trading-under-mifid-ii), Kroll
+- [Why HFT desks will not let the kernel touch a market-data packet](https://www.techinterview.org/post/3233477282/hft-kernel-bypass-interview/), techinterview.org
+- [Code of Conduct for Persons Licensed by or Registered with the SFC](https://sfc.hk/en/Rules-and-standards/Codes-and-guidelines/Codes/Code-of-Conduct-for-Persons-Licensed), SFC

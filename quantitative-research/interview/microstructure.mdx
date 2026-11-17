@@ -1,26 +1,194 @@
 ---
-title: "Microstructure and execution"
-description: "市場微結構與執行的面試題目。"
+title: "Microstructure and market-making mock interview"
+sidebarTitle: "microstructure"
+description: "Mock interview questions on market microstructure and market making: spread components, realised spread, inventory skew, queue position, market impact, auctions, adverse selection and order flow toxicity."
+icon: "chart-candlestick"
 keywords:
-  - "interview"
+  - "mock interview"
   - "microstructure"
   - "market making"
-  - "execution"
-sidebarTitle: "microstructure"
+  - "spread components"
+  - "realised spread"
+  - "inventory skew"
+  - "queue position"
+  - "market impact"
+  - "adverse selection"
+  - "order flow imbalance"
 ---
 
-<Info>**Status of this page：** 大綱（skeleton）。題目與答案尚未撰寫，將比照其他 Mock Interview 頁的格式，答案附來源與 Points to verify。</Info>
+This page covers market microstructure and market-making questions for quantitative research roles. Each question has a main question, common follow-ups and answer points. The answers are thinking frameworks, so say out loud which assumptions you would test. The background is on [Order book and spread](/quantitative-research/microstructure/order-book-spread), [Market-making models](/quantitative-research/microstructure/market-making-models) and [Market-making strategies](/quantitative-research/strategies/market-making-strategies).
 
-## 預計涵蓋的題目主題
+<Info>**Status of this page.** Last checked on 17 November 2026. This page replaces an earlier outline, and the questions are general practice frameworks, not any firm's interview content. The numerical examples were recomputed. Market rules, such as auction and break arrangements, differ by venue, so say you would check the venue's current rules.</Info>
 
-1. 價差的三個成分與如何估計
-2. 庫存增加時的報價偏移方向
-3. Queue 位置的價值與成交機率
-4. Market impact 的估計與 VWAP 基準的問題
-5. 拍賣與午休對 fair value 的影響
+## Spread and adverse selection
+
+<AccordionGroup>
+  <Accordion title="Q1. What are the components of the bid-ask spread, and how would you estimate them?">
+    **Three components:** order processing (the fixed cost of providing quotes), inventory (compensation for holding an unbalanced position) and adverse selection (the risk of trading with better-informed counterparties).
+
+    - Glosten and Milgrom showed that informed traders produce a positive spread even when the dealer is risk-neutral and earns zero expected profit.
+    - Huang and Stoll built a time-series model that identifies all three components from signed trades and quotes.
+
+    **Estimation options:** the Roll serial covariance estimator needs only trade prices, but it gives only an effective spread. The Glosten-Harris and Huang-Stoll models need signed trades, so trade classification errors bias the split. A realised-spread decomposition needs a horizon, and the answer depends on that choice.
+
+    **Follow-up:** Which component do you expect to be largest in a liquid large-cap stock?
+
+    → Do not answer from memory of a number. Say that published estimates differ by market and period, that the split changes with trade size, and that you would estimate it on your own data. See [Order book and spread](/quantitative-research/microstructure/order-book-spread).
+  </Accordion>
+
+  <Accordion title="Q2. A market maker's bid is hit at 99.95 when the mid is 100.00. Ten seconds later the mid is 99.97. Compute the effective spread, the realised spread and the price impact.">
+    Work per share and use the convention where the spread is twice the distance from the mid.
+
+    - **Effective spread:** 2 × (100.00 − 99.95) = **0.10**.
+    - **Realised spread:** measured against the later mid, 2 × (99.97 − 99.95) = **0.04**. This is what the liquidity provider keeps.
+    - **Price impact:** the difference, 0.10 − 0.04 = **0.06**, which equals 2 × (100.00 − 99.97). It is the part of the spread lost to the price move after the fill.
+
+    **Follow-up 1:** Why can the quoted spread look attractive while the realised spread is negative?
+
+    → Fills are not random. A bid is filled more often when the price is about to fall, so the average move after fills is against the maker. The quoted spread ignores this.
+
+    **Follow-up 2:** Does the answer depend on the horizon?
+
+    → Yes. Choose horizons that match the time over which the maker holds or hedges the position, and report several. Conventions on the factor of two also vary, so state yours.
+  </Accordion>
+</AccordionGroup>
+
+## Quoting and inventory
+
+<AccordionGroup>
+  <Accordion title="Q3. Your inventory increases. In which direction should you move your quotes, and by how much in the Avellaneda-Stoikov model?">
+    **Direction:** move both quotes down when long, so that you are more likely to sell and less likely to buy more. The reverse when short.
+
+    **Model answer:** the reservation price is the mid minus inventory × risk aversion × variance × time remaining. Using the example on the [models page](/quantitative-research/microstructure/market-making-models), with mid 100, risk aversion 0.1, volatility 2, one unit of time remaining and inventory +5, the reservation price falls by 5 × 0.1 × 4 × 1 = **2.0**, to 98.0. The quotes are placed symmetrically around it, so with a spread of 1.691 they are 97.15 and 98.85.
+
+    **Follow-up 1:** What does the model leave out?
+
+    → Adverse selection, because the mid is exogenous and trades carry no information. Also tick size discreteness, constant volatility and the finite horizon. See the limitations on the models page.
+
+    **Follow-up 2:** How do you use a hedge in this problem?
+
+    → If the inventory can be hedged, the relevant risk is the residual after the hedge, so the skew should depend on the residual and not on the gross position.
+  </Accordion>
+
+  <Accordion title="Q4. Why does queue position have value, and when does it matter most?">
+    Under price-time priority, an order at the back of the queue at the touch fills only after the orders ahead trade or cancel. Moallemi and Yuan model the value of a limit order as a function of its queue position and find that queue value can be of the same order of magnitude as the bid-ask spread.
+
+    **It matters most** in large-tick instruments, where the spread is pinned at one tick, the queues are long and price competition is not possible. In small-tick instruments, competition happens through price.
+
+    **Follow-up:** How do you estimate your queue position?
+
+    → With an order-by-order feed you can reconstruct it from order IDs. With aggregated depth only, the position is uncertain, so assume both a conservative rule (back of the queue) and an optimistic one, and report both. See [Queue position and fill probability](/quantitative-research/microstructure/queue-position-fill).
+  </Accordion>
+
+  <Accordion title="Q5. There are 50,000 shares ahead of you at the touch, and that price level trades about 10,000 shares a minute. How long until you fill, and what is wrong with that estimate?">
+    **Simple benchmark:** shares ahead divided by the trading rate, so about **5 minutes**.
+
+    **What is wrong with it:**
+
+    - Cancellations ahead of you shorten the wait.
+    - If the price moves away, you are no longer at the touch, so the probability of ever filling is below one.
+    - Volume arrives in bursts and is not constant.
+    - Fills are adversely selected: you are likely to fill just before the price moves against you.
+
+    **Follow-up:** How would you do better?
+
+    → Estimate a time-to-fill model on your own order data, such as a hazard model, with queue size, cancellation rates and volatility as inputs, and validate it on out-of-sample fills.
+  </Accordion>
+</AccordionGroup>
+
+## Execution and impact
+
+<AccordionGroup>
+  <Accordion title="Q6. What is wrong with using VWAP as the benchmark for your own execution quality?">
+    - **Self-influence.** Your own trades are part of the volume that sets VWAP. The larger your participation, the closer the benchmark moves to your average price, so the slippage looks smaller than it is.
+    - **Not a measure of decision cost.** VWAP ignores the price at the time you decided to trade. A strategy that delays can beat VWAP while losing against the arrival price.
+    - **Gaming.** The benchmark can be met by trading in proportion to volume, which says nothing about whether that was a good plan.
+    - **Volume weighting.** Large trades, including those caused by others reacting to you, dominate.
+
+    **Better practice:** report implementation shortfall against the arrival price, and use VWAP only as a secondary reference. See [Market impact and TCA](/quantitative-research/microstructure/market-impact-tca).
+
+    **Follow-up:** How do you separate your own impact from market moves?
+
+    → Compare with a control, such as the movement of related instruments over the same period, and estimate impact with a model fitted on many orders, not one.
+  </Accordion>
+
+  <Accordion title="Q7. How do auctions and a trading break affect your fair value and quoting?">
+    **During a break or before an auction,** information keeps arriving, but you cannot trade at continuous prices. The first prices after the break reflect the news that accumulated.
+
+    - **Fair value uncertainty rises,** so quotes at the reopening should be wider or smaller until prices settle.
+    - **Use related instruments** that keep trading, such as futures or other markets, to update fair value during the break.
+    - **Auction prices** are set by matching rules that differ from continuous trading, so the auction can show different liquidity and information content. Check how your own orders are treated.
+    - **Obligations.** Some market maker regimes extend quoting obligations to auction sessions. See [ETF market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules).
+
+    **Follow-up:** What do you check before relying on this?
+
+    → The exchange's current rules for auction sessions, order types, price limits and break arrangements. See [Auction mechanisms](/quantitative-research/microstructure/auction-mechanisms).
+  </Accordion>
+</AccordionGroup>
+
+## Strategy diagnosis
+
+<AccordionGroup>
+  <Accordion title="Q8. Your market making strategy is profitable on quiet days and loses on busy days. How do you diagnose it?">
+    **Split the P&L** into spread captured, adverse selection, inventory, hedging cost and fees, by day type.
+
+    - If adverse selection explains the busy-day losses, look at markouts and at the state of related instruments when you were filled. A quote that was not updated after a related move is the usual cause.
+    - If inventory explains it, check how quickly the position was hedged and the hedge slippage.
+    - If fees or obligations explain it, check whether quoting obligations forced you to quote in conditions where you would otherwise stand back.
+
+    **Then test responses** with markouts: wider quotes on busy days, faster cancel on related moves, smaller size, or a toxicity signal that widens quotes. Each has a cost in lost fills.
+
+    **Follow-up:** How do you know a fix did not simply reduce volume?
+
+    → Compare realised spread and P&L per unit of risk before and after, not only total P&L, and keep a control period or instrument.
+  </Accordion>
+
+  <Accordion title="Q9. What is order flow imbalance, and how would you use it in quoting?">
+    Cont, Kukanov and Stoikov define order flow imbalance as the net imbalance between supply and demand at the best bid and ask, counting limit orders, market orders and cancellations. Over short intervals they find a linear relation between it and price changes, with a slope inversely proportional to depth.
+
+    **Use in quoting:** shift the centre of the quote away from the imbalance, widen the side under pressure, and cancel quickly when imbalance builds. It is a short-horizon signal that decays quickly.
+
+    **Follow-up:** What about VPIN?
+
+    → VPIN estimates flow toxicity from volume imbalance in volume time. The authors link it to short-term toxicity-induced volatility and the 2010 flash crash. Andersen and Bondarenko dispute it: they report classification errors correlated with volume and volatility and no incremental predictive power once those are controlled for. A careful answer states both and says you would test any toxicity measure against your own markouts. See [Order flow and toxicity](/quantitative-research/microstructure/order-flow-toxicity).
+  </Accordion>
+
+  <Accordion title="Q10. An exchange obligation forces you to keep quoting a tight spread while the market becomes volatile. What do you do?">
+    **Separate what is required from what is optional.** Check the exact obligation: spread limit, minimum size, minimum quoting time and participation rate. Some regimes require participation over most of the day, not at every moment, which gives some room to step back for short periods.
+
+    - Stay within the obligation using small size where the rules allow, and use the time within the permitted tolerance to pull quotes when risk is highest.
+    - Hedge faster and tighten inventory limits.
+    - Estimate the cost of the obligation in bad conditions and compare it with the incentives, such as fee waivers.
+    - Tell risk and compliance early, and keep a record of the conditions.
+
+    **Follow-up:** When would you accept a breach?
+
+    → Only after a decision at the right level of authority, because a breach has regulatory and commercial consequences. A loss from quoting may be smaller than the cost of losing the market making appointment, but that is a management decision, not a trader's. See [ETF market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules).
+  </Accordion>
+</AccordionGroup>
+
+## Points to verify before relying on this page
+
+1. **Conventions.** The factor of two in effective and realised spread and the choice of horizon vary by author.
+2. **Models.** Formulas for the quoting model follow the [models page](/quantitative-research/microstructure/market-making-models), which asks readers to check the original paper.
+3. **Hong Kong rules.** Auction, break and obligation details change. Use the current HKEX pages.
+4. **Empirical claims.** The queue value and order flow imbalance results come from specific studies and markets. Test them on your own data.
 
 ## Related pages
 
+- [Market-making strategies](/quantitative-research/strategies/market-making-strategies)
+- [Order flow and toxicity](/quantitative-research/microstructure/order-flow-toxicity)
 - [Order book and spread](/quantitative-research/microstructure/order-book-spread)
 - [Market-making models](/quantitative-research/microstructure/market-making-models)
-- [Mock interview 總覽](/quantitative-research/mock-interview)
+- [HFT and low-latency questions](/quantitative-research/interview/hft-low-latency)
+- [Mock Interview (Quantitative Research)](/quantitative-research/mock-interview)
+
+## Sources
+
+- Glosten and Milgrom (1985), [Bid, ask and transaction prices in a specialist market with heterogeneously informed traders](https://econpapers.repec.org/RePEc:eee:jfinec:v:14:y:1985:i:1:p:71-100), Journal of Financial Economics 14(1)
+- Huang and Stoll (1997), [The components of the bid-ask spread: a general approach](https://ideas.repec.org/a/oup/rfinst/v10y1997i4p995-1034.html), Review of Financial Studies 10(4)
+- Avellaneda and Stoikov (2008), [High-frequency trading in a limit order book](https://math.nyu.edu/%7Eavellane/HighFrequencyTrading.pdf), Quantitative Finance 8(3)
+- Moallemi and Yuan (2016), [A model for queue position valuation in a limit order book](https://drupalgsb-test.paas.cc.columbia.edu/sites/default/files-efs/pubfiles/25461/queue-value-2016.pdf)
+- Cont, Kukanov and Stoikov (2014), [The price impact of order book events](https://arxiv.org/abs/1011.6402), Journal of Financial Econometrics 12(1)
+- Easley, Lopez de Prado and O'Hara (2011), [The microstructure of the flash crash](https://papers.ssrn.com/abstract=1695041), Journal of Portfolio Management 37(2)
+- Andersen and Bondarenko (2014), [VPIN and the flash crash](https://repec.econ.au.dk/repec/creates/rp/11/rp11_50.pdf), Journal of Financial Markets 17
