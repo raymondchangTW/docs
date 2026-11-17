@@ -1,0 +1,167 @@
+---
+title: "ETF fair value: multi-currency framework"
+sidebarTitle: "ETF fair value: multi-currency"
+description: "Currency roles in an ETF, converting constituent prices to the quote currency, FX sources and timing, hedged share classes and covered interest parity, dual and multi-counter listings in Hong Kong, CNY versus CNH, and a consistency checklist."
+icon: "coins"
+keywords:
+  - "ETF fair value"
+  - "multi-currency"
+  - "FX"
+  - "currency hedged ETF"
+  - "covered interest parity"
+  - "forward points"
+  - "dual counter"
+  - "multi-counter"
+  - "HKD"
+  - "RMB"
+  - "CNH"
+  - "CNY"
+  - "iNAV"
+---
+
+This page covers the currency layer of an ETF fair value. It assumes the asset-class methods on [ETF fair value models](/quantitative-research/strategies/etf-fair-value-models), and adds how prices in many currencies are brought into one quote currency, how currency-hedged funds behave, and how Hong Kong multi-counter listings tie together.
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. This is a general framework. FX rates, interest rates and prices in the examples are invented to show the arithmetic. Counter rules and fund terms change, so Hong Kong specifics are listed under [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
+
+## Currency roles
+
+One ETF can involve five different currencies. Fair value errors often come from mixing them.
+
+| Role | Meaning | Example |
+| --- | --- | --- |
+| Constituent currency | Currency in which each holding trades | JPY for Japanese stocks, USD for US stocks |
+| Fund base currency | Currency of the fund's accounting and official NAV | USD or RMB |
+| Share class currency | Currency of a particular share class, which may be hedged | A class hedged into HKD |
+| Trading counter currency | Currency in which a listed line trades and settles | HKD, RMB or USD counter |
+| iNAV publication currency | Currency of the published indicative value | RMB, with a converted HKD figure for some funds |
+
+Write down the role of every price and rate before building the model.
+
+## Conversion rules
+
+**Convention.** Define every FX rate as units of the quote currency per one unit of the constituent currency. The most common error is inverting a rate. Keep a single table of rates in this form.
+
+**Cross rates.** For currencies with no direct liquid pair, use triangulation through a major currency: the rate from constituent currency to quote currency equals the rate from constituent currency to USD times the rate from USD to quote currency. Take the bid and ask of each leg when you need an executable value.
+
+**Fair value in the quote currency.** Replace each constituent price by price times the rate to the quote currency, then sum, as in the generic structure on the models page. The index provider's iNAV guide applies the same idea with a currency conversion factor for each holding, and it describes using a real-time mid-rate, with the WM fixing as an alternative.
+
+**Return decomposition.** The return in the quote currency is the product of the local return and the currency return: (1 + quote return) = (1 + local return) x (1 + FX return). For small moves this is about local return plus FX return, plus a small cross term.
+
+**Illustration.** An ETF quoted in HKD holds Japanese shares. Previous NAV is 100.00. The basket is up 0.60% in yen. The yen has weakened 0.50% against HKD, so the HKD per JPY rate falls from 0.0520 to 0.05174. Fair value is 100.00 x 1.0060 x 0.9950 = 100.097, about 100.10. The yen gain is mostly offset by the currency move. Using local return alone would give 100.60 and a false premium or discount of about 50 bp.
+
+## FX inputs and timing
+
+| Choice | Options | Consideration |
+| --- | --- | --- |
+| Rate type | Live mid, executable side, benchmark fixing | Use live mid for the estimate and the executable side for a trade |
+| Fixing time | Time at which the official NAV applies FX | The fund documents state it. If it differs from the constituent's close, part of the gap is timing, not mispricing |
+| Timestamp alignment | Price and FX at the same instant | A stale rate with a fresh price creates a false move |
+| Source | One feed for all currencies | Mixing sources adds noise |
+| Holidays | Local currency or local market closed | FX may trade while the local market is shut, and the reverse |
+
+FX markets trade almost continuously on weekdays, which makes the currency leg the easiest part of a closed-market fair value to update. Liquidity still varies by hour and by currency, so use side-aware rates for large trades.
+
+## Unhedged and currency-hedged funds
+
+**Unhedged.** The quote-currency fair value moves one for one with the currency of each holding, as above.
+
+**Hedged share class.** Funds usually hedge with forward contracts rolled on a schedule, for example monthly, and set the hedge size to the fund's value at the time. A UBS note on its hedged funds describes monthly forwards, regular readjustment to keep the investment ratio near 100%, and hedged returns that differ from the base index mainly by the cost of the hedge, which reflects interest rate differentials, trading costs, the hedge ratio and reinvestment lag.
+
+For intraday fair value of a hedged class:
+
+1. The currency move of the holdings is mostly neutralised, so fair value follows the local return of the basket.
+2. Add the accrual of forward points since the last NAV. This is the carry that results from the interest rate difference.
+3. Account for the residual exposure created because the hedge was sized to the previous value.
+
+**Covered interest parity.** The forward rate equals the spot rate adjusted by the interest rate differential between the two currencies. Hedging therefore costs or pays the interest differential, and it is not a fee charged by the fund, although real forwards add bid-ask spreads and operational costs.
+
+**Illustration of forward points.** Spot USD/HKD 7.8000, HKD rate 3.00%, USD rate 4.00%, three months, with a simple year fraction of 0.25 and ignoring day-count differences. Forward = 7.8000 x (1 + 0.03 x 0.25) / (1 + 0.04 x 0.25) = 7.8000 x 1.0075 / 1.0100 = 7.7807. The forward is 0.0193 below spot. A holder who hedges USD assets into HKD sells USD forward at a lower rate and gives up this amount, which is the interest advantage of holding USD. The sign and size change with rates and conventions.
+
+**Illustration of residual exposure.** The hedge covers 100.00. The basket then rises 2%, so 2.00 of value is unhedged. A 1% currency move on that part changes the fund value by 0.02, or 2 bp of NAV. The effect is small per day, and it grows with large basket moves and longer hedge intervals.
+
+## Pegged and managed currencies
+
+For a fund quoted in HKD that holds US assets, the currency term is small because HKD trades in a band against USD, but it is not zero. Include it, since a systematic omission becomes a bias and a hedge mismatch. For renminbi, the onshore rate (CNY) and the offshore rate (CNH) can differ. A fund whose basket is valued onshore but whose units and hedges are priced offshore carries a CNY versus CNH basis. Use the rate that the fund documents specify for the NAV, and the rate you can actually trade for the hedge. The existing Hong Kong discussion is in Q11 of the [ETF market making mock interview](/equities-derivatives/mock/etf-market-making).
+
+## Hong Kong multi-counter listings
+
+Hong Kong allows an ETF to list in more than one currency. The Investor and Financial Education Council describes eligible counter currencies as HKD, RMB and USD, with each counter settled in its own currency. HKEX's dual counter materials describe the units in the different counters as interchangeable one to one through an inter-counter transfer in CCASS. HKEX launched an HKD-RMB dual counter model for eligible securities on 19 June 2023, together with a Dual Counter Market Making programme. Market commentary described its aim as limiting price gaps between the two counters. The first dual counter ETF listed in 2012, and its official NAV and iNAV were calculated and published in RMB, with HKD versions converted using an FX rate.
+
+**Relationship between counters.** Units are the same security, so the prices should be related by the exchange rate. Let the HKD per CNH rate be the HKD counter currency divided by the RMB counter currency.
+
+**Illustration.** HKD counter price 20.00. USD/HKD 7.8000 and USD/CNH 7.2500 give HKD per CNH = 7.8000 / 7.2500 = 1.07586. The RMB counter fair price is 20.00 / 1.07586 = 18.59 in RMB. A gap between the RMB counter's price and 18.59 is a candidate trade only after costs.
+
+**Limits on the arbitrage between counters.**
+
+- FX bid-ask spread on the conversion.
+- Time to complete the inter-counter transfer and settlement.
+- Different tick sizes and liquidity in each counter, which round the fair price.
+- Dividend currency differences and any distribution elections.
+- Participation of market makers in each counter.
+
+The fair value of the fund itself is the same. The counters differ only in the quote currency and in the liquidity and flow of each line.
+
+## Many currencies at once
+
+Global baskets have exposure to several currencies at the same time.
+
+- **Exposure vector.** Compute net exposure by currency, from constituents and from hedges. The sum in the quote currency is not the whole risk.
+- **Hedge currency mismatch.** Hedging a HKD-quoted fund that holds US shares with USD index futures hedges the equity move but leaves the USD/HKD exposure on the notional. The residual is small for a pegged pair and large for a floating one. See [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging).
+- **One FX snapshot per calculation.** Use the same timestamped rate table for every holding in one fair value calculation.
+- **Calendars.** Constituent markets, the FX fixing and the exchange of the ETF can have different holidays. List them for each fund.
+
+## Consistency checklist
+
+1. Every price is tagged with its currency and every rate is stated as quote currency per constituent currency.
+2. One rate table, one timestamp, one source for the calculation.
+3. The FX fixing and valuation point match those of the official NAV when comparing with it.
+4. Hedged classes include forward point accrual and the residual from the hedge size.
+5. Counter prices are compared through the exchange rate that you could trade.
+6. Rates used for the estimate and rates used for execution are labelled separately.
+7. Holiday and session calendars are checked for each currency and market.
+
+## Failure modes
+
+| Failure | Cause | Control |
+| --- | --- | --- |
+| False 50 bp premium | Local return used without the currency move | Always convert before comparing |
+| Inverted rate | Wrong quote convention | One rate table with a fixed convention |
+| Gap to official NAV that never closes | Different FX fixing time | Match the fund's fixing in the comparison |
+| Hedged fund looks cheap or rich | Forward points ignored | Accrue forward points |
+| Counter arbitrage fails | Transfer delay or wide FX spread | Include cost and timing in the band |
+| CNY and CNH confused | Onshore and offshore mix | Use the rate named in the documents for NAV and the tradable rate for hedging |
+
+## Points to verify before relying on this page
+
+1. **Hong Kong counter rules.** Which counters a given ETF has, current market making programmes, tick sizes, fees and transfer timing. Check the HKEX pages and the fund documents.
+2. **FX fixing and iNAV conversion** for each fund. The 2012 HKEX release describes one early dual counter ETF. Do not generalise it.
+3. **Hedging practice.** Hedge frequency, instruments and investment ratio differ by sponsor.
+4. **Rates and day counts.** The forward illustration ignores day-count differences between currencies.
+5. **CNY and CNH.** Rate source and basis for each fund.
+6. **Numbers.** All inputs in the illustrations are invented.
+
+## Related pages
+
+- [ETF fair value models](/quantitative-research/strategies/etf-fair-value-models)
+- [Market-making strategies](/quantitative-research/strategies/market-making-strategies)
+- [ETF arbitrage and premium/discount models](/quantitative-research/strategies/etf-arbitrage-premium-discount)
+- [ETF creation, redemption and arbitrage in Hong Kong](/equities-derivatives/hk/cash-etf/creation-redemption)
+- [ETF market maker rules](/equities-derivatives/hk/cash-etf/market-maker-rules)
+- [FX hedging mock interview](/equities-derivatives/mock/fx-hedging)
+- [ETF fair value mock interview](/equities-derivatives/mock/etf-fair-value)
+
+## Sources
+
+- [iNAV calculation guide](https://www.stoxx.com/documents/stoxxnet/Documents/Indices/Common/Indexguide/iNAV_Guide.pdf), STOXX
+- [Understanding currency hedging](https://www.ubs.com/uk/en/assetmanagement/insights/asset-class-perspectives/etf/articles/understanding-currency-hedging.html), UBS Asset Management
+- [Currency-hedged vs unhedged ETFs](https://www.globalinvestments.net/investments/guides/currency-hedged-vs-unhedged-etfs), Global Investments
+- [How currency-hedged ETFs protect you from currency risk](https://www.justetf.com/en-es/news/etf/why-currency-hedged-etfs-are-rising-in-popularity.html), justETF
+- [Multiple counter model for ETFs](https://www.ifec.org.hk/web/en/financial-products/investment/etf/basics/multiple-counter-model-etf.html), Investor and Financial Education Council
+- [Dual counter model for ETFs](https://www.ifec.org.hk/web/en/financial-products/investment/rmb-products/basics/dc-etf.html), Investor and Financial Education Council
+- [Dual Tranche Dual Counter model FAQ](https://www.hkex.com.hk/Global/Exchange/FAQ/Featured/RMB-Readiness-and-Services/Dual-Tranche-Dual-Counter-Model), HKEX
+- [HKD-RMB Dual Counter Model](https://www.hkex.com.hk/Services/Trading/Securities/Overview/Trading-Mechanism/HKD-RMB-Dual-Counter-Model), HKEX
+- [First dual counter security to debut at HKEX, 11 October 2012](https://www.hkex.com.hk/news/news-release/2012/121011news?sc_lang=en), HKEX
+- [HKEX launches HKD-RMB Dual Counter Model, 19 June 2023](https://www.marketsmedia.com/?p=124009), Markets Media
+- Petajisto (2017), [Inefficiencies in the pricing of exchange-traded funds](https://econpapers.repec.org/RePEc:taf:ufajxx:v:73:y:2017:i:1:p:24-54), Financial Analysts Journal 73(1)

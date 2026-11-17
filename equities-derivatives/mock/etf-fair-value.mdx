@@ -1,0 +1,215 @@
+---
+title: "ETF fair value mock interview"
+sidebarTitle: "ETF fair value"
+description: "Mock interview questions on ETF fair value: NAV versus iNAV, closed-market proxies, bond ETFs, futures-based ETFs, leveraged and inverse ETFs, hedged share classes, multi-counter listings and model validation."
+icon: "calculator"
+keywords:
+  - "mock interview"
+  - "ETF fair value"
+  - "iNAV"
+  - "bond ETF"
+  - "futures-based ETF"
+  - "leveraged ETF"
+  - "inverse ETF"
+  - "dual counter"
+  - "currency hedged ETF"
+  - "market making"
+---
+
+This page covers ETF fair value questions for ETF market making and Delta-1 desks. Each question has a main question, common follow-ups and answer points. The answers are thinking frameworks, so say out loud which inputs you would check. The methods are on [ETF fair value models](/quantitative-research/strategies/etf-fair-value-models) and [ETF fair value: multi-currency framework](/quantitative-research/strategies/etf-fair-value-multi-currency).
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. These are general practice frameworks, not any firm's interview content or desk practice. All numbers are invented to test arithmetic and were recomputed. Product rules, especially Hong Kong leveraged and inverse rules and counter arrangements, change, so say you would check the current documents.
+</Info>
+
+## Foundations
+
+<AccordionGroup>
+  <Accordion title="Q1. What is the difference between NAV, iNAV and fair value, and which do you quote from?">
+    - **NAV** is the official value struck at a valuation point, usually daily. It is the price for creation and redemption and can be stale against live markets.
+    - **iNAV** is an indicative value published by a calculation agent, commonly every 15 seconds. It is computed from the prices it is fed, so it carries staleness when constituents are closed or thin.
+    - **Fair value** is your own estimate of what the basket is worth now, built from the best live inputs, with an uncertainty band.
+
+    **You quote from fair value,** adjusted for hedging cost, inventory and the width of the band. NAV and iNAV are references to compare against.
+
+    **Follow-up:** When would iNAV be good enough?
+
+    → When all constituents trade in the same session as the ETF and are liquid. The more the basket is closed, illiquid or in another currency, the more your own estimate is needed. See [ETF fair value models](/quantitative-research/strategies/etf-fair-value-models).
+  </Accordion>
+</AccordionGroup>
+
+## Equity baskets and currency
+
+<AccordionGroup>
+  <Accordion title="Q2. An HKD-quoted ETF holds Japanese shares. Japan is closed. The previous NAV is 100.00. Your Nikkei proxy implies the basket is up 0.60% in yen, and the yen is down 0.50% against HKD. The ETF trades at 100.60. Is it rich?">
+    **Convert before comparing.** The quote-currency return is the product of the local and currency returns: 1.0060 x 0.9950 = 1.00097, so fair value is about **100.10**.
+
+    The ETF at 100.60 is about 0.50 above fair value, roughly 50 bp. Using the yen return alone would have shown no gap, which is the trap.
+
+    **Follow-up 1:** How confident are you in 100.10?
+
+    → Only as confident as the proxy. Give a band from the residual error of the basket against the proxy, and check how stale your yen rate is. A 50 bp gap against a band of, say, 30 bp is a candidate trade. A gap inside the band is noise.
+
+    **Follow-up 2:** What do you check before trading it?
+
+    → Whether the proxy is a good fit over the same time window, hedge cost and liquidity, FX spread, and whether the creation or redemption cut-offs allow you to close the position. See [ETF fair value: multi-currency framework](/quantitative-research/strategies/etf-fair-value-multi-currency).
+  </Accordion>
+
+  <Accordion title="Q3. The cash index closed at 5,000.0. At the same moment the future was 5,020.0. Overnight the future rises to 5,060.0. What index return do you apply to the NAV?">
+    Use the **futures return from the matching reference time**: 5,060 / 5,020 = 1.00797, about **+0.80%**.
+
+    Using the cash close would give 5,060 / 5,000 = 1.0120, **+1.20%**, which overstates the move by 0.40%. That 0.40% is the basis (5,020 / 5,000 minus 1), which the future already carried at the close.
+
+    **Follow-up:** Does the basis stay at 0.40%?
+
+    → No. It changes with financing, expected dividends and time to expiry, so keep the reference at the same timestamp and update the basis assumption if the future approaches expiry or goes ex-dividend.
+  </Accordion>
+</AccordionGroup>
+
+## Bonds
+
+<AccordionGroup>
+  <Accordion title="Q4. A bond ETF trades at 99.40 while the last NAV is 100.00. Rates have moved 5 bp up and credit spreads 3 bp wider since the NAV was struck. Is the discount real?">
+    **Update the NAV first.** With interest rate duration 7.0 and spread duration 6.5, the change is minus 7.0 x 0.05% minus 6.5 x 0.03% = minus 0.545%. Fair value is about **99.455**, plus about 1.2 bp of carry if the portfolio yields 4.5%, so roughly 99.47.
+
+    At 99.40 the ETF is about 7 cents below fair value, not 60 cents. Most of the apparent discount is stale NAV.
+
+    **Follow-up 1:** Why can bond NAVs be stale?
+
+    → Many bonds do not trade on a given day, and NAVs use evaluated prices from pricing services. A study cited by Invesco found only about a fifth of corporate bonds trade on a typical day. In stress, some commentators argue the ETF price is the more current estimate.
+
+    **Follow-up 2:** What would make you less sure?
+
+    → Credit-heavy or high yield baskets where the credit index does not match the holdings, a fund that holds a sample of the index, and illiquid periods. Widen the band and reduce size.
+  </Accordion>
+
+  <Accordion title="Q5. Two bond ETFs on similar baskets show different average discounts to NAV. Why?">
+    **Marking basis.** One fund may mark its NAV at bid and the other at mid. Invesco notes that a mid-marked fund should trade at a relative discount to a bid-marked one of about half the underlying bid-ask spread. If the basket bid-ask spread is 0.40 on a price near 100, half is 0.20, about 20 bp.
+
+    **Other causes:** different pricing providers and times, sampling, and differences in liquidity and fees.
+
+    **Follow-up:** How does this change your quoting?
+
+    → Define fair value on the basis you compare with, and quote relative to the executable side. A structural discount is not an arbitrage.
+  </Accordion>
+</AccordionGroup>
+
+## Futures-based and leveraged products
+
+<AccordionGroup>
+  <Accordion title="Q6. How do you value a commodity futures ETF intraday, and why is spot a poor proxy?">
+    The fund holds futures and collateral. Return is spot change plus roll yield plus collateral yield. **Fair value** is the previous NAV times one plus the weighted return of the contracts actually held since the settlement reference, plus collateral and fee accrual, with roll weights shifted during the published roll window.
+
+    **Spot is poor** because the held contract can move differently and the roll adds a systematic term. In contango, rolling sells the expiring contract and buys a dearer one. If the next contract is 1% higher each month, the roll costs about 1.01 to the power of 12 minus 1, or **12.7% a year**, before spot and collateral yield.
+
+    **Follow-up:** What breaks the proxy?
+
+    → A futures limit move or halt, a settlement time that differs from the ETF close, and the roll window where the fund holds two contracts. Check the fund's roll schedule.
+  </Accordion>
+
+  <Accordion title="Q7. A 2x daily leveraged ETF has NAV 100.00. The underlying is up 3% from the reference close. Where is fair value, and what happens over two days if the index goes up 10% and then down 9.0909%?">
+    **Intraday:** 100.00 x (1 + 2 x 3%) = **106.00** before financing and fees.
+
+    **Two days:** the fund gains 20%, then loses 2 x 9.0909% = 18.1818%. The result is 1.20 x 0.818182 = 0.981818, a **loss of 1.82%**, although the index is flat. The factor applies to a new base each day.
+
+    **Follow-up 1:** Does the previous path matter for today's fair value?
+
+    → No. The previous NAV already contains it. Price from the previous NAV and today's underlying move.
+
+    **Follow-up 2:** What if the leverage factor is not fixed?
+
+    → The SFC revised its framework in July 2026 to allow a flexible leverage structure, with the daily factor disclosed after the close. Then L is the factor for that day. Check each product's current documents.
+  </Accordion>
+
+  <Accordion title="Q8. A -1x inverse fund and a 2x fund both lose 1.82% on that same path. Is that a coincidence, and what do both funds do at the close?">
+    The inverse fund gives 0.90 x 1.090909 = 0.981818, the same number. It is a feature of this symmetric path, not a general rule. In general the daily factor differs and the drag grows with the factor and the volatility.
+
+    **Close behaviour:** the rebalance trade is about L x (L - 1) x return x previous NAV. For L = 2 the factor is 2, and for L = -1 it is also 2, so both trade **in the direction of the day's move**. A 3% up day on 1 billion of NAV gives about 60 million of buying for each. The flow is predictable and concentrated near the close. See Q10 of the [ETF market making mock interview](/equities-derivatives/mock/etf-market-making).
+
+    **Follow-up:** How does it affect fair value?
+
+    → The fund's value depends on the underlying close, which the rebalancing flow itself can move. Near the close, widen your band and consider the aggregate flow of all products on the same underlying.
+  </Accordion>
+</AccordionGroup>
+
+## Hong Kong structures and currencies
+
+<AccordionGroup>
+  <Accordion title="Q9. An ETF has an HKD counter at 20.00 and an RMB counter. USD/HKD is 7.8000 and USD/CNH is 7.2500. Where should the RMB counter trade?">
+    HKD per CNH = 7.8000 / 7.2500 = 1.07586. The RMB counter fair price is 20.00 / 1.07586 = **18.59 RMB**.
+
+    The two counters are the same security, interchangeable one for one through an inter-counter transfer, so the prices are linked by the exchange rate.
+
+    **Follow-up:** Why might the gap not close?
+
+    → FX spread, transfer and settlement time, different tick sizes and liquidity, dividend currency, and the level of market making in each counter. A gap is a candidate trade only after these costs. HKEX introduced a dual counter market making programme in June 2023 to limit price gaps. Check the current rules.
+  </Accordion>
+
+  <Accordion title="Q10. How do you fair value a currency-hedged share class, and what residual risk remains?">
+    **Intraday:** the currency move on the holdings is mostly hedged, so fair value follows the local return of the basket plus accrued forward points since the last NAV.
+
+    **Forward points** follow covered interest parity. With spot USD/HKD 7.8000, HKD 3.00%, USD 4.00% and three months (simple year fraction 0.25), the forward is 7.8000 x 1.0075 / 1.0100 = 7.7807, about 0.0193 below spot. This is interest rate carry, not a fee.
+
+    **Residual risk:** the hedge is sized to the previous value. If the basket rises 2%, 2.00 of value is unhedged, and a 1% currency move on it changes NAV by 0.02, or 2 bp. Monthly rolls, hedge ratio drift and forward spreads add tracking differences.
+
+    **Follow-up:** Where does this link to the desk's FX hedging?
+
+    → See the [FX hedging mock interview](/equities-derivatives/mock/fx-hedging) for forward points, hedged ETFs and the HKD peg.
+  </Accordion>
+
+  <Accordion title="Q11. Your fair value on a renminbi-exposed fund is consistently off against the official NAV. What do you check?">
+    1. **Rate convention.** Is each rate quote currency per constituent currency, with no inversion?
+    2. **CNY versus CNH.** The NAV may be struck on the onshore rate while the units and your hedge are priced offshore. Use the rate the documents name for the comparison, and the tradable rate for the hedge.
+    3. **Fixing time.** If the NAV uses a fixing at a different time, part of the gap is timing.
+    4. **Calendars.** Stock Connect days and FX holidays may differ.
+    5. **Basket and cash terms.** Accruals, cash and dividend receivables.
+
+    **Follow-up:** How do you separate model error from a real basis?
+
+    → A persistent, stable gap that matches the CNY and CNH difference is a basis. An error that varies with the time of day or the fixing is a timing or convention error.
+  </Accordion>
+</AccordionGroup>
+
+## Model quality
+
+<AccordionGroup>
+  <Accordion title="Q12. How do you know your fair value model is good?">
+    - **Against the later official NAV:** error distribution by time of day and by how long the underlying has been closed.
+    - **Against your fills:** markouts relative to fair value. A model that matches NAV but loses to informed flow is not good enough. See [Order flow and toxicity](/quantitative-research/microstructure/order-flow-toxicity).
+    - **Against iNAV and peers:** know where and why you differ. A peer-group check of premiums reduced stale-price effects in one academic study, but premiums in international and illiquid funds stayed material.
+    - **By regime:** calm, stressed, open and closed underlying markets, roll windows.
+
+    **Follow-up:** What would make you retire a proxy?
+
+    → Residual error that grows, a changed relationship such as a new index or listing, or a proxy that stops trading when you need it most.
+  </Accordion>
+</AccordionGroup>
+
+## Points to verify before relying on this page
+
+1. **Hong Kong rules** for leveraged and inverse products, multi-counter listings and market making programmes. Use current SFC and HKEX material.
+2. **Fund documents** for marking basis, FX fixing, roll schedule and leverage factor.
+3. **Academic and sponsor claims** such as the bond trading frequency and the peer-group result come from the cited sources. Check the originals before quoting them in an interview.
+4. **Numbers.** All inputs are invented.
+
+## Related pages
+
+- [ETF fair value models](/quantitative-research/strategies/etf-fair-value-models)
+- [ETF fair value: multi-currency framework](/quantitative-research/strategies/etf-fair-value-multi-currency)
+- [ETF market making mock interview](/equities-derivatives/mock/etf-market-making)
+- [FX hedging mock interview](/equities-derivatives/mock/fx-hedging)
+- [Market-making strategies](/quantitative-research/strategies/market-making-strategies)
+- [Mock interview overview](/equities-derivatives/interview/mock-interview)
+
+## Sources
+
+- [Understanding ETF trading and liquidity: arbitrage, premiums and discounts](https://invesco.com/apac/en/institutional/insights/etf/understanding-etf-trading-and-liquidity-etf-arbitrage-premiums-and-discounts.html), Invesco
+- [Bond ETFs and underlying price uncertainty](https://www.msci.com/www/blog-posts/bond-etfs-and-underlying-price/01769924776), MSCI
+- [Commodity ETFs: the 3 sources of return](https://www.fidelity.com/learning-center/investment-products/etf/commodity-etfs), Fidelity
+- [Daily rebalancing in leveraged ETPs explained](https://leverageshares.com/en/insights/daily-rebalancing-in-leveraged-etps-explained/), Leverage Shares
+- [Flexible leverage structure](https://www.ifec.org.hk/web/en/investment/investment-products/leveraged-and-inverse-products/flexible-leverage-structure.page), Investor and Financial Education Council
+- [SFC revises circular on listed structured funds](https://conventuslaw.com/?p=137537), Conventus Law
+- [HKD-RMB Dual Counter Model](https://www.hkex.com.hk/Services/Trading/Securities/Overview/Trading-Mechanism/HKD-RMB-Dual-Counter-Model), HKEX
+- [Multiple counter model for ETFs](https://www.ifec.org.hk/web/en/financial-products/investment/etf/basics/multiple-counter-model-etf.html), Investor and Financial Education Council
+- [iNAV calculation guide](https://www.stoxx.com/documents/stoxxnet/Documents/Indices/Common/Indexguide/iNAV_Guide.pdf), STOXX
+- Petajisto (2017), [Inefficiencies in the pricing of exchange-traded funds](https://econpapers.repec.org/RePEc:taf:ufajxx:v:73:y:2017:i:1:p:24-54), Financial Analysts Journal 73(1)

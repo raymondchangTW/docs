@@ -1,0 +1,205 @@
+---
+title: "ETF fair value models"
+sidebarTitle: "ETF fair value models"
+description: "How to build an ETF fair value for equity baskets, bonds, futures-based funds and leveraged or inverse funds: NAV versus iNAV versus fair value, proxies for closed markets, marking basis, roll yield, daily reset, uncertainty bands and validation."
+icon: "scale-balanced"
+keywords:
+  - "ETF fair value"
+  - "iNAV"
+  - "NAV"
+  - "stale pricing"
+  - "bond ETF"
+  - "futures-based ETF"
+  - "roll yield"
+  - "leveraged ETF"
+  - "inverse ETF"
+  - "daily reset"
+  - "proxy"
+  - "market making"
+---
+
+This page sets out how an ETF fair value is built for different underlying assets. It extends the short fair value section on [Market-making strategies](/quantitative-research/strategies/market-making-strategies) and the staleness discussion on [ETF arbitrage and premium/discount models](/quantitative-research/strategies/etf-arbitrage-premium-discount). Currency handling is on [ETF fair value: multi-currency framework](/quantitative-research/strategies/etf-fair-value-multi-currency).
+
+<Info>
+  **Status of this page.** Last checked on 17 November 2026. This is a general framework, not any firm's model or parameter set. Numerical examples are illustrative inputs chosen to show the arithmetic, not market data. Method descriptions follow the index-provider iNAV guide, regulator and fund-sponsor material and academic papers listed under Sources. Items that need checking against each fund's documents are under [Points to verify](#points-to-verify-before-relying-on-this-page).
+</Info>
+
+## Four values that are easy to confuse
+
+| Measure | Produced by | Update | Use and limit |
+| --- | --- | --- | --- |
+| Official NAV | Fund administrator | Struck at a valuation point, usually once a day | Basis for creation and redemption. Can be stale against live markets. The marking basis (last, mid, bid or an evaluated price) is set by the fund documents. |
+| iNAV (indicative NAV) | Calculation agent or index provider | Set by the sponsor, commonly every 15 seconds and in one index provider's guide 15 to 60 seconds | Indicative, not a tradable price. It uses the prices it is fed, so it inherits staleness when constituent markets are closed or thin. |
+| Fair value | Your own model | Continuous | Best estimate of what the basket would be worth now, with an uncertainty band. |
+| Executable fair value | Fair value plus the cost of the hedge | Continuous | The price at which you could actually lock in a trade, which depends on the side and on the hedge instrument's spread. |
+
+Quoting and arbitrage decisions should be based on the last two. The first two are references.
+
+## Generic structure
+
+Write the fair value per share in the quote currency as:
+
+Fair value = (1 / shares) x [ cash + sum over holdings of (quantity x estimated price x FX rate) ] - accrued fees, plus other adjustments.
+
+The index-provider iNAV guide uses the same structure for the standard case: cash plus the sum of holdings, each converted to the iNAV currency, divided by the number of fund shares. The same guide also gives a futures-based form, where futures positions replace the holdings, and an index-ratio form that scales the previous official value by the move in the index and the FX rate. The guide's text for the futures form is garbled in the extraction used here, so check the original before relying on it.
+
+The modelling work is in the term called estimated price. Choose it according to the state of each constituent.
+
+| State of the constituent | Estimated price | Comment |
+| --- | --- | --- |
+| Open and liquid | Mid, or last if it is recent | Prefer mid for thin names, since the last trade may be old |
+| Open but illiquid | Mid or evaluated price, shrunk towards a proxy | Weight by how fresh and reliable each input is |
+| Closed (time zone, holiday, lunch break) | Previous close x (1 + beta x proxy return) | Proxy return must be measured over the same window |
+| Halted or locked at a price limit | Last tradable price, flagged uncertain | No executable price exists. Widen or step back. |
+
+**Uncertainty.** Every estimated price has an error. Aggregate them into a basket-level error band and pass it to the spread, as described on [Market-making strategies](/quantitative-research/strategies/market-making-strategies). A fair value without a band hides the main risk.
+
+**Estimating the proxy beta.** Regress returns of the constituent or basket on returns of the proxy, using windows that match the real timing. A beta fitted on close-to-close returns can fail when the proxy is observed over a different clock window. Review residual size and stability regularly and re-estimate when the relationship drifts.
+
+## Common adjustments
+
+| Item | Treatment | Check in the fund documents |
+| --- | --- | --- |
+| Fees and expenses | Accrue daily from the last NAV | Fee rate and accrual basis |
+| Cash and dividends receivable | Include in the cash term | Whether the iNAV includes them |
+| Ex-dividend dates | Apply the price drop to the constituent, and the receivable to cash | Price-return or total-return index, and distribution policy |
+| Corporate actions | Adjust quantities and prices | The administrator's adjustment factors |
+| Creation unit cash component | Include when comparing with a creation basket | Cash or in-kind dealing terms |
+| Securities lending or swap financing | Accrue as income or cost | Whether the fund lends or uses swaps |
+
+## Equity baskets
+
+**Full basket, same time zone.** When all constituents are open and liquid, the generic sum is accurate and the main errors are stale prints and slow data. Update quickly where the basket is concentrated in a few names.
+
+**Index-ratio method.** When the fund tracks one index closely, scale the previous NAV by the index return and the FX move. It is simple and fast. It ignores fees, cash drag and tracking difference, so it is a starting point.
+
+**Closed underlying market.** The ETF trades while the constituents cannot. Proxies, in rough order of quality:
+
+1. **Index futures** on the same or a closely related index that still trade.
+2. **Depositary receipts and dual listings** of the largest constituents.
+3. **Other ETFs** on the same exposure that trade in another time zone.
+4. **Sector or factor baskets** estimated by regression, for the rest.
+
+Fund sponsors and academic work describe the same idea: while an overseas market is closed, the ETF acts as the price discovery vehicle, and a gap to the last NAV is often information, not mispricing. Fair value pricing by firms that make markets or create and redeem is how that information is built into quotes.
+
+**Measure the futures move from the right starting point.** The futures price includes financing and expected dividends, so it differs from the cash index by the basis. Compute the futures return from the futures price at the same time as the NAV reference, not from the cash index close. Otherwise the basis shows up as a false move.
+
+**Illustration.** Previous NAV 100.00. The index future has risen 0.80% since the reference time. Estimated beta of the basket to the future is 0.95. The fair value before any currency effect is 100.00 x (1 + 0.95 x 0.80%) = 100.76. The currency step is on the [multi-currency page](/quantitative-research/strategies/etf-fair-value-multi-currency).
+
+**Events and halts.** Single-name news, trading halts and price-limit locks make the NAV unreliable as a tradable price. When a large constituent is locked, quote from your estimate of where the basket would clear, with a wide band.
+
+## Bond ETFs
+
+Bond baskets are harder because most bonds trade over the counter and many do not trade on a given day. A study cited by Invesco found that only about a fifth of corporate bonds trade on a typical day. NAVs therefore rest on prices from pricing services that estimate values, and that data can be stale when markets move fast. Commentators from fund sponsors and index providers argue that during stress, discounts to NAV partly reflect the uncertainty in those underlying prices and the ETF price can be the more current estimate.
+
+**Inputs to a bond ETF fair value:**
+
+| Input | What it captures | Weakness |
+| --- | --- | --- |
+| Government bond futures or rate swaps | Interest rate move | Basis to the basket's curve exposure |
+| Credit index derivatives or credit ETFs | Spread move | Basket mismatch, especially in high yield |
+| Peer bond ETFs that trade | Market view of the sector | Their own premium or discount |
+| Evaluated prices from pricing services | Level of the holdings | Often not executable and updated slowly |
+| Trade reports and dealer quotes where available | Actual levels | Sparse and delayed |
+
+**Update by duration and spread duration.** For a small move, the change in value is approximately minus the interest-rate duration times the change in the risk-free yield, minus the spread duration times the change in the credit spread. Add the carry, which is the accrual of coupon over the elapsed time.
+
+**Illustration.** Previous NAV 100.00, interest rate duration 7.0, spread duration 6.5. Yields rise 5 bp and spreads widen 3 bp. The change is minus 7.0 x 0.05% minus 6.5 x 0.03%, which is minus 0.350% minus 0.195%, or minus 0.545%. The fair value falls to 99.455. If the portfolio yield is 4.5% a year, one day of carry is about 0.0123%, or 1.2 bp, so the fair value is about 99.467. The durations and yield here are invented for the example.
+
+**Marking basis matters.** NAVs can be marked at bid, mid or an evaluated price. Invesco notes that a mid-marked fund should trade at a relative discount to a bid-marked fund by about half of the underlying bid-ask spread, and one market commentary describes a large high yield fund whose bid-based NAV sits systematically below its market price. Define your fair value on the same basis as what you compare it with. For a trade, use the executable side. If the underlying bid-ask spread is 0.40 points on a price near 100, half is 0.20 points, or about 20 bp. This is an illustration.
+
+**Sampling.** Many bond funds hold a sample of the index, not every bond, so index-level proxies carry tracking error to the actual holdings. Use the published holdings where available.
+
+**Stress.** When few bonds trade, the fair value band should widen and quoting size should fall. This is the period when the NAV is least informative.
+
+## Futures-based ETFs
+
+Some ETFs, including many commodity funds, hold futures and collateral instead of the physical asset. Their value follows the contracts they hold, not the spot price.
+
+**Return structure.** The return of a collateralised futures position is the change in the spot price plus roll yield plus collateral yield. In contango, rolling means selling the expiring contract and buying a more expensive one, which produces a negative roll yield. In backwardation the roll yield is positive.
+
+**Fair value construction.** Take the previous NAV, apply the weighted return of the contracts actually held from the settlement reference to now, and add collateral accrual and the fee accrual. Points to handle:
+
+- **Use the held contract, not spot and not a generic front month.** Spot and the held contract can diverge sharply.
+- **Roll windows.** During a published roll period, weights move from the expiring to the next contract according to the fund or index schedule. Model both legs and the schedule.
+- **Settlement time.** NAV is usually marked at futures settlement, which may differ from the ETF's closing time. Use the same reference for the return.
+- **Limits and liquidity.** A futures price limit or a halt stops the proxy. The ETF may keep trading beyond what the futures show.
+
+**Illustration of roll drag.** If the next contract is 1% above the one being sold and this repeats every month, the roll alone costs about 1.01 to the power of 12 minus 1, or 12.7% a year, before spot changes and collateral yield. A fair value based on spot would miss this accrual.
+
+## Leveraged and inverse ETFs
+
+Leveraged and inverse funds target a multiple of the underlying's return over one rebalancing period, usually one day. In Hong Kong, the SFC requires authorised products of this kind to use swap-based or futures-based replication and to carry a warning against holding them longer than the rebalancing interval. The Investor and Financial Education Council describes daily performance as the NAV return from one underlying market close to the next.
+
+**Daily fair value.** With leverage factor L, the NAV after one day is the previous NAV times (1 + L x r), less costs, where r is the underlying return measured from the reference close. Intraday, use r from the reference close to now. Costs include swap or financing charges and fees, which are deducted daily from NAV according to the regulator's investor material on single stock products.
+
+**Illustration.** L = 2, previous NAV 100.00, underlying up 3% from the reference close. The intraday fair value is 100.00 x (1 + 2 x 3%) = 106.00 before costs.
+
+**Flexible leverage.** In July 2026 the SFC revised its circular to allow a flexible leverage structure, with the leverage factor disclosed daily after market close. Single stock products are covered by the revised framework. In that case L is the factor disclosed for the day, not a constant. Read each product's current documents.
+
+**Path dependence over several days.** Each day applies the factor to a new base, so the multi-day return is the product of the daily results, not L times the cumulative return. Example with L = 2: the index rises 10% and then falls 9.0909%, returning to its start. The fund gains 20% and then loses 18.1818%, so 1.20 x 0.818182 = 0.981818, a loss of 1.82%. An inverse (-1x) fund on the same path gives 0.90 x 1.090909 = 0.981818, the same loss. A common approximation for the average drag is minus one half of L x (L - 1) times variance times time. The approximation comes from the leveraged ETF literature and is repeated on practitioner sites, so test it for your use.
+
+**Why fair value is not path dependent within a day.** The market maker prices from the previous NAV and the underlying's move from the reference close, so the path of earlier days is already in the NAV.
+
+**Rebalancing flow.** At each close the fund trades about L x (L - 1) x daily return x previous NAV in the direction of the day's move. Because the flow is predictable and concentrated near the close, it can move the underlying's closing price and the futures used as a hedge. See Q10 on [ETF market making mock interview](/equities-derivatives/mock/etf-market-making).
+
+**Reference time and capacity.** If the underlying market closes at a different time from the ETF's exchange, the reference point is the underlying close. The regulator's flexible leverage material lists limited availability of swaps, options or futures and higher costs of obtaining leverage as capacity constraints, so a product's ability to stay at target can vary.
+
+## Summary by product
+
+| Product | Core input | Main proxy when stale | Special risk |
+| --- | --- | --- | --- |
+| Equity ETF, same time zone | Constituent mids | Index future | Thin names, halts |
+| Equity ETF, closed market | Previous close | Index futures, receipts, other ETFs | Basis, opening gap |
+| Bond ETF | Evaluated or traded prices | Rate futures, credit indices, peer ETFs | Stale NAV, marking basis, sampling |
+| Futures-based ETF | Held futures prices | Same contracts, other months | Roll schedule, settlement time, limits |
+| Leveraged or inverse | Previous NAV and underlying return | Underlying index future | Daily factor, financing, close flow |
+
+## Validating a fair value model
+
+1. **Compare with the later official NAV.** Record the error distribution by time of day and by how long the underlying was closed.
+2. **Compare with fills.** Test fair value against markouts of your own trades, as on [Order flow and toxicity](/quantitative-research/microstructure/order-flow-toxicity). A fair value that is accurate against NAV can still lose against informed flow.
+3. **Compare with iNAV.** Know where your estimate differs from the published figure and why.
+4. **Use a peer check.** One academic approach compares each ETF's premium with the average premium of similar ETFs, to control for stale prices. It reduced but did not remove premiums for funds with international or illiquid holdings. This work uses US data.
+5. **Split by regime.** Calm and stressed periods, open and closed underlying markets, and roll windows should be reported separately.
+
+## Points to verify before relying on this page
+
+1. **Marking basis and iNAV method** for each fund, from the fund documents and the calculation agent.
+2. **Hong Kong leveraged and inverse rules.** The leverage limits, flexible leverage conditions and disclosure timing changed in 2026 and may change again. Check the current SFC circular and HKEX pages.
+3. **Index-provider guide.** The futures-based formula was reconstructed from a garbled extraction.
+4. **Drag approximation.** Source is a practitioner site that cites the academic literature. Read Cheng and Madhavan before relying on it.
+5. **Bond sampling and pricing source** for the specific fund.
+6. **Numbers.** All inputs in the illustrations are invented.
+
+## Related pages
+
+- [ETF fair value: multi-currency framework](/quantitative-research/strategies/etf-fair-value-multi-currency)
+- [Market-making strategies](/quantitative-research/strategies/market-making-strategies)
+- [ETF arbitrage and premium/discount models](/quantitative-research/strategies/etf-arbitrage-premium-discount)
+- [ETF creation and redemption](/equities-derivatives/global/etf-creation-redemption)
+- [Delta-1: hedging with listed derivatives](/equities-derivatives/global/delta-1-hedging)
+- [ETF fair value mock interview](/equities-derivatives/mock/etf-fair-value)
+
+## Sources
+
+- [iNAV calculation guide](https://www.stoxx.com/documents/stoxxnet/Documents/Indices/Common/Indexguide/iNAV_Guide.pdf), STOXX
+- [Understanding an ETF's iNAV](https://www.fidelity.com/learning-center/investment-products/etf/etfs-inav), Fidelity
+- [International ETFs and the price discovery mechanism](https://schwabassetmanagement.com/content/international-etfs-and-price-discovery-mechanism), Schwab Asset Management
+- [When markets are closed, what is your international ETF really worth?](https://www.franklintempleton.com/corporate/articles/2026/etf/when-markets-are-closed-what-is-your-international-etf-really-worth), Franklin Templeton
+- [Understanding ETF trading and liquidity: arbitrage, premiums and discounts](https://invesco.com/apac/en/institutional/insights/etf/understanding-etf-trading-and-liquidity-etf-arbitrage-premiums-and-discounts.html), Invesco
+- [How ETF NAVs are calculated](https://invesco.com/us/en/insights/how-etf-navs-are-calculated.html), Invesco
+- [Confusing world of ETF premiums and discounts](https://www.etf.com/sections/news/confusing-world-etf-premiums-discounts), etf.com
+- [Bond ETFs and underlying price uncertainty](https://www.msci.com/www/blog-posts/bond-etfs-and-underlying-price/01769924776), MSCI
+- [Commodity ETFs: the 3 sources of return](https://www.fidelity.com/learning-center/investment-products/etf/commodity-etfs), Fidelity
+- [Commodity ETFs: contango and backwardation](https://www.fidelity.com/learning-center/investment-products/etf/commodity-etfs-contango-backwardation), Fidelity
+- [Daily rebalancing in leveraged ETPs explained](https://leverageshares.com/en/insights/daily-rebalancing-in-leveraged-etps-explained/), Leverage Shares
+- Cheng and Madhavan (2009), [The dynamics of leveraged and inverse exchange-traded funds](https://joim.com/dynamics-leveraged-inverse-exchange-traded-funds), Journal of Investment Management 7(4)
+- Avellaneda and Zhang, [Path-dependence of leveraged ETF returns](https://math.nyu.edu/inmemoriam/avellaneda/LETFSlides.pdf), slides
+- [Know more about daily rebalancing](https://ifec.org.hk/web/en/financial-products/investment/leveraged-and-inverse-products/know-daily-rebalancing.html), Investor and Financial Education Council
+- [Flexible leverage structure](https://www.ifec.org.hk/web/en/investment/investment-products/leveraged-and-inverse-products/flexible-leverage-structure.page), Investor and Financial Education Council
+- [Single stock L&I products](https://ifec.org.hk/web/en/blog/2025/03/single-stock-li-products.page), Investor and Financial Education Council
+- [SFC requirements for authorising leveraged and inverse products](https://www.charltonslaw.com/sfc-requirements-for-authorising-leveraged-and-inverse-products-for-public-offering/), Charltons
+- [SFC revises circular on listed structured funds](https://conventuslaw.com/?p=137537), Conventus Law
+- Petajisto (2017), [Inefficiencies in the pricing of exchange-traded funds](https://econpapers.repec.org/RePEc:taf:ufajxx:v:73:y:2017:i:1:p:24-54), Financial Analysts Journal 73(1)
+- [Managing leverage decay in leveraged ETFs](https://leveragedposition.com/blog/slippage-in-leveraged-etfs/), practitioner site (drag approximation)

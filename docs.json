@@ -90,7 +90,8 @@
               "equities-derivatives/mock/warrants-structured-products",
               "equities-derivatives/mock/markets-risk-behavioral",
               "equities-derivatives/mock/fx-hedging",
-              "equities-derivatives/mock/dma-electronic-execution"
+              "equities-derivatives/mock/dma-electronic-execution",
+              "equities-derivatives/mock/etf-fair-value"
             ]
           }
         ]
@@ -158,7 +159,9 @@
               "quantitative-research/strategies/vol-strategies",
               "quantitative-research/strategies/event-dividend-strategies",
               "quantitative-research/strategies/cross-market",
-              "quantitative-research/strategies/market-making-strategies"
+              "quantitative-research/strategies/market-making-strategies",
+              "quantitative-research/strategies/etf-fair-value-models",
+              "quantitative-research/strategies/etf-fair-value-multi-currency"
             ]
           },
           {
